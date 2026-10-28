@@ -1,7 +1,20 @@
 'use client';
 
-import React, { useState } from 'react';
-import { X, ShieldCheck, Upload, CheckCircle2, Clock, Lock, Sparkles, Check, AlertCircle } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import Link from 'next/link';
+import {
+  X,
+  ShieldCheck,
+  Upload,
+  CheckCircle2,
+  Clock,
+  Lock,
+  Check,
+  FileText,
+  Image as ImageIcon,
+  Trash2,
+  ExternalLink,
+} from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 
 interface VerificationModalProps {
@@ -17,39 +30,79 @@ export default function VerificationModal({
   onComplete,
   reason,
 }: VerificationModalProps) {
-  const { currentUser, submitVerification, adminApproveUser, adminResetVerification } = useAuth();
+  const { currentUser, submitVerification, approveUser } = useAuth();
 
-  const [nationalCardFile, setNationalCardFile] = useState<string | null>(
+  const cardInputRef = useRef<HTMLInputElement>(null);
+  const selfieInputRef = useRef<HTMLInputElement>(null);
+
+  const [nationalCardPreview, setNationalCardPreview] = useState<string | null>(
     currentUser?.verification_docs?.national_card_url || null
   );
-  const [selfieWithCardFile, setSelfieWithCardFile] = useState<string | null>(
+  const [nationalCardName, setNationalCardName] = useState<string>(
+    currentUser?.verification_docs?.national_card_url ? 'تصویر کارت ملی' : ''
+  );
+
+  const [selfiePreview, setSelfiePreview] = useState<string | null>(
     currentUser?.verification_docs?.selfie_with_card_url || null
   );
+  const [selfieName, setSelfieName] = useState<string>(
+    currentUser?.verification_docs?.selfie_with_card_url ? 'تصویر سلفی با کارت ملی' : ''
+  );
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen) return null;
 
   const currentStatus = currentUser?.verification_status || 'unverified';
 
-  const handleSimulatedUpload = (type: 'card' | 'selfie') => {
-    // Simulate image upload with sample photo
-    if (type === 'card') {
-      setNationalCardFile('uploaded_national_card.jpg');
-    } else {
-      setSelfieWithCardFile('uploaded_selfie_with_card.jpg');
+  const handleCardFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setNationalCardName(file.name);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setNationalCardPreview(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
     }
+  };
+
+  const handleSelfieFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelfieName(file.name);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setSelfiePreview(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveCard = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setNationalCardPreview(null);
+    setNationalCardName('');
+    if (cardInputRef.current) cardInputRef.current.value = '';
+  };
+
+  const handleRemoveSelfie = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelfiePreview(null);
+    setSelfieName('');
+    if (selfieInputRef.current) selfieInputRef.current.value = '';
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nationalCardFile || !selfieWithCardFile) {
-      alert('لطفاً هر دو تصویر (عکس کارت ملی و سلفی همراه با کارت ملی) را بارگذاری فرمایید.');
+    if (!nationalCardPreview || !selfiePreview) {
+      alert('لطفاً هر دو تصویر (عکس کارت ملی و سلفی همراه با کارت ملی) را انتخاب فرمایید.');
       return;
     }
 
     setIsSubmitting(true);
     setTimeout(() => {
-      submitVerification(nationalCardFile, selfieWithCardFile);
+      submitVerification(nationalCardPreview, selfiePreview);
       setIsSubmitting(false);
       if (onComplete) onComplete();
     }, 600);
@@ -57,7 +110,7 @@ export default function VerificationModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl p-6 sm:p-8 text-right overflow-hidden border border-[#EADFD5]">
+      <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl p-6 sm:p-8 text-right overflow-hidden border border-[#EADFD5] max-h-[92vh] overflow-y-auto">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -76,12 +129,12 @@ export default function VerificationModal({
             احراز هویت و عضویت امن
           </h3>
           {reason ? (
-            <p className="text-xs text-[#C25E38] font-bold mt-1.5 bg-[#FBF4F0] p-2 rounded-xl">
+            <p className="text-xs text-[#C25E38] font-bold mt-1.5 bg-[#FBF4F0] p-2.5 rounded-xl border border-[#C25E38]/20">
               ⚠️ {reason}
             </p>
           ) : (
             <p className="text-xs text-gray-500 mt-1">
-              صرفاً ارسال تصویر کارت ملی و یک سلفی همراه با کارت جهت بررسی دستی کافیست.
+              صرفاً بارگذاری تصویر کارت ملی و سلفی همراه با کارت ملی جهت بررسی دستی کافیست.
             </p>
           )}
         </div>
@@ -118,29 +171,41 @@ export default function VerificationModal({
             <div className="space-y-1.5">
               <h4 className="text-lg font-bold text-gray-800">مدارک در انتظار بررسی دستی</h4>
               <p className="text-xs text-gray-600 leading-relaxed max-w-sm mx-auto">
-                مدارک شناسایی شما با موفقیت ثبت شد. تیم پشتیبانی همجا به صورت دستی تصویر کارت ملی و سلفی شما را تطبیق داده و پس از تأیید، امکان ارسال درخواست برای شما فعال خواهد شد.
+                مدارک شما با موفقیت دریافت شد. تیم همجا به صورت دستی مدارک را در پنل ادمین بررسی کرده و پس از تأیید، امکان ارسال درخواست برای شما فعال خواهد شد.
               </p>
             </div>
 
-            {/* Admin demo bypass button for instant test */}
-            <div className="p-3.5 bg-[#FBF4F0] rounded-2xl border border-[#C25E38]/20 text-right space-y-2">
-              <span className="text-[11px] font-bold text-[#C25E38] block">
-                تست و شبیه‌سازی ادمین:
+            {/* Link to Admin Panel */}
+            <div className="p-4 bg-[#FBF4F0] rounded-2xl border border-[#C25E38]/20 text-right space-y-2">
+              <span className="text-xs font-bold text-[#C25E38] block flex items-center justify-between">
+                <span>پنل بررسی ادمین</span>
+                <span className="text-[10px] bg-[#C25E38] text-white px-2 py-0.5 rounded-full">مدیریت</span>
               </span>
-              <p className="text-[10px] text-gray-600">
-                در حالت واقعی، ادمین مدارک را در پنل بررسی می‌کند. برای اینکه بتوانید بلافاصله قابلیت‌ها را تست کنید، روی دکمه زیر کلیک نمایید:
+              <p className="text-[11px] text-gray-600 leading-relaxed">
+                شما می‌توانید به عنوان ادمین وارد پنل مدیریت شده، مدارک آپلودشده‌ی خود یا سایر کاربران را ببینید و تایید فرمایید:
               </p>
-              <button
-                type="button"
-                onClick={() => {
-                  adminApproveUser();
-                  if (onComplete) onComplete();
-                }}
-                className="w-full py-2 bg-[#1E5647] hover:bg-[#164337] text-white text-xs font-bold rounded-xl shadow transition-colors flex items-center justify-center gap-1.5"
-              >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>تأیید فوری مدارک توسط ادمین (تست دمو)</span>
-              </button>
+              <div className="flex gap-2 pt-1">
+                <Link
+                  href="/admin"
+                  onClick={onClose}
+                  className="flex-1 py-2.5 bg-[#C25E38] hover:bg-[#A84E2D] text-white text-xs font-bold rounded-xl shadow transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>ورود به پنل بررسی مدارک (ادمین)</span>
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (currentUser) approveUser(currentUser.id);
+                    if (onComplete) onComplete();
+                  }}
+                  className="py-2.5 px-3 bg-[#1E5647] hover:bg-[#164337] text-white text-xs font-bold rounded-xl transition-colors shrink-0"
+                  title="تأیید فوری آزمایشی"
+                >
+                  تأیید فوری
+                </button>
+              </div>
             </div>
 
             <button
@@ -152,37 +217,78 @@ export default function VerificationModal({
           </div>
         )}
 
-        {/* Status 3: UNVERIFIED FORM */}
+        {/* Status 3: UNVERIFIED FORM WITH REAL FILE PICKER */}
         {currentStatus === 'unverified' && (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Hidden Real File Inputs */}
+            <input
+              type="file"
+              ref={cardInputRef}
+              accept="image/*"
+              className="hidden"
+              onChange={handleCardFileChange}
+            />
+            <input
+              type="file"
+              ref={selfieInputRef}
+              accept="image/*"
+              className="hidden"
+              onChange={handleSelfieFileChange}
+            />
+
             {/* Upload 1: National Card */}
             <div>
               <label className="block text-xs font-semibold text-gray-800 mb-1.5">
                 ۱. تصویر کارت ملی یا برگه رهگیری <span className="text-red-500">*</span>
               </label>
-              <div
-                onClick={() => handleSimulatedUpload('card')}
-                className={`p-4 rounded-2xl border-2 border-dashed cursor-pointer transition-all text-center flex flex-col items-center justify-center ${
-                  nationalCardFile
-                    ? 'border-[#1E5647] bg-[#EBF5F1]'
-                    : 'border-gray-300 hover:border-[#C25E38] bg-[#F9F8F6]'
-                }`}
-              >
-                {nationalCardFile ? (
-                  <div className="flex items-center gap-2 text-[#1E5647] text-xs font-bold">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>تصویر کارت ملی انتخاب شد ✓</span>
+
+              {nationalCardPreview ? (
+                <div className="relative p-3 rounded-2xl border-2 border-[#1E5647] bg-[#EBF5F1] flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    <img
+                      src={nationalCardPreview}
+                      alt="پیش‌نمایش کارت ملی"
+                      className="w-14 h-14 rounded-xl object-cover border border-[#1E5647]/30 shrink-0"
+                    />
+                    <div className="text-right truncate">
+                      <p className="text-xs font-bold text-[#1E5647] truncate">{nationalCardName || 'تصویر کارت ملی'}</p>
+                      <span className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5">
+                        <CheckCircle2 className="w-3 h-3 text-[#1E5647]" />
+                        فایل با موفقیت انتخاب شد
+                      </span>
+                    </div>
                   </div>
-                ) : (
-                  <>
-                    <Upload className="w-6 h-6 text-gray-400 mb-1" />
-                    <span className="text-xs font-semibold text-gray-700">
-                      کلیک برای انتخاب عکس کارت ملی
-                    </span>
-                    <span className="text-[10px] text-gray-400 mt-0.5">فرمت‌های JPG، PNG</span>
-                  </>
-                )}
-              </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => cardInputRef.current?.click()}
+                      className="px-2.5 py-1 text-[11px] bg-white text-gray-700 rounded-lg border border-gray-200 hover:bg-gray-50 font-medium"
+                    >
+                      تغییر عکس
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRemoveCard}
+                      className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg transition-colors"
+                      title="حذف"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  onClick={() => cardInputRef.current?.click()}
+                  className="p-5 rounded-2xl border-2 border-dashed border-gray-300 hover:border-[#C25E38] bg-[#F9F8F6] cursor-pointer transition-all text-center flex flex-col items-center justify-center group"
+                >
+                  <Upload className="w-7 h-7 text-gray-400 group-hover:text-[#C25E38] mb-1.5 transition-colors" />
+                  <span className="text-xs font-bold text-gray-700 group-hover:text-[#C25E38]">
+                    کلیک برای انتخاب فایل عکس کارت ملی از دستگاه
+                  </span>
+                  <span className="text-[10px] text-gray-400 mt-1">فرمت‌های JPG، PNG یا WEBP</span>
+                </div>
+              )}
             </div>
 
             {/* Upload 2: Selfie with National Card */}
@@ -190,50 +296,75 @@ export default function VerificationModal({
               <label className="block text-xs font-semibold text-gray-800 mb-1.5">
                 ۲. تصویر سلفی به همراه کارت ملی <span className="text-red-500">*</span>
               </label>
-              <div
-                onClick={() => handleSimulatedUpload('selfie')}
-                className={`p-4 rounded-2xl border-2 border-dashed cursor-pointer transition-all text-center flex flex-col items-center justify-center ${
-                  selfieWithCardFile
-                    ? 'border-[#1E5647] bg-[#EBF5F1]'
-                    : 'border-gray-300 hover:border-[#C25E38] bg-[#F9F8F6]'
-                }`}
-              >
-                {selfieWithCardFile ? (
-                  <div className="flex items-center gap-2 text-[#1E5647] text-xs font-bold">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>تصویر سلفی با کارت ملی انتخاب شد ✓</span>
+
+              {selfiePreview ? (
+                <div className="relative p-3 rounded-2xl border-2 border-[#1E5647] bg-[#EBF5F1] flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    <img
+                      src={selfiePreview}
+                      alt="پیش‌نمایش سلفی با کارت ملی"
+                      className="w-14 h-14 rounded-xl object-cover border border-[#1E5647]/30 shrink-0"
+                    />
+                    <div className="text-right truncate">
+                      <p className="text-xs font-bold text-[#1E5647] truncate">{selfieName || 'سلفی با کارت ملی'}</p>
+                      <span className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5">
+                        <CheckCircle2 className="w-3 h-3 text-[#1E5647]" />
+                        فایل با موفقیت انتخاب شد
+                      </span>
+                    </div>
                   </div>
-                ) : (
-                  <>
-                    <Upload className="w-6 h-6 text-gray-400 mb-1" />
-                    <span className="text-xs font-semibold text-gray-700">
-                      کلیک برای انتخاب سلفی به همراه کارت ملی
-                    </span>
-                    <span className="text-[10px] text-gray-400 mt-0.5">
-                      کارت ملی را کنار چهره بگیرید تا مشخصات خوانا باشد
-                    </span>
-                  </>
-                )}
-              </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => selfieInputRef.current?.click()}
+                      className="px-2.5 py-1 text-[11px] bg-white text-gray-700 rounded-lg border border-gray-200 hover:bg-gray-50 font-medium"
+                    >
+                      تغییر عکس
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRemoveSelfie}
+                      className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg transition-colors"
+                      title="حذف"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  onClick={() => selfieInputRef.current?.click()}
+                  className="p-5 rounded-2xl border-2 border-dashed border-gray-300 hover:border-[#C25E38] bg-[#F9F8F6] cursor-pointer transition-all text-center flex flex-col items-center justify-center group"
+                >
+                  <Upload className="w-7 h-7 text-gray-400 group-hover:text-[#C25E38] mb-1.5 transition-colors" />
+                  <span className="text-xs font-bold text-gray-700 group-hover:text-[#C25E38]">
+                    کلیک برای انتخاب عکس سلفی همراه با کارت ملی
+                  </span>
+                  <span className="text-[10px] text-gray-400 mt-1">
+                    کارت ملی را کنار چهره بگیرید تا چهره و اطلاعات کارت مشخص باشند
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Privacy notice */}
             <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500 pt-1">
               <Lock className="w-3.5 h-3.5 text-gray-400" />
-              <span>مدارک شما کاملاً محرمانه بوده و به هیچ کاربری نمایش داده نمی‌شود.</span>
+              <span>مدارک شما کاملاً محرمانه بوده و تنها توسط ادمین همجا بررسی می‌شود.</span>
             </div>
 
-            {/* Action buttons */}
-            <div className="space-y-2 pt-2">
+            {/* Action button */}
+            <div className="pt-2">
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !nationalCardPreview || !selfiePreview}
                 className="w-full py-3.5 bg-[#C25E38] hover:bg-[#A84E2D] text-white font-bold rounded-2xl shadow transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <span>در حال ارسال مدارک...</span>
                 ) : (
-                  <span>ارسال مدارک جهت بررسی دستی</span>
+                  <span>ارسال مدارک جهت بررسی دستی همجا</span>
                 )}
               </button>
             </div>

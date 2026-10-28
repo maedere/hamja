@@ -31,6 +31,7 @@ export default function Navbar() {
     { label: 'میزبانی متقابل', href: '/#mutual', icon: HomeIcon },
     { label: 'امنیت و اعتماد', href: '/#trust', icon: ShieldCheck },
     { label: 'درخواست‌های من', href: '/requests', icon: MessageSquare },
+    { label: 'پنل بررسی ادمین', href: '/admin', icon: ShieldCheck },
   ];
 
   return (

@@ -53,7 +53,7 @@ describe('Hamja Components & Core Features Test Suite', () => {
     // Modal title & subtitle
     expect(screen.getByText('احراز هویت و عضویت امن')).toBeInTheDocument();
     expect(
-      screen.getByText('صرفاً ارسال تصویر کارت ملی و یک سلفی همراه با کارت جهت بررسی دستی کافیست.')
+      screen.getByText(/صرفاً بارگذاری تصویر کارت ملی و سلفی همراه با کارت ملی/)
     ).toBeInTheDocument();
 
     // Upload items
@@ -65,7 +65,7 @@ describe('Hamja Components & Core Features Test Suite', () => {
     ).toBeInTheDocument();
 
     // Submit button
-    expect(screen.getByText('ارسال مدارک جهت بررسی دستی')).toBeInTheDocument();
+    expect(screen.getByText('ارسال مدارک جهت بررسی دستی همجا')).toBeInTheDocument();
   });
 
   it('renders HostingRequestModal and handles stay submission', () => {
