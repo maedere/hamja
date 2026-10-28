@@ -1,36 +1,77 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# همجا (Hamja)
+### پلتفرم اجتماعی سفر و میزبانی متقابل ایرانیان
 
-## Getting Started
+> **«سفر به شهرها، ماندن در جمع دوستان؛ میزبانی دوطرفه»**  
+> *غریبه نیستیم؛ هنوز آشنا نشده‌ایم.*
 
-First, run the development server:
+همجا یک پلتفرم بومی و امن برای سفرهای انسانی‌تر و میزبانی متقابل و رایگان در شهرهای ایران است. در همجا، اعضا بر پایه اعتماد، استعلام هویت، و احترام متقابل، درِ خانه‌هایشان را به روی همسفران باز می‌کنند.
 
+---
+
+## 🎨 ویژگی‌های بصری و طراحی (منطبق بر طرح PDF)
+
+1. **طراحی کاملاً راست‌چین و فارسی (Persian RTL)** با فونت بهینه‌شده **وزیرمتن (Vazirmatn)**.
+2. **پالت رنگی گرم و اصیل**:
+   - نارنجی آجری/سفالی (`#C25E38`) برای اکشن‌ها و دکمه‌های اصلی.
+   - سبز سروی و اعتمادسازی (`#1E5647`) برای بج‌های تأیید هویت و میزبانی متقابل.
+   - پس‌زمینه کرم شنی (`#F9F8F6`) و سطوح سفید کارت‌ها.
+3. **صفحات اصلی پیاده‌سازی شده**:
+   - **صفحه فرود (`/`)**: بنر Hero، نوار جستجوی سریع شهر، فرآیند ۳ مرحله‌ای آشنایی، کارت‌های میزبان، بخش اعتمادسازی و داستان همجا.
+   - **کاوش اعضا و میزبان‌ها (`/explore`)**: جستجوی بلادرنگ، فیلتر بر اساس شهر، نوع میزبانی، تاگل کاربران دارای تأیید هویت، و نقشه شماتیک شهرهای ایران با پین‌های تعاملی.
+   - **پروفایل کامل میزبان (`/members/[id]`)**: کارت مشخصات، درصد پاسخ‌دهی، تب‌های سه‌گانه (درباره من، خانه و امکانات، نظرات اعضا)، و میزبانی‌های گذشته.
+   - **صندوق درخواست‌ها و قفل‌گشایی نشانی (`/requests`)**: مدیریت درخواست‌های ارسالی و دریافتی، و نمایش نشانی دقیق پس از پذیرش دوطرفه.
+   - **مدال ۳ مرحله‌ای احراز هویت امن**: منطبق بر صفحه ۱ سند طرح (کارت ملی، سلفی زنده با تشخیص چهره در کادر، تکمیل نقش و عضویت).
+   - **مدال درخواست میزبانی و ارتباط**: انتخاب تاریخ سفر و تعداد مهمانان با پیام شخصی‌سازی‌شده.
+
+---
+
+## 🛠 استک فناوری (Tech Stack)
+
+- **فریم‌ورک**: [Next.js](https://nextjs.org) (App Router) + React 19 + TypeScript
+- **استایل‌دهی**: [Tailwind CSS v4](https://tailwindcss.com) با توکن‌های تم همجا
+- **پایگاه‌داده و احراز هویت**: [Supabase](https://supabase.com) (PostgreSQL + RLS + Supabase Auth)
+- **آیکون‌ها**: [Lucide React](https://lucide.dev)
+- **تست‌ها**: [Vitest](https://vitest.dev) + React Testing Library
+
+---
+
+## 🚀 راه‌اندازی و اجرای محلی (Quick Start)
+
+### ۱. نصب وابستگی‌ها
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### ۲. اجرای محیط توسعه
+```bash
+npm run dev
+```
+سپس مرورگر خود را باز کرده و به آدرس [http://localhost:3000](http://localhost:3000) بروید.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### ۳. اجرای تست‌های خودکار
+```bash
+npm run test
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### ۴. ساخت بیلد نهایی پروداکشن
+```bash
+npm run build
+```
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 🗄️ راه‌اندازی Supabase و امنیت در سطح سطر (RLS)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+فایل مایگریشن کامل در مسیر زیر آماده است:
+```
+supabase/migrations/001_initial_schema.sql
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. در پنل کاربری Supabase یک پروژه جدید بسازید.
+2. محتوای فایل `001_initial_schema.sql` را در SQL Editor اجرا کنید تا جداول، Enums، توابع، تریگر ثبت‌نام خودکار، و سیاست‌های Row Level Security فعال شوند.
+3. متغیرهای محیطی را در فایل `.env.local` قرار دهید (مطابق با `.env.example`):
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+```
+*(توجه: پروژه به صورت خودکار دارای لایه داده‌های نمایشی غنی است، به گونه‌ای که حتی بدون اتصال اولیه به دیتابیس نیز تمامی جریان‌های کاربری به صورت تعاملی کار می‌کنند).*
