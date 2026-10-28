@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@source "../app";
+@source "../components";
+@source "../lib";
+
 @theme {
   --color-hamja-terracotta: #C25E38;
   --color-hamja-terracotta-hover: #A84E2D;
