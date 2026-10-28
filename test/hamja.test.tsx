@@ -4,6 +4,7 @@ import MemberCard from '@/components/members/MemberCard';
 import VerificationModal from '@/components/modals/VerificationModal';
 import HostingRequestModal from '@/components/modals/HostingRequestModal';
 import IranMap from '@/components/explore/IranMap';
+import { AuthProvider } from '@/lib/auth-context';
 import { MOCK_PROFILES } from '@/lib/mock-data';
 
 // Mock Next.js navigation hooks
@@ -42,34 +43,29 @@ describe('Hamja Components & Core Features Test Suite', () => {
     expect(screen.getByText('مشاهده پروفایل')).toBeInTheDocument();
   });
 
-  it('renders VerificationModal with 3-step liveness selfie matching PDF Page 1', () => {
-    render(<VerificationModal isOpen={true} onClose={vi.fn()} />);
+  it('renders VerificationModal with manual national card and selfie uploads', () => {
+    render(
+      <AuthProvider>
+        <VerificationModal isOpen={true} onClose={vi.fn()} />
+      </AuthProvider>
+    );
 
-    // Modal title & privacy notice
+    // Modal title & subtitle
     expect(screen.getByText('احراز هویت و عضویت امن')).toBeInTheDocument();
     expect(
-      screen.getByText('اطلاعات شما نزد همجا کاملاً محرمانه می‌ماند.')
+      screen.getByText('صرفاً ارسال تصویر کارت ملی و یک سلفی همراه با کارت جهت بررسی دستی کافیست.')
     ).toBeInTheDocument();
 
-    // Step 2 indicator and live face frame
-    expect(screen.getByText('گام ۲ از ۳: احراز چهره')).toBeInTheDocument();
-    expect(screen.getByText('چهره در کادر قرار گرفت')).toBeInTheDocument();
+    // Upload items
     expect(
-      screen.getByText(
-        'جهت حفظ امنیت جامعه، تصویر زنده چهره شما باید با کارت ملی تطبیق داده شود.'
-      )
+      screen.getByText(/تصویر کارت ملی یا برگه رهگیری/)
     ).toBeInTheDocument();
-
-    // Action button
-    const nextBtn = screen.getByText('ثبت و ادامه به گام بعد');
-    expect(nextBtn).toBeInTheDocument();
-
-    // Click next -> transitions to step 3
-    fireEvent.click(nextBtn);
-    expect(screen.getByText('گام ۳ از ۳: تکمیل عضویت')).toBeInTheDocument();
     expect(
-      screen.getByText('میزبانی متقابل (میزبان و مسافر)')
+      screen.getByText(/تصویر سلفی به همراه کارت ملی/)
     ).toBeInTheDocument();
+
+    // Submit button
+    expect(screen.getByText('ارسال مدارک جهت بررسی دستی')).toBeInTheDocument();
   });
 
   it('renders HostingRequestModal and handles stay submission', () => {

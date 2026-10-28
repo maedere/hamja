@@ -18,11 +18,17 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import VerificationModal from '@/components/modals/VerificationModal';
+import { useAuth } from '@/lib/auth-context';
 import { HostingRequest } from '@/types/database';
 import { INITIAL_REQUESTS } from '@/lib/mock-data';
 
 export default function RequestsPage() {
+  const { isVerified } = useAuth();
   const [activeTab, setActiveTab] = useState<'sent' | 'received'>('sent');
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [pendingAcceptReqId, setPendingAcceptReqId] = useState<string | null>(null);
+
   const [requests, setRequests] = useState<HostingRequest[]>([
     ...INITIAL_REQUESTS,
     {
@@ -45,6 +51,12 @@ export default function RequestsPage() {
   ]);
 
   const handleStatusChange = (requestId: string, newStatus: 'accepted' | 'declined') => {
+    if (newStatus === 'accepted' && !isVerified) {
+      setPendingAcceptReqId(requestId);
+      setShowVerifyModal(true);
+      return;
+    }
+
     setRequests((prev) =>
       prev.map((req) => {
         if (req.id === requestId) {
@@ -333,6 +345,20 @@ export default function RequestsPage() {
       </main>
 
       <Footer />
+      
+      {/* Verification modal for unverified hosts */}
+      <VerificationModal
+        isOpen={showVerifyModal}
+        onClose={() => setShowVerifyModal(false)}
+        reason="جهت امنیت جامعه همجا و اطمینان از هویت میزبان قبل از پذیرش مسافر، ارسال تصویر کارت ملی و سلفی الزامی است."
+        onComplete={() => {
+          setShowVerifyModal(false);
+          if (pendingAcceptReqId) {
+            handleStatusChange(pendingAcceptReqId, 'accepted');
+            setPendingAcceptReqId(null);
+          }
+        }}
+      />
     </div>
   );
 }

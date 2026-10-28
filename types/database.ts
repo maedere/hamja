@@ -4,28 +4,63 @@ export type RoomType = 'private_room' | 'shared_room' | 'entire_place' | 'couch'
 export type RequestStatus = 'pending' | 'accepted' | 'declined' | 'canceled' | 'completed';
 export type VerificationStatus = 'unverified' | 'pending' | 'approved' | 'rejected';
 
-export interface Profile {
+export type GuestPreference = 'females_only' | 'males_only' | 'couples_families' | 'any';
+export type SleepingArrangement = 'private_with_bed' | 'private_without_bed' | 'shared_space';
+
+export interface UserProfile {
   id: string;
+  // Personal Info (Google Form Page 1)
   full_name: string;
-  avatar_url: string;
+  phone?: string;
+  instagram?: string;
   city: string;
   province?: string;
+  age?: number;
+  job_education?: string;
+  avatar_url?: string;
+
+  // Role & Hosting Capability (Google Form Page 2)
+  can_host?: boolean;
   role: UserRole;
   hosting_status: HostingStatus;
-  bio_headline: string;
-  about_me: string;
-  interests: string[];
-  languages: string[];
-  favorite_destinations: string[];
+  max_guests?: number;
+  guest_preference?: GuestPreference;
+  sleeping_arrangement?: SleepingArrangement;
+
+  // House Rules & Travel Plans (Google Form Page 3)
+  house_rules?: string[];
+  target_destination?: string;
+  target_travel_dates?: string;
+  target_guests_count?: number;
+  bio_headline?: string;
+  about_me?: string;
+  interests?: string[];
+  languages?: string[];
+  favorite_destinations?: string[];
+
+  // Terms & Commitments (Google Form Page 4)
+  agreed_to_provide_id?: boolean;
+  agreed_to_respect_house_rules?: boolean;
+  agreed_to_hamja_terms?: boolean;
+
+  // Verification & Safety
+  verification_status: VerificationStatus;
+  is_identity_verified: boolean;
+  verification_docs?: {
+    national_card_url?: string;
+    selfie_with_card_url?: string;
+    submitted_at?: string;
+  };
+
+  // Metadata
+  member_since_year: string;
   response_rate_percent: number;
   hosting_count: number;
-  is_identity_verified: boolean;
-  verification_status: VerificationStatus;
-  member_since_year: string;
   last_active?: string;
   created_at?: string;
-  updated_at?: string;
 }
+
+export interface Profile extends UserProfile {}
 
 export interface HomeListing {
   id: string;

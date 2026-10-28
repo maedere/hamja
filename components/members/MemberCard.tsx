@@ -59,7 +59,7 @@ export default function MemberCard({ member }: MemberCardProps) {
 
         {/* Interests Tags */}
         <div className="flex flex-wrap gap-1.5 mb-3">
-          {member.interests.slice(0, 3).map((tag) => (
+          {member.interests?.slice(0, 3).map((tag) => (
             <span
               key={tag}
               className="text-[11px] font-medium text-[#C25E38] bg-[#FBF4F0] px-2 py-0.5 rounded-lg"

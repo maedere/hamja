@@ -39,7 +39,7 @@ function ExploreContent() {
         !searchTerm ||
         member.city.includes(searchTerm) ||
         member.full_name.includes(searchTerm) ||
-        member.about_me.includes(searchTerm);
+        (member.about_me?.includes(searchTerm) ?? false);
 
       // Selected city from Map or filter
       const matchesCity = !selectedCity || member.city === selectedCity;
@@ -56,7 +56,7 @@ function ExploreContent() {
       // Interest
       const matchesInterest =
         selectedInterest === 'all' ||
-        member.interests.some((tag) => tag.includes(selectedInterest));
+        (member.interests?.some((tag) => tag.includes(selectedInterest)) ?? false);
 
       return matchesSearch && matchesCity && matchesVerified && matchesType && matchesInterest;
     });

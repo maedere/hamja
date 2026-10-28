@@ -24,6 +24,9 @@ import {
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import HostingRequestModal from '@/components/modals/HostingRequestModal';
+import VerificationModal from '@/components/modals/VerificationModal';
+import { useAuth } from '@/lib/auth-context';
+import { useRouter } from 'next/navigation';
 import {
   MOCK_PROFILES,
   MOCK_LISTINGS,
@@ -33,11 +36,28 @@ import {
 import { Suspense } from 'react';
 
 function MemberProfileContent() {
+  const router = useRouter();
+  const { isLoggedIn, isVerified } = useAuth();
   const params = useParams();
   const id = params?.id as string;
 
   const [activeTab, setActiveTab] = useState<'about' | 'home' | 'reviews'>('about');
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [verifyReason, setVerifyReason] = useState('');
+
+  const handleOpenRequest = () => {
+    if (!isLoggedIn) {
+      router.push('/register');
+      return;
+    }
+    if (!isVerified) {
+      setVerifyReason('برای ارسال درخواست میزبانی و حفظ امنیت جامعه همجا، لطفاً ابتدا مدارک هویتی (تصویر کارت ملی و سلفی) خود را ارسال فرمایید.');
+      setShowVerifyModal(true);
+      return;
+    }
+    setShowRequestModal(true);
+  };
 
   // Find member or default to Sara Rahimi
   const member =
@@ -129,7 +149,7 @@ function MemberProfileContent() {
             </div>
 
             <button
-              onClick={() => setShowRequestModal(true)}
+              onClick={handleOpenRequest}
               className="w-full py-3.5 bg-[#C25E38] hover:bg-[#A84E2D] text-white font-bold rounded-2xl shadow-md transition-all hover:shadow-lg flex items-center justify-center gap-2 text-sm"
             >
               <MessageSquare className="w-4 h-4" />
@@ -206,7 +226,7 @@ function MemberProfileContent() {
               <div className="pt-4 border-t border-gray-100">
                 <h4 className="text-xs font-bold text-gray-500 mb-2">علاقه‌مندی‌ها</h4>
                 <div className="flex flex-wrap gap-2">
-                  {member.interests.map((tag) => (
+                  {member.interests?.map((tag) => (
                     <span
                       key={tag}
                       className="px-3 py-1 rounded-xl text-xs font-semibold text-[#C25E38] bg-[#FBF4F0] border border-[#C25E38]/20"
@@ -224,14 +244,14 @@ function MemberProfileContent() {
                 <div>
                   <h4 className="text-xs font-bold text-gray-500 mb-1.5">زبان‌ها</h4>
                   <p className="text-xs sm:text-sm font-semibold text-gray-800">
-                    {member.languages.join(' · ')}
+                    {member.languages?.join(' · ') || 'فارسی (زبان مادری)'}
                   </p>
                 </div>
 
                 <div className="pt-3 border-t border-gray-100">
                   <h4 className="text-xs font-bold text-gray-500 mb-1.5">مقصدهای محبوب من</h4>
                   <p className="text-xs sm:text-sm font-semibold text-gray-800 leading-relaxed">
-                    {member.favorite_destinations.join(' · ')}
+                    {member.favorite_destinations?.join(' · ') || 'شهرهای مختلف ایران'}
                   </p>
                 </div>
               </div>
@@ -419,6 +439,17 @@ function MemberProfileContent() {
         isOpen={showRequestModal}
         onClose={() => setShowRequestModal(false)}
         host={member}
+      />
+
+      {/* Verification Modal for Unverified Users */}
+      <VerificationModal
+        isOpen={showVerifyModal}
+        onClose={() => setShowVerifyModal(false)}
+        reason={verifyReason}
+        onComplete={() => {
+          setShowVerifyModal(false);
+          setShowRequestModal(true);
+        }}
       />
     </div>
   );
