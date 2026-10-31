@@ -176,44 +176,11 @@ export default function VerificationModal({
               </p>
             </div>
 
-            {/* Link to Admin Panel */}
-            <div className="p-4 bg-[#FBF4F0] rounded-2xl border border-[#C25E38]/20 text-right space-y-2">
-              <span className="text-xs font-bold text-[#C25E38] block flex items-center justify-between">
-                <span>پنل بررسی ادمین</span>
-                <span className="text-[10px] bg-[#C25E38] text-white px-2 py-0.5 rounded-full">مدیریت</span>
-              </span>
-              <p className="text-[11px] text-gray-600 leading-relaxed">
-                شما می‌توانید به عنوان ادمین وارد پنل مدیریت شده، مدارک آپلودشده‌ی خود یا سایر کاربران را ببینید و تایید فرمایید:
-              </p>
-              <div className="flex gap-2 pt-1">
-                <Link
-                  href="/admin"
-                  onClick={onClose}
-                  className="flex-1 py-2.5 bg-[#C25E38] hover:bg-[#A84E2D] text-white text-xs font-bold rounded-xl shadow transition-colors flex items-center justify-center gap-1.5"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  <span>ورود به پنل بررسی مدارک (ادمین)</span>
-                </Link>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (currentUser) approveUser(currentUser.id);
-                    if (onComplete) onComplete();
-                  }}
-                  className="py-2.5 px-3 bg-[#1E5647] hover:bg-[#164337] text-white text-xs font-bold rounded-xl transition-colors shrink-0"
-                  title="تأیید فوری آزمایشی"
-                >
-                  تأیید فوری
-                </button>
-              </div>
-            </div>
-
             <button
               onClick={onClose}
-              className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl"
+              className="w-full py-3 bg-[#1E5647] hover:bg-[#164337] text-white text-xs font-bold rounded-2xl shadow transition-colors"
             >
-              بستن پنجره
+              متوجه شدم و بستن
             </button>
           </div>
         )}

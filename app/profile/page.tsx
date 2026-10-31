@@ -34,7 +34,7 @@ import VerificationModal from '@/components/modals/VerificationModal';
 import EditProfileModal from '@/components/modals/EditProfileModal';
 
 export default function ProfilePage() {
-  const { currentUser, isLoggedIn, logout, usersList, switchUser } = useAuth();
+  const { currentUser, isLoggedIn, logout } = useAuth();
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
@@ -199,19 +199,13 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
-                <Link
-                  href="/admin"
-                  className="w-full sm:w-auto px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow transition-colors flex items-center justify-center gap-1.5"
-                >
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>بررسی در پنل ادمین (تست)</span>
-                </Link>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button
                   onClick={() => setShowVerifyModal(true)}
-                  className="w-full sm:w-auto px-4 py-2.5 bg-white border border-amber-300 text-amber-800 hover:bg-amber-100 text-xs font-bold rounded-xl transition-colors"
+                  className="w-full sm:w-auto px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow transition-colors flex items-center justify-center gap-1.5"
                 >
-                  ویرایش مدارک
+                  <Pencil className="w-3.5 h-3.5" />
+                  <span>ویرایش و بارگذاری مجدد مدارک</span>
                 </button>
               </div>
             </div>
@@ -289,98 +283,130 @@ export default function ProfilePage() {
         {/* ============================================================== */}
         <div className="bg-white rounded-3xl border border-[#EADFD5] shadow-sm overflow-hidden">
           {/* Banner cover */}
-          <div className="h-32 sm:h-44 bg-gradient-to-r from-[#C25E38]/20 via-[#1E5647]/15 to-[#C25E38]/30 relative">
-            <div className="absolute top-4 left-4 flex items-center gap-2">
-              <button
-                onClick={logout}
-                className="px-3 py-1.5 bg-white/90 hover:bg-white text-red-600 rounded-xl text-xs font-bold shadow-sm transition-colors flex items-center gap-1.5"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>خروج از حساب</span>
-              </button>
-            </div>
+          <div className="h-36 sm:h-48 bg-gradient-to-r from-[#C25E38]/25 via-[#1E5647]/20 to-[#C25E38]/25 relative">
+            <div className="absolute inset-0 bg-[radial-gradient(#C25E38_1px,transparent_1px)] [background-size:16px_16px] opacity-20" />
           </div>
 
           {/* Profile Header Content */}
-          <div className="px-6 pb-6 pt-0 relative">
-            <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 -mt-16 sm:-mt-20 mb-6">
-              <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 text-center sm:text-right">
-                <div className="relative group">
+          <div className="px-6 sm:px-8 pb-8 pt-0 relative">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-5 -mt-16 sm:-mt-20 mb-8 pb-6 border-b border-gray-100">
+              {/* User Avatar + Identity Info */}
+              <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5 text-center sm:text-right">
+                <div className="relative shrink-0">
                   <img
                     src={currentUser.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&q=80'}
                     alt={currentUser.full_name}
-                    className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl object-cover border-4 border-white shadow-xl bg-gray-100"
+                    className="w-28 h-28 sm:w-36 sm:h-36 rounded-3xl object-cover border-4 border-white shadow-xl bg-white"
                   />
                   {currentUser.is_identity_verified && (
                     <div
                       title="هویت تأیید شده"
-                      className="absolute -bottom-1.5 -left-1.5 w-8 h-8 rounded-full bg-[#1E5647] text-white flex items-center justify-center border-2 border-white shadow"
+                      className="absolute -bottom-1.5 -left-1.5 w-9 h-9 rounded-full bg-[#1E5647] text-white flex items-center justify-center border-2 border-white shadow-md"
                     >
-                      <Check className="w-4 h-4" />
+                      <Check className="w-5 h-5" />
                     </div>
                   )}
                 </div>
 
-                <div className="space-y-1">
-                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                    <h1 className="text-xl sm:text-2xl font-black text-gray-900">
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
+                    <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
                       {currentUser.full_name}
                     </h1>
                     {currentUser.username && (
-                      <span className="text-xs text-gray-500 font-mono bg-gray-100 px-2 py-0.5 rounded-lg dir-ltr">
+                      <span className="text-xs text-gray-500 font-mono bg-gray-100 px-2.5 py-1 rounded-xl dir-ltr">
                         @{currentUser.username}
+                      </span>
+                    )}
+                    <span className="text-xs font-bold px-3 py-1 rounded-xl bg-[#FBF4F0] text-[#C25E38] border border-[#C25E38]/20">
+                      {roleLabel}
+                    </span>
+                    {currentUser.is_identity_verified ? (
+                      <span className="text-[11px] font-bold px-2.5 py-1 rounded-xl bg-[#EBF5F1] text-[#1E5647] border border-[#1E5647]/20 flex items-center gap-1">
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                        هویت تأیید شده
+                      </span>
+                    ) : status === 'pending' ? (
+                      <span className="text-[11px] font-bold px-2.5 py-1 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5" />
+                        در صف بررسی مدارک
+                      </span>
+                    ) : (
+                      <span className="text-[11px] font-bold px-2.5 py-1 rounded-xl bg-gray-100 text-gray-500 border border-gray-200">
+                        احراز هویت نشده
                       </span>
                     )}
                   </div>
 
-                  <p className="text-xs text-gray-600 flex items-center justify-center sm:justify-start gap-1">
-                    <MapPin className="w-3.5 h-3.5 text-[#C25E38]" />
-                    <span>{currentUser.city}</span>
-                    {currentUser.age && <span>• {currentUser.age} ساله</span>}
-                    {currentUser.job_education && <span>• {currentUser.job_education}</span>}
+                  <p className="text-xs sm:text-sm text-gray-600 flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3">
+                    <span className="flex items-center gap-1 font-bold text-gray-800">
+                      <MapPin className="w-4 h-4 text-[#C25E38]" />
+                      {currentUser.city}
+                    </span>
+                    {currentUser.age && (
+                      <span className="text-gray-500">
+                        • {currentUser.age} ساله
+                      </span>
+                    )}
+                    {currentUser.job_education && (
+                      <span className="text-gray-500">
+                        • {currentUser.job_education}
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>
 
-              {/* Quick stats pills & Edit profile button */}
-              <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto justify-center">
+              {/* Action Buttons Row */}
+              <div className="flex items-center justify-center sm:justify-end gap-2.5 w-full md:w-auto">
                 <button
                   onClick={() => setShowEditModal(true)}
-                  className="px-4 py-2.5 bg-[#FBF4F0] hover:bg-[#F3E5DD] text-[#C25E38] rounded-2xl text-xs font-bold border border-[#C25E38]/20 transition-all flex items-center gap-1.5 shadow-sm"
+                  className="px-5 py-2.5 bg-[#C25E38] hover:bg-[#A84E2D] text-white rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-md"
                 >
                   <Pencil className="w-3.5 h-3.5" />
                   <span>ویرایش مشخصات</span>
                 </button>
 
-                <div className="flex items-center gap-2">
-                  <div className="px-3.5 py-2 bg-[#F9F8F6] rounded-2xl border border-[#EADFD5] text-center">
-                    <span className="block text-xs font-bold text-gray-800">
-                      {currentUser.hosting_count}
-                    </span>
-                    <span className="text-[10px] text-gray-500">میزبانی</span>
-                  </div>
-                  <div className="px-3.5 py-2 bg-[#F9F8F6] rounded-2xl border border-[#EADFD5] text-center">
-                    <span className="block text-xs font-bold text-gray-800">
-                      {currentUser.response_rate_percent}%
-                    </span>
-                    <span className="text-[10px] text-gray-500">پاسخ‌دهی</span>
-                  </div>
-                  <div className="px-3.5 py-2 bg-[#F9F8F6] rounded-2xl border border-[#EADFD5] text-center">
-                    <span className="block text-xs font-bold text-gray-800">
-                      {currentUser.member_since_year}
-                    </span>
-                    <span className="text-[10px] text-gray-500">عضویت</span>
-                  </div>
-                </div>
+                <button
+                  onClick={logout}
+                  className="px-4 py-2.5 bg-gray-100 hover:bg-rose-50 text-gray-600 hover:text-rose-600 rounded-2xl text-xs font-bold transition-colors flex items-center gap-1.5 border border-gray-200"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>خروج از حساب</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Dedicated 3-Card Stats Grid */}
+            <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-6">
+              <div className="p-4 bg-[#F9F8F6] rounded-2xl border border-[#EADFD5] text-center">
+                <span className="block text-lg sm:text-2xl font-black text-gray-900 mb-0.5">
+                  {currentUser.hosting_count}
+                </span>
+                <span className="text-[11px] sm:text-xs text-gray-500 font-medium">میزبانی‌های انجام‌شده</span>
+              </div>
+              <div className="p-4 bg-[#F9F8F6] rounded-2xl border border-[#EADFD5] text-center">
+                <span className="block text-lg sm:text-2xl font-black text-gray-900 mb-0.5">
+                  {currentUser.response_rate_percent}٪
+                </span>
+                <span className="text-[11px] sm:text-xs text-gray-500 font-medium">نرخ پاسخ‌دهی سریع</span>
+              </div>
+              <div className="p-4 bg-[#F9F8F6] rounded-2xl border border-[#EADFD5] text-center">
+                <span className="block text-lg sm:text-2xl font-black text-gray-900 mb-0.5">
+                  {currentUser.member_since_year}
+                </span>
+                <span className="text-[11px] sm:text-xs text-gray-500 font-medium">سال عضویت در همجا</span>
               </div>
             </div>
 
             {/* Profile Bio Headline */}
             {currentUser.bio_headline && (
-              <div className="p-4 bg-[#F9F8F6] rounded-2xl border border-[#EADFD5] mb-6">
-                <p className="text-sm font-semibold text-gray-800 italic">
-                  "{currentUser.bio_headline}"
+              <div className="p-4 sm:p-5 bg-[#FBF4F0] rounded-2xl border border-[#C25E38]/20 mb-6 flex items-start gap-3">
+                <div className="text-2xl text-[#C25E38] font-serif shrink-0 leading-none">«</div>
+                <p className="text-xs sm:text-sm font-semibold text-gray-800 leading-relaxed italic">
+                  {currentUser.bio_headline}
                 </p>
+                <div className="text-2xl text-[#C25E38] font-serif shrink-0 leading-none mr-auto">»</div>
               </div>
             )}
 
@@ -601,43 +627,6 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* ============================================================== */}
-        {/* SWITCH USER TESTING BAR (Shown when multiple users exist)      */}
-        {/* ============================================================== */}
-        {usersList.length > 1 && (
-          <div className="bg-white rounded-3xl p-5 border border-[#EADFD5] shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <h4 className="text-xs font-black text-gray-800 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-[#C25E38]" />
-                <span>تغییر حساب کاربری بین اعضای ثبت‌نام‌شده</span>
-              </h4>
-              <p className="text-[11px] text-gray-500">
-                جهت تست وضعیت‌های مختلف می‌توانید به آسانی بین حساب‌های کاربری جابجا شوید:
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <select
-                value={currentUser.id}
-                onChange={(e) => switchUser(e.target.value)}
-                className="text-xs bg-[#F9F8F6] border border-gray-300 rounded-xl px-3 py-2 font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#C25E38]"
-              >
-                {usersList.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.full_name} ({u.verification_status === 'approved' ? 'تأییدشده' : u.verification_status === 'pending' ? 'در انتظار' : u.verification_status === 'rejected' ? 'ردشده' : 'تأییدنشده'})
-                  </option>
-                ))}
-              </select>
-
-              <Link
-                href="/admin"
-                className="px-3.5 py-2 bg-[#1F2937] hover:bg-black text-white text-xs font-bold rounded-xl transition-colors whitespace-nowrap"
-              >
-                پنل ادمین
-              </Link>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Global Verification Modal */}

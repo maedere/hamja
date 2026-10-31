@@ -96,7 +96,7 @@ export default function HomePage() {
               <div className="lg:col-span-5 relative">
                 <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[4/3] sm:aspect-[1/1] max-w-md mx-auto">
                   <img
-                    src="https://images.unsplash.com/photo-1543007630-9710e4a00a20?auto=format&fit=crop&w=800&q=80"
+                    src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1000&q=80"
                     alt="یک خانه، شروع یک دوستی"
                     className="w-full h-full object-cover"
                   />
@@ -104,9 +104,9 @@ export default function HomePage() {
                     <div className="bg-white/95 backdrop-blur-md p-3.5 rounded-2xl text-right w-full border border-white/50 shadow-lg">
                       <p className="text-xs font-bold text-[#1F2937] flex items-center gap-1.5">
                         <HeartHandshake className="w-4 h-4 text-[#C25E38]" />
-                        یک خانه، شروع یک دوستی
+                        یک خانه امن، شروع یک دوستی ماندگار
                       </p>
-                      <p className="text-[11px] text-[#6B7280] mt-0.5">در دل کوچه‌های تاریخی اصفهان</p>
+                      <p className="text-[11px] text-[#6B7280] mt-0.5">میزبانی صمیمانه و اصیل در هر گوشه از ایران</p>
                     </div>
                   </div>
                 </div>

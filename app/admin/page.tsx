@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   ShieldCheck,
@@ -21,12 +21,54 @@ import {
   Sparkles,
   AlertTriangle,
   Trash2,
+  Lock,
+  KeyRound,
+  LogOut,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { UserProfile, VerificationStatus } from '@/types/database';
 
 export default function AdminPage() {
   const { usersList, approveUser, rejectUser, switchUser, currentUser, clearAllUsers } = useAuth();
+
+  // Admin Authentication State
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
+  const [adminUsername, setAdminUsername] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [loginError, setLoginError] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const stored = sessionStorage.getItem('hamja_admin_auth');
+        if (stored === 'true') {
+          setIsAdminAuthenticated(true);
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
+  const handleAdminLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (adminUsername.trim() === 'admin' && adminPassword === 'hamja_admin_1405') {
+      setIsAdminAuthenticated(true);
+      setLoginError(null);
+      try {
+        sessionStorage.setItem('hamja_admin_auth', 'true');
+      } catch (e) {}
+    } else {
+      setLoginError('نام کاربری یا رمز عبور ادمین نادرست است.');
+    }
+  };
+
+  const handleAdminLogout = () => {
+    setIsAdminAuthenticated(false);
+    try {
+      sessionStorage.removeItem('hamja_admin_auth');
+    } catch (e) {}
+  };
 
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
@@ -66,6 +108,85 @@ export default function AdminPage() {
     'کارت ملی در تصویر سلفی وجود ندارد یا مبهم است.',
     'عکس مخدوش یا برش‌خورده است؛ لطفاً عکس کامل و واضح بگیرید.',
   ];
+
+  if (!isAdminAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[#F9F8F6] flex flex-col justify-center items-center p-4 text-right font-sans">
+        <div className="w-full max-w-md bg-white rounded-3xl p-8 border border-[#EADFD5] shadow-xl space-y-6">
+          <div className="text-center space-y-2">
+            <div className="w-16 h-16 rounded-3xl bg-[#1E5647] text-white mx-auto flex items-center justify-center shadow-lg shadow-[#1E5647]/20">
+              <ShieldCheck className="w-8 h-8" />
+            </div>
+            <h1 className="text-xl font-black text-gray-900 pt-2">ورود به پنل مدیریت همجا</h1>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              این بخش ویژه مدیر سایت جهت تایید هویت و مدیریت اعضا است. لطفاً اطلاعات امنیتی خود را وارد کنید.
+            </p>
+          </div>
+
+          {loginError && (
+            <div className="p-3.5 bg-rose-50 text-rose-700 rounded-2xl border border-rose-200 text-xs font-bold flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <span>{loginError}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleAdminLogin} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                نام کاربری مدیر
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  required
+                  value={adminUsername}
+                  onChange={(e) => setAdminUsername(e.target.value)}
+                  placeholder="admin"
+                  className="w-full px-4 py-3 text-sm bg-[#F9F8F6] border border-gray-200 rounded-2xl focus:border-[#1E5647] outline-none font-mono text-left"
+                  dir="ltr"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                رمز عبور مدیر
+              </label>
+              <div className="relative">
+                <input
+                  type="password"
+                  required
+                  value={adminPassword}
+                  onChange={(e) => setAdminPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full px-4 py-3 text-sm bg-[#F9F8F6] border border-gray-200 rounded-2xl focus:border-[#1E5647] outline-none text-left"
+                  dir="ltr"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3.5 bg-[#1E5647] hover:bg-[#153e33] text-white font-bold rounded-2xl text-sm shadow-md transition-all flex items-center justify-center gap-2"
+            >
+              <Lock className="w-4 h-4" />
+              <span>ورود به پنل ادمین</span>
+            </button>
+          </form>
+
+          <div className="pt-2 text-center border-t border-gray-100">
+            <Link
+              href="/"
+              className="text-xs text-gray-500 hover:text-[#C25E38] font-semibold transition-colors flex items-center justify-center gap-1"
+            >
+              <ArrowRight className="w-3.5 h-3.5" />
+              <span>بازگشت به صفحه اصلی سایت</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F9F8F6] text-[#1F2937] py-8 text-right font-sans">
@@ -107,12 +228,20 @@ export default function AdminPage() {
               <span>پاکسازی کامل کاربران</span>
             </button>
 
-            <Link
-              href="/"
+            <button
+              onClick={handleAdminLogout}
               className="w-full sm:w-auto px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-1.5"
             >
+              <LogOut className="w-4 h-4 text-red-500" />
+              <span>خروج از پنل</span>
+            </button>
+
+            <Link
+              href="/"
+              className="w-full sm:w-auto px-4 py-2.5 bg-[#FBF4F0] hover:bg-[#F3E5DD] text-[#C25E38] text-xs font-bold rounded-xl border border-[#C25E38]/20 transition-colors flex items-center justify-center gap-1.5"
+            >
               <ArrowRight className="w-4 h-4" />
-              <span>بازگشت به سایت اصلی</span>
+              <span>مشاهده سایت</span>
             </Link>
           </div>
         </div>

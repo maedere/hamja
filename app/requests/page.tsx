@@ -21,7 +21,6 @@ import Footer from '@/components/layout/Footer';
 import VerificationModal from '@/components/modals/VerificationModal';
 import { useAuth } from '@/lib/auth-context';
 import { HostingRequest } from '@/types/database';
-import { INITIAL_REQUESTS } from '@/lib/mock-data';
 
 export default function RequestsPage() {
   const { currentUser, isVerified } = useAuth();
@@ -29,26 +28,8 @@ export default function RequestsPage() {
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [pendingAcceptReqId, setPendingAcceptReqId] = useState<string | null>(null);
 
-  const [requests, setRequests] = useState<HostingRequest[]>([
-    ...INITIAL_REQUESTS,
-    {
-      id: 'req-2',
-      sender_id: 'behnam-rezaei',
-      sender_name: 'بهنام رضایی',
-      sender_avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
-      sender_city: 'بوشهر',
-      receiver_id: 'guest-current-user',
-      receiver_name: 'شما (میزبان در تهران)',
-      receiver_avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
-      receiver_city: 'تهران',
-      start_date: '۱۴۰۵/۰۸/۰۱',
-      end_date: '۱۴۰۵/۰۸/۰۴',
-      guest_count: 1,
-      message: 'درود بر شما، برای حضور در یک جشنواره موسیقی به تهران می‌آیم و خوشحال می‌شوم با هم گپی بزنیم.',
-      status: 'pending',
-      created_at: '۱۴۰۵/۰۷/۰۳',
-    },
-  ]);
+  const [requests, setRequests] = useState<HostingRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchRequests = async () => {
@@ -57,13 +38,15 @@ export default function RequestsPage() {
           const res = await fetch('/api/requests');
           if (res.ok) {
             const data = await res.json();
-            if (data.success && Array.isArray(data.requests) && data.requests.length > 0) {
+            if (data.success && Array.isArray(data.requests)) {
               setRequests(data.requests);
             }
           }
         }
       } catch (e) {
         // fallback
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchRequests();

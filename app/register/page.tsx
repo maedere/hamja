@@ -25,11 +25,12 @@ import {
   Globe,
   Heart,
   Tag,
+  HeartHandshake,
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useAuth } from '@/lib/auth-context';
-import { GuestPreference, SleepingArrangement } from '@/types/database';
+import { GuestPreference, SleepingArrangement, UserRole } from '@/types/database';
 import { parsePersianNumber } from '@/lib/persian-utils';
 
 export default function RegisterPage() {
@@ -59,8 +60,9 @@ export default function RegisterPage() {
   const [phone, setPhone] = useState('');
   const [jobEducation, setJobEducation] = useState('');
 
-  // Page 2: Hosting capability
-  const [canHost, setCanHost] = useState(true);
+  // Page 2: Role & Hosting capability
+  const [selectedRole, setSelectedRole] = useState<UserRole>('both');
+  const canHost = selectedRole === 'both' || selectedRole === 'host';
   const [maxGuests, setMaxGuests] = useState('2');
   const [guestPreference, setGuestPreference] = useState<GuestPreference>('any');
   const [sleepingArrangement, setSleepingArrangement] = useState<SleepingArrangement>('private_with_bed');
@@ -164,9 +166,9 @@ export default function RegisterPage() {
   };
 
   // Page 4: Agreements
-  const [agreeId, setAgreeId] = useState(true);
-  const [agreeEthic, setAgreeEthic] = useState(true);
-  const [agreeTerms, setAgreeTerms] = useState(true);
+  const [agreeId, setAgreeId] = useState(false);
+  const [agreeEthic, setAgreeEthic] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -220,6 +222,8 @@ export default function RegisterPage() {
     const parsedMaxGuests = parsePersianNumber(maxGuests);
     const parsedTargetGuests = parsePersianNumber(targetGuests);
 
+    const isHostCapable = selectedRole === 'both' || selectedRole === 'host';
+
     setTimeout(() => {
       register({
         full_name: fullName,
@@ -231,20 +235,22 @@ export default function RegisterPage() {
         age: parsedAge,
         job_education: jobEducation,
         avatar_url: avatarPreview || undefined,
-        can_host: canHost,
-        role: canHost ? 'both' : 'traveler',
-        hosting_status: canHost ? 'ready_for_hosting' : 'not_hosting',
-        max_guests: canHost ? parsedMaxGuests || 2 : undefined,
-        guest_preference: canHost ? guestPreference : undefined,
-        sleeping_arrangement: canHost ? sleepingArrangement : undefined,
-        house_rules: canHost ? houseRules : [],
+        can_host: isHostCapable,
+        role: selectedRole,
+        hosting_status: isHostCapable ? 'ready_for_hosting' : 'not_hosting',
+        max_guests: isHostCapable ? parsedMaxGuests || 2 : undefined,
+        guest_preference: isHostCapable ? guestPreference : undefined,
+        sleeping_arrangement: isHostCapable ? sleepingArrangement : undefined,
+        house_rules: isHostCapable ? houseRules : [],
         target_destination: targetDestination.trim() || undefined,
         target_travel_dates: targetDates.trim() || undefined,
         target_guests_count: parsedTargetGuests || 1,
         bio_headline: bioSnippet
           ? bioSnippet.slice(0, 70)
-          : targetDestination
+          : selectedRole === 'traveler' && targetDestination
           ? `مشتاق سفر به ${targetDestination} و آشنایی با میزبانان محلی`
+          : isHostCapable
+          ? `مشتاق میزبانی صمیمانه در ${city || 'شهر من'}`
           : 'علاقه‌مند به سفر و آشنایی با فرهنگ و مردم شهرهای مختلف',
         about_me: bioSnippet || (targetDestination ? `قصد دارم به ${targetDestination} سفر کنم و خوشحال می‌شوم با میزبانان محلی آشنا شوم.` : ''),
         interests: selectedInterests.length > 0 ? selectedInterests : ['سفر و ماجراجویی', 'عکاسی'],
@@ -511,7 +517,7 @@ export default function RegisterPage() {
                     required
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    placeholder="مثال: آرش قدیمی"
+                    placeholder="مثال: سارا محمدی، علی رضایی..."
                     className="w-full px-4 py-2.5 text-sm bg-[#F9F8F6] border border-gray-200 rounded-xl focus:border-[#C25E38] outline-none"
                   />
                 </div>
@@ -524,7 +530,7 @@ export default function RegisterPage() {
                     type="text"
                     value={age}
                     onChange={(e) => setAge(e.target.value)}
-                    placeholder="مثال: ۳۵"
+                    placeholder="مثال: ۲۸"
                     className="w-full px-4 py-2.5 text-sm bg-[#F9F8F6] border border-gray-200 rounded-xl focus:border-[#C25E38] outline-none"
                   />
                 </div>
@@ -552,7 +558,7 @@ export default function RegisterPage() {
                     required
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="مثال: 09355363846"
+                    placeholder="مثال: ۰۹۱۲۳۴۵۶۷۸۹"
                     className="w-full px-4 py-2.5 text-sm bg-[#F9F8F6] border border-gray-200 rounded-xl focus:border-[#C25E38] outline-none text-left font-mono"
                     dir="ltr"
                   />
@@ -597,42 +603,90 @@ export default function RegisterPage() {
 
               <div>
                 <label className="block text-xs font-semibold text-gray-800 mb-3">
-                  آیا در حال حاضر امکان میزبانی از مسافران را در شهر خود دارید؟ <span className="text-red-500">*</span>
+                  نحوه فعالیت شما در شبکه همجا چگونه خواهد بود؟ <span className="text-red-500">*</span>
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {/* Option 1: Mutual Hosting */}
                   <button
                     type="button"
-                    onClick={() => setCanHost(true)}
-                    className={`p-3.5 rounded-2xl border text-right transition-all flex items-center justify-between ${
-                      canHost
-                        ? 'border-[#C25E38] bg-[#FBF4F0]'
-                        : 'border-gray-200 hover:border-gray-300'
+                    onClick={() => setSelectedRole('both')}
+                    className={`p-4 rounded-2xl border text-right transition-all flex flex-col justify-between gap-2.5 ${
+                      selectedRole === 'both'
+                        ? 'border-[#C25E38] bg-[#FBF4F0] ring-2 ring-[#C25E38]/20 shadow-sm'
+                        : 'border-gray-200 hover:border-gray-300 bg-[#F9F8F6]'
                     }`}
                   >
-                    <span className="text-sm font-bold text-gray-800">بله (آماده میزبانی)</span>
-                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${canHost ? 'border-[#C25E38] bg-[#C25E38] text-white' : 'border-gray-300'}`}>
-                      {canHost && <CheckCircle2 className="w-3.5 h-3.5" />}
+                    <div className="flex items-center justify-between w-full">
+                      <div className="w-8 h-8 rounded-xl bg-[#C25E38]/10 text-[#C25E38] flex items-center justify-center">
+                        <HeartHandshake className="w-4 h-4" />
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${selectedRole === 'both' ? 'border-[#C25E38] bg-[#C25E38] text-white' : 'border-gray-300'}`}>
+                        {selectedRole === 'both' && <CheckCircle2 className="w-3.5 h-3.5" />}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-gray-900 block mb-0.5">میزبانی متقابل</span>
+                      <span className="text-[11px] text-gray-500 leading-relaxed block">
+                        هم میزبان می‌شوم، هم در سفرهایم مهمان
+                      </span>
                     </div>
                   </button>
 
+                  {/* Option 2: Host Only */}
                   <button
                     type="button"
-                    onClick={() => setCanHost(false)}
-                    className={`p-3.5 rounded-2xl border text-right transition-all flex items-center justify-between ${
-                      !canHost
-                        ? 'border-[#C25E38] bg-[#FBF4F0]'
-                        : 'border-gray-200 hover:border-gray-300'
+                    onClick={() => setSelectedRole('host')}
+                    className={`p-4 rounded-2xl border text-right transition-all flex flex-col justify-between gap-2.5 ${
+                      selectedRole === 'host'
+                        ? 'border-[#1E5647] bg-[#EBF5F1] ring-2 ring-[#1E5647]/20 shadow-sm'
+                        : 'border-gray-200 hover:border-gray-300 bg-[#F9F8F6]'
                     }`}
                   >
-                    <span className="text-sm font-bold text-gray-800">فعلاً نه (فقط می‌خواهم مهمان شوم)</span>
-                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${!canHost ? 'border-[#C25E38] bg-[#C25E38] text-white' : 'border-gray-300'}`}>
-                      {!canHost && <CheckCircle2 className="w-3.5 h-3.5" />}
+                    <div className="flex items-center justify-between w-full">
+                      <div className="w-8 h-8 rounded-xl bg-[#1E5647]/10 text-[#1E5647] flex items-center justify-center">
+                        <Home className="w-4 h-4" />
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${selectedRole === 'host' ? 'border-[#1E5647] bg-[#1E5647] text-white' : 'border-gray-300'}`}>
+                        {selectedRole === 'host' && <CheckCircle2 className="w-3.5 h-3.5" />}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-gray-900 block mb-0.5">فقط میزبان</span>
+                      <span className="text-[11px] text-gray-500 leading-relaxed block">
+                        آمادگی پذیرش مسافران در خانه خود
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Option 3: Traveler Only */}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRole('traveler')}
+                    className={`p-4 rounded-2xl border text-right transition-all flex flex-col justify-between gap-2.5 ${
+                      selectedRole === 'traveler'
+                        ? 'border-sky-600 bg-sky-50 ring-2 ring-sky-600/20 shadow-sm'
+                        : 'border-gray-200 hover:border-gray-300 bg-[#F9F8F6]'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <div className="w-8 h-8 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center">
+                        <Compass className="w-4 h-4" />
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${selectedRole === 'traveler' ? 'border-sky-600 bg-sky-600 text-white' : 'border-gray-300'}`}>
+                        {selectedRole === 'traveler' && <CheckCircle2 className="w-3.5 h-3.5" />}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-gray-900 block mb-0.5">فقط مهمان / مسافر</span>
+                      <span className="text-[11px] text-gray-500 leading-relaxed block">
+                        فعلاً امکان میزبانی ندارم و فقط مسافرم
+                      </span>
                     </div>
                   </button>
                 </div>
               </div>
 
-              {canHost && (
+              {(selectedRole === 'both' || selectedRole === 'host') && (
                 <div className="space-y-4 pt-4 border-t border-gray-100 animate-fade-in">
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1.5">
@@ -703,7 +757,7 @@ export default function RegisterPage() {
               )}
 
               {/* If user is only a traveler (guest), capture where they want to go */}
-              {!canHost && (
+              {selectedRole === 'traveler' && (
                 <div className="space-y-4 pt-4 border-t border-gray-100 animate-fade-in">
                   <div className="p-4 bg-sky-50 rounded-2xl border border-sky-200 flex items-start gap-3">
                     <Compass className="w-5 h-5 text-sky-700 shrink-0 mt-0.5" />
@@ -1091,10 +1145,15 @@ export default function RegisterPage() {
 
             {/* Submit Button */}
             <div className="space-y-3">
+              {(!agreeId || !agreeEthic || !agreeTerms) && (
+                <p className="text-[11px] text-amber-800 text-center font-bold bg-amber-50 py-2.5 px-3 rounded-2xl border border-amber-200">
+                  برای فعال‌سازی ثبت‌نام، لطفاً تیک هر ۳ بند تعهدات امنیتی و توافق‌نامه در بخش ۴ را بزنید.
+                </p>
+              )}
               <button
                 type="submit"
-                disabled={isSubmitting || !!usernameError}
-                className="w-full py-4 bg-[#C25E38] hover:bg-[#A84E2D] text-white font-bold rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 text-base disabled:opacity-50"
+                disabled={isSubmitting || !!usernameError || !agreeId || !agreeEthic || !agreeTerms}
+                className="w-full py-4 bg-[#C25E38] hover:bg-[#A84E2D] text-white font-bold rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 text-base disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <span>در حال ایجاد حساب کاربری...</span>
