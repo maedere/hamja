@@ -103,3 +103,8 @@ WITH CHECK (true);
 CREATE POLICY "Anyone can update hosting requests"
 ON public.hosting_requests FOR UPDATE
 USING (true);
+
+-- 4. Grant table privileges to Supabase roles
+GRANT ALL ON TABLE public.profiles TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.hosting_requests TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
