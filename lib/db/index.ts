@@ -1,0 +1,268 @@
+import fs from 'fs/promises';
+import path from 'path';
+import { UserProfile, HostingRequest, RequestStatus } from '@/types/database';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+
+const DB_FILE_PATH = path.join(process.cwd(), 'data', 'hamja_db.json');
+
+// Check if Supabase credentials are configured
+export function isSupabaseEnabled(): boolean {
+  return Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+  );
+}
+
+function getSupabase() {
+  const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!rawUrl || !key) return null;
+  const cleanUrl = rawUrl.replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
+  return createSupabaseClient(cleanUrl, key);
+}
+
+interface LocalDatabaseSchema {
+  users: UserProfile[];
+  requests: HostingRequest[];
+}
+
+const DEFAULT_DB: LocalDatabaseSchema = {
+  users: [],
+  requests: [],
+};
+
+// Memory cache for local file store to avoid race conditions
+let memCache: LocalDatabaseSchema | null = null;
+
+async function ensureLocalDb(): Promise<LocalDatabaseSchema> {
+  if (memCache) return memCache;
+
+  try {
+    const dir = path.dirname(DB_FILE_PATH);
+    await fs.mkdir(dir, { recursive: true });
+    const content = await fs.readFile(DB_FILE_PATH, 'utf-8');
+    memCache = JSON.parse(content) as LocalDatabaseSchema;
+    if (!Array.isArray(memCache.users)) memCache.users = [];
+    if (!Array.isArray(memCache.requests)) memCache.requests = [];
+    return memCache;
+  } catch (err: any) {
+    if (err.code === 'ENOENT' || err.name === 'SyntaxError') {
+      memCache = { ...DEFAULT_DB };
+      await persistLocalDb(memCache);
+      return memCache;
+    }
+    throw err;
+  }
+}
+
+async function persistLocalDb(data: LocalDatabaseSchema): Promise<void> {
+  memCache = data;
+  const dir = path.dirname(DB_FILE_PATH);
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(DB_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
+}
+
+// ==========================================
+// User / Profile Operations
+// ==========================================
+
+export async function getAllUsers(): Promise<UserProfile[]> {
+  const supabase = getSupabase();
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Supabase getAllUsers error:', error);
+      // Fallback to local
+    } else if (data) {
+      return data as UserProfile[];
+    }
+  }
+
+  const db = await ensureLocalDb();
+  return db.users;
+}
+
+export async function getUserById(id: string): Promise<UserProfile | null> {
+  const supabase = getSupabase();
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (!error && data) {
+      return data as UserProfile;
+    }
+  }
+
+  const db = await ensureLocalDb();
+  return db.users.find((u) => u.id === id) || null;
+}
+
+export async function getUserByUsername(username: string): Promise<UserProfile | null> {
+  const clean = username.trim().toLowerCase();
+  const supabase = getSupabase();
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .ilike('username', clean)
+      .single();
+
+    if (!error && data) {
+      return data as UserProfile;
+    }
+  }
+
+  const db = await ensureLocalDb();
+  return (
+    db.users.find(
+      (u) =>
+        u.username?.toLowerCase() === clean ||
+        u.phone?.replace(/\s+/g, '') === clean ||
+        u.instagram?.toLowerCase() === clean
+    ) || null
+  );
+}
+
+export async function createUser(profile: UserProfile): Promise<UserProfile> {
+  const supabase = getSupabase();
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .insert([profile])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase createUser error:', error);
+    } else if (data) {
+      return data as UserProfile;
+    }
+  }
+
+  const db = await ensureLocalDb();
+  // Filter out any duplicate ID just in case
+  const updatedUsers = [profile, ...db.users.filter((u) => u.id !== profile.id)];
+  await persistLocalDb({ ...db, users: updatedUsers });
+  return profile;
+}
+
+export async function updateUser(
+  id: string,
+  updates: Partial<UserProfile>
+): Promise<UserProfile | null> {
+  const supabase = getSupabase();
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (!error && data) {
+      return data as UserProfile;
+    }
+  }
+
+  const db = await ensureLocalDb();
+  const index = db.users.findIndex((u) => u.id === id);
+  if (index === -1) return null;
+
+  const updated: UserProfile = { ...db.users[index], ...updates };
+  db.users[index] = updated;
+  await persistLocalDb(db);
+  return updated;
+}
+
+export async function clearAllUsers(): Promise<void> {
+  const supabase = getSupabase();
+  if (supabase) {
+    await supabase.from('profiles').delete().neq('id', '');
+    await supabase.from('hosting_requests').delete().neq('id', '');
+  }
+
+  const db = await ensureLocalDb();
+  await persistLocalDb({ users: [], requests: [] });
+}
+
+// ==========================================
+// Hosting Request Operations
+// ==========================================
+
+export async function getAllRequests(): Promise<HostingRequest[]> {
+  const supabase = getSupabase();
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('hosting_requests')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      return data as HostingRequest[];
+    }
+  }
+
+  const db = await ensureLocalDb();
+  return db.requests;
+}
+
+export async function createRequest(req: HostingRequest): Promise<HostingRequest> {
+  const supabase = getSupabase();
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('hosting_requests')
+      .insert([req])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase createRequest error:', error);
+    } else if (data) {
+      return data as HostingRequest;
+    }
+  }
+
+  const db = await ensureLocalDb();
+  const updated = [req, ...db.requests];
+  await persistLocalDb({ ...db, requests: updated });
+  return req;
+}
+
+export async function updateRequestStatus(
+  id: string,
+  status: RequestStatus,
+  exactAddress?: string
+): Promise<HostingRequest | null> {
+  const updates: Partial<HostingRequest> = { status };
+  if (exactAddress) updates.exact_address_unlocked = exactAddress;
+
+  const supabase = getSupabase();
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('hosting_requests')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (!error && data) {
+      return data as HostingRequest;
+    }
+  }
+
+  const db = await ensureLocalDb();
+  const index = db.requests.findIndex((r) => r.id === id);
+  if (index === -1) return null;
+
+  const updatedReq: HostingRequest = { ...db.requests[index], ...updates };
+  db.requests[index] = updatedReq;
+  await persistLocalDb(db);
+  return updatedReq;
+}

@@ -15,6 +15,7 @@ import {
   User,
   Clock,
   Sparkles,
+  AlertTriangle,
 } from 'lucide-react';
 import VerificationModal from '../modals/VerificationModal';
 import { useAuth } from '@/lib/auth-context';
@@ -31,6 +32,7 @@ export default function Navbar() {
     { label: 'میزبانی متقابل', href: '/#mutual', icon: HomeIcon },
     { label: 'امنیت و اعتماد', href: '/#trust', icon: ShieldCheck },
     { label: 'درخواست‌های من', href: '/requests', icon: MessageSquare },
+    { label: 'پروفایل من', href: '/profile', icon: User },
     { label: 'پنل بررسی ادمین', href: '/admin', icon: ShieldCheck },
   ];
 
@@ -97,6 +99,16 @@ export default function Navbar() {
                     </button>
                   )}
 
+                  {currentUser.verification_status === 'rejected' && (
+                    <Link
+                      href="/profile"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-50 text-red-700 text-xs font-semibold border border-red-200 hover:bg-red-100 transition-colors"
+                    >
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      مدارک رد شد (بررسی)
+                    </Link>
+                  )}
+
                   {currentUser.verification_status === 'unverified' && (
                     <button
                       onClick={() => setShowVerifyModal(true)}
@@ -108,7 +120,11 @@ export default function Navbar() {
                   )}
 
                   {/* User Profile Info */}
-                  <div className="flex items-center gap-2 border-r border-gray-200 pr-3 mr-1">
+                  <Link
+                    href="/profile"
+                    className="flex items-center gap-2 border-r border-gray-200 pr-3 mr-1 hover:opacity-80 transition-opacity"
+                    title="مشاهده پروفایل من"
+                  >
                     <img
                       src={currentUser.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80'}
                       alt={currentUser.full_name}
@@ -118,7 +134,7 @@ export default function Navbar() {
                       <p className="text-xs font-bold text-gray-800">{currentUser.full_name}</p>
                       <p className="text-[10px] text-gray-500">{currentUser.city}</p>
                     </div>
-                  </div>
+                  </Link>
 
                   {/* Logout Button */}
                   <button
@@ -165,7 +181,11 @@ export default function Navbar() {
           <div className="md:hidden border-b border-[#EADFD5] bg-[#F9F8F6] px-4 pt-2 pb-6 space-y-3">
             {isLoggedIn && currentUser && (
               <div className="p-3 bg-white rounded-2xl border border-gray-200 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
+                <Link
+                  href="/profile"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
+                >
                   <img
                     src={currentUser.avatar_url}
                     alt={currentUser.full_name}
@@ -175,7 +195,7 @@ export default function Navbar() {
                     <h4 className="text-xs font-bold text-gray-800">{currentUser.full_name}</h4>
                     <span className="text-[10px] text-gray-500">{currentUser.city}</span>
                   </div>
-                </div>
+                </Link>
                 <button
                   onClick={() => {
                     logout();

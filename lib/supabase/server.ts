@@ -10,7 +10,8 @@ export async function createClient() {
     return null;
   }
 
-  return createServerClient(supabaseUrl, supabaseAnonKey, {
+  const cleanUrl = supabaseUrl.replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
+  return createServerClient(cleanUrl, supabaseAnonKey, {
     cookies: {
       getAll() {
         return cookieStore.getAll();

@@ -43,13 +43,19 @@ export interface UserProfile {
   agreed_to_respect_house_rules?: boolean;
   agreed_to_hamja_terms?: boolean;
 
+  // Account Credentials
+  username?: string;
+  password?: string;
+
   // Verification & Safety
   verification_status: VerificationStatus;
   is_identity_verified: boolean;
+  rejection_reason?: string;
   verification_docs?: {
     national_card_url?: string;
     selfie_with_card_url?: string;
     submitted_at?: string;
+    rejection_reason?: string;
   };
 
   // Metadata
@@ -114,6 +120,7 @@ export interface HostingRequest {
   guest_count: number;
   message: string;
   status: RequestStatus;
+  request_type?: 'stay_request' | 'host_invitation';
   host_response_note?: string;
   exact_address_unlocked?: string;
   created_at: string;

@@ -19,10 +19,11 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import MemberCard from '@/components/members/MemberCard';
 import VerificationModal from '@/components/modals/VerificationModal';
-import { MOCK_PROFILES } from '@/lib/mock-data';
+import { useAuth } from '@/lib/auth-context';
 
 export default function HomePage() {
   const router = useRouter();
+  const { usersList } = useAuth();
   const [searchCity, setSearchCity] = useState('');
   const [hostingFilter, setHostingFilter] = useState<'all' | 'mutual' | 'host'>('all');
   const [showVerifyModal, setShowVerifyModal] = useState(false);
@@ -255,12 +256,36 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* Grid of 4 Members */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {MOCK_PROFILES.slice(0, 4).map((member) => (
-                <MemberCard key={member.id} member={member} />
-              ))}
-            </div>
+            {/* Grid of 4 Members or empty state */}
+            {usersList.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {usersList.slice(0, 4).map((member) => (
+                  <MemberCard key={member.id} member={member} />
+                ))}
+              </div>
+            ) : (
+              <div className="p-8 sm:p-12 text-center bg-white rounded-3xl border border-[#EADFD5] space-y-4">
+                <div className="w-14 h-14 rounded-2xl bg-[#C25E38]/10 text-[#C25E38] flex items-center justify-center mx-auto">
+                  <UserCheck className="w-7 h-7" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-base font-bold text-gray-800">
+                    هنوز کاربری ثبت‌نام نکرده است
+                  </h3>
+                  <p className="text-xs text-gray-500 max-w-md mx-auto leading-relaxed">
+                    تمام داده‌های تستی پاک شدند. با عضویت در همجا، اولین میزبان یا مسافر باشید و پروفایل خود را ثبت کنید.
+                  </p>
+                </div>
+                <div>
+                  <Link
+                    href="/register"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#C25E38] hover:bg-[#A84E2D] text-white text-xs font-bold rounded-2xl shadow transition-colors"
+                  >
+                    عضویت و ثبت اولین پروفایل
+                  </Link>
+                </div>
+              </div>
+            )}
 
             {/* Privacy Note banner matching Page 3 */}
             <div className="mt-8 p-4 rounded-2xl bg-[#F0EDE8] border border-[#EADFD5] text-center text-xs text-gray-600 flex items-center justify-center gap-2">

@@ -17,15 +17,16 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import MemberCard from '@/components/members/MemberCard';
 import IranMap from '@/components/explore/IranMap';
-import { MOCK_PROFILES } from '@/lib/mock-data';
+import { useAuth } from '@/lib/auth-context';
 
 function ExploreContent() {
+  const { usersList } = useAuth();
   const searchParams = useSearchParams();
   const initialCity = searchParams.get('city') || '';
 
   const [searchTerm, setSearchTerm] = useState(initialCity);
   const [selectedCity, setSelectedCity] = useState(initialCity);
-  const [hostingType, setHostingType] = useState<'all' | 'mutual' | 'host'>('all');
+  const [hostingType, setHostingType] = useState<'all' | 'mutual' | 'host' | 'traveler'>('all');
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [selectedInterest, setSelectedInterest] = useState<string>('all');
 
@@ -33,25 +34,31 @@ function ExploreContent() {
 
   // Filter members based on criteria
   const filteredMembers = useMemo(() => {
-    return MOCK_PROFILES.filter((member) => {
-      // City or name search
+    return usersList.filter((member) => {
+      // City or name or target destination search
       const matchesSearch =
         !searchTerm ||
         member.city.includes(searchTerm) ||
         member.full_name.includes(searchTerm) ||
+        (member.target_destination?.includes(searchTerm) ?? false) ||
         (member.about_me?.includes(searchTerm) ?? false);
 
-      // Selected city from Map or filter
-      const matchesCity = !selectedCity || member.city === selectedCity;
+      // Selected city from Map or filter (matches origin or traveler destination)
+      const matchesCity =
+        !selectedCity ||
+        member.city === selectedCity ||
+        member.target_destination === selectedCity;
 
       // Verified only
       const matchesVerified = !verifiedOnly || member.is_identity_verified;
 
       // Hosting type
+      const isTravelerMember = member.can_host === false || member.role === 'traveler';
       const matchesType =
         hostingType === 'all' ||
-        (hostingType === 'mutual' && member.role === 'both') ||
-        (hostingType === 'host' && (member.role === 'host' || member.role === 'both'));
+        (hostingType === 'mutual' && member.role === 'both' && !isTravelerMember) ||
+        (hostingType === 'host' && (member.role === 'host' || member.role === 'both') && !isTravelerMember) ||
+        (hostingType === 'traveler' && isTravelerMember);
 
       // Interest
       const matchesInterest =
@@ -60,7 +67,7 @@ function ExploreContent() {
 
       return matchesSearch && matchesCity && matchesVerified && matchesType && matchesInterest;
     });
-  }, [searchTerm, selectedCity, verifiedOnly, hostingType, selectedInterest]);
+  }, [usersList, searchTerm, selectedCity, verifiedOnly, hostingType, selectedInterest]);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F9F8F6]">
@@ -137,6 +144,16 @@ function ExploreContent() {
               >
                 فقط میزبان
               </button>
+              <button
+                onClick={() => setHostingType('traveler')}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-xl transition-all ${
+                  hostingType === 'traveler'
+                    ? 'bg-white text-sky-700 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                مسافران (مشتاق میزبان)
+              </button>
             </div>
 
             {/* Verified Only Toggle */}
@@ -203,6 +220,7 @@ function ExploreContent() {
               <IranMap
                 selectedCity={selectedCity}
                 onSelectCity={(city) => setSelectedCity(city)}
+                users={usersList}
               />
             </div>
           </div>
@@ -242,23 +260,46 @@ function ExploreContent() {
                 ))}
               </div>
             ) : (
-              <div className="bg-white rounded-3xl p-12 text-center border border-[#EADFD5] space-y-3">
-                <MapPin className="w-10 h-10 text-gray-400 mx-auto" />
-                <h4 className="text-base font-bold text-gray-700">میزبانی با این مشخصات یافت نشد</h4>
-                <p className="text-xs text-gray-500 max-w-sm mx-auto">
-                  می‌توانید فیلترها را حذف کرده یا نام شهر دیگری را جستجو نمایید.
-                </p>
-                <button
-                  onClick={() => {
-                    setSearchTerm('');
-                    setSelectedCity('');
-                    setVerifiedOnly(false);
-                    setSelectedInterest('all');
-                  }}
-                  className="px-4 py-2 bg-[#C25E38] text-white text-xs font-bold rounded-xl shadow mt-2"
-                >
-                  نمایش همه اعضا
-                </button>
+              <div className="bg-white rounded-3xl p-12 text-center border border-[#EADFD5] space-y-4">
+                <div className="w-14 h-14 rounded-2xl bg-[#C25E38]/10 text-[#C25E38] flex items-center justify-center mx-auto">
+                  <MapPin className="w-7 h-7" />
+                </div>
+                {usersList.length === 0 ? (
+                  <>
+                    <div className="space-y-1">
+                      <h4 className="text-base font-bold text-gray-800">هنوز عضوی در همجا ثبت‌نام نکرده است</h4>
+                      <p className="text-xs text-gray-500 max-w-sm mx-auto leading-relaxed">
+                        داده‌های آزمایشی پاکسازی شدند. شما می‌توانید اولین عضو و میزبان همجا باشید.
+                      </p>
+                    </div>
+                    <div>
+                      <Link
+                        href="/register"
+                        className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#C25E38] hover:bg-[#A84E2D] text-white text-xs font-bold rounded-xl shadow transition-colors"
+                      >
+                        ثبت‌نام اولین عضو همجا
+                      </Link>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h4 className="text-base font-bold text-gray-700">میزبانی با این فیلترها یافت نشد</h4>
+                    <p className="text-xs text-gray-500 max-w-sm mx-auto">
+                      می‌توانید فیلترها را حذف کرده یا نام شهر دیگری را جستجو نمایید.
+                    </p>
+                    <button
+                      onClick={() => {
+                        setSearchTerm('');
+                        setSelectedCity('');
+                        setVerifiedOnly(false);
+                        setSelectedInterest('all');
+                      }}
+                      className="px-4 py-2 bg-[#C25E38] text-white text-xs font-bold rounded-xl shadow mt-2"
+                    >
+                      نمایش همه اعضا
+                    </button>
+                  </>
+                )}
               </div>
             )}
 

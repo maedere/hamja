@@ -19,16 +19,24 @@ import {
   Check,
   X,
   Sparkles,
+  AlertTriangle,
+  Trash2,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { UserProfile, VerificationStatus } from '@/types/database';
 
 export default function AdminPage() {
-  const { usersList, approveUser, rejectUser, switchUser, currentUser } = useAuth();
+  const { usersList, approveUser, rejectUser, switchUser, currentUser, clearAllUsers } = useAuth();
 
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
   const [actionNotice, setActionNotice] = useState<string | null>(null);
+
+  // Rejection Modal State
+  const [rejectingUser, setRejectingUser] = useState<UserProfile | null>(null);
+  const [rejectionReason, setRejectionReason] = useState<string>(
+    'تصویر کارت ملی ناخواناست و مشخصات به وضوح دیده نمی‌شود.'
+  );
 
   const pendingCount = usersList.filter((u) => u.verification_status === 'pending').length;
   const approvedCount = usersList.filter((u) => u.verification_status === 'approved').length;
@@ -44,11 +52,20 @@ export default function AdminPage() {
     setTimeout(() => setActionNotice(null), 3000);
   };
 
-  const handleReject = (user: UserProfile) => {
-    rejectUser(user.id);
-    setActionNotice(`مدارک ${user.full_name} رد شد.`);
+  const handleConfirmReject = () => {
+    if (!rejectingUser) return;
+    rejectUser(rejectingUser.id, rejectionReason);
+    setActionNotice(`مدارک ${rejectingUser.full_name} با ذکر دلیل رد شد.`);
+    setRejectingUser(null);
     setTimeout(() => setActionNotice(null), 3000);
   };
+
+  const presetReasons = [
+    'تصویر کارت ملی ناخواناست و مشخصات به وضوح دیده نمی‌شود.',
+    'تصویر سلفی با چهره روی کارت ملی تطابق ندارد.',
+    'کارت ملی در تصویر سلفی وجود ندارد یا مبهم است.',
+    'عکس مخدوش یا برش‌خورده است؛ لطفاً عکس کامل و واضح بگیرید.',
+  ];
 
   return (
     <div className="min-h-screen bg-[#F9F8F6] text-[#1F2937] py-8 text-right font-sans">
@@ -75,6 +92,21 @@ export default function AdminPage() {
           </div>
 
           <div className="flex items-center gap-3 w-full sm:w-auto">
+            <button
+              onClick={() => {
+                if (window.confirm('آیا از پاکسازی تمام کاربران و مدارک اطمینان دارید؟')) {
+                  clearAllUsers();
+                  setActionNotice('تمام داده‌های تستی پاکسازی شدند.');
+                  setTimeout(() => setActionNotice(null), 3000);
+                }
+              }}
+              className="w-full sm:w-auto px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-xl border border-rose-200 transition-colors flex items-center justify-center gap-1.5"
+              title="پاکسازی تمام داده‌ها و ریست"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>پاکسازی کامل کاربران</span>
+            </button>
+
             <Link
               href="/"
               className="w-full sm:w-auto px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-1.5"
@@ -164,6 +196,8 @@ export default function AdminPage() {
                   className={`bg-white rounded-3xl p-6 border shadow-sm transition-all ${
                     user.verification_status === 'pending'
                       ? 'border-amber-300 ring-2 ring-amber-100'
+                      : user.verification_status === 'rejected'
+                      ? 'border-rose-300 bg-rose-50/20'
                       : 'border-[#EADFD5]'
                   }`}
                 >
@@ -176,10 +210,17 @@ export default function AdminPage() {
                         className="w-16 h-16 rounded-2xl object-cover ring-2 ring-[#EADFD5] shrink-0"
                       />
 
-                      <div className="space-y-1.5">
+                      <div className="space-y-1.5 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="text-base font-bold text-gray-900">{user.full_name}</h3>
                           
+                          {/* Username Badge */}
+                          {user.username && (
+                            <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-0.5 rounded-lg">
+                              @{user.username}
+                            </span>
+                          )}
+
                           {/* Verification Status Badge */}
                           {user.verification_status === 'approved' && (
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#EBF5F1] text-[#1E5647] text-[11px] font-bold border border-[#1E5647]/20">
@@ -234,11 +275,14 @@ export default function AdminPage() {
                           {user.job_education && <span className="text-gray-500">({user.job_education})</span>}
                         </div>
 
-                        {/* Bio snippet */}
-                        {user.about_me && (
-                          <p className="text-xs text-gray-500 line-clamp-1 mt-1">
-                            &ldquo;{user.about_me}&rdquo;
-                          </p>
+                        {/* Rejection Notice if rejected */}
+                        {user.verification_status === 'rejected' && user.rejection_reason && (
+                          <div className="mt-2 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-1.5">
+                            <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0 mt-0.5" />
+                            <span>
+                              <strong>دلیل رد ثبت‌شده:</strong> {user.rejection_reason}
+                            </span>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -317,11 +361,11 @@ export default function AdminPage() {
 
                         {user.verification_status !== 'rejected' && (
                           <button
-                            onClick={() => handleReject(user)}
+                            onClick={() => setRejectingUser(user)}
                             className="px-3 py-2 bg-gray-100 hover:bg-rose-100 text-gray-700 hover:text-rose-700 text-xs font-bold rounded-xl transition-colors flex items-center gap-1"
                           >
                             <X className="w-3.5 h-3.5" />
-                            <span>رد</span>
+                            <span>رد مدارک</span>
                           </button>
                         )}
 
@@ -339,14 +383,113 @@ export default function AdminPage() {
               );
             })
           ) : (
-            <div className="bg-white rounded-3xl p-12 text-center border border-[#EADFD5]">
-              <User className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <h4 className="text-base font-bold text-gray-700">کاربری در این وضعیت یافت نشد</h4>
-              <p className="text-xs text-gray-400 mt-1">می‌توانید فیلتر وضعیت را روی «همه کاربران» بگذارید.</p>
+            <div className="bg-white rounded-3xl p-12 text-center border border-[#EADFD5] space-y-4">
+              <div className="w-16 h-16 rounded-2xl bg-gray-100 text-gray-400 flex items-center justify-center mx-auto">
+                <User className="w-8 h-8" />
+              </div>
+              {usersList.length === 0 ? (
+                <>
+                  <div className="space-y-1">
+                    <h4 className="text-base font-bold text-gray-800">هیچ کاربری در سامانه ثبت‌نام نکرده است</h4>
+                    <p className="text-xs text-gray-500 max-w-sm mx-auto leading-relaxed">
+                      تمام داده‌های تستی پاکسازی شدند. شما می‌توانید از طریق صفحه ثبت‌نام، اولین کاربران آزمایشی را بسازید.
+                    </p>
+                  </div>
+                  <div>
+                    <Link
+                      href="/register"
+                      className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#C25E38] hover:bg-[#A84E2D] text-white text-xs font-bold rounded-xl shadow transition-colors"
+                    >
+                      ثبت‌نام اولین کاربر
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h4 className="text-base font-bold text-gray-700">کاربری در این وضعیت یافت نشد</h4>
+                  <p className="text-xs text-gray-400 mt-1">می‌توانید فیلتر وضعیت را روی «همه کاربران» بگذارید.</p>
+                </>
+              )}
             </div>
           )}
         </div>
       </div>
+
+      {/* REJECTION REASON MODAL */}
+      {rejectingUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in text-right">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full space-y-5 border border-[#EADFD5] shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-rose-600" />
+                <span>ثبت دلیل رد مدارک {rejectingUser.full_name}</span>
+              </h3>
+              <button
+                onClick={() => setRejectingUser(null)}
+                className="p-1 rounded-full text-gray-400 hover:text-gray-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-gray-600 leading-relaxed">
+              این دلیل در صفحه پروفایل کاربر به او نمایش داده خواهد شد تا بتواند مدارک اصلاح‌شده را مجدداً بارگذاری کند:
+            </p>
+
+            {/* Quick Reason Presets */}
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-gray-700">دلایل آماده متداول:</label>
+              <div className="space-y-1.5">
+                {presetReasons.map((reason, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setRejectionReason(reason)}
+                    className={`w-full p-2.5 rounded-xl text-xs text-right transition-all border ${
+                      rejectionReason === reason
+                        ? 'border-rose-500 bg-rose-50 text-rose-900 font-bold'
+                        : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    • {reason}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom Reason Textarea */}
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                یا متن اختصاصی دلیل رد را بنویسید:
+              </label>
+              <textarea
+                rows={3}
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                className="w-full p-3 text-xs bg-[#F9F8F6] border border-gray-200 rounded-xl outline-none focus:border-rose-500 leading-relaxed"
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={handleConfirmReject}
+                className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs transition-colors shadow"
+              >
+                ثبت رد مدارک و اطلاع به کاربر
+              </button>
+              <button
+                type="button"
+                onClick={() => setRejectingUser(null)}
+                className="py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-xs transition-colors"
+              >
+                انصراف
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Lightbox Modal for Large Document Inspection */}
       {previewImage && (

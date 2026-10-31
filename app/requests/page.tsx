@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   MessageSquare,
@@ -24,7 +24,7 @@ import { HostingRequest } from '@/types/database';
 import { INITIAL_REQUESTS } from '@/lib/mock-data';
 
 export default function RequestsPage() {
-  const { isVerified } = useAuth();
+  const { currentUser, isVerified } = useAuth();
   const [activeTab, setActiveTab] = useState<'sent' | 'received'>('sent');
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [pendingAcceptReqId, setPendingAcceptReqId] = useState<string | null>(null);
@@ -50,12 +50,36 @@ export default function RequestsPage() {
     },
   ]);
 
-  const handleStatusChange = (requestId: string, newStatus: 'accepted' | 'declined') => {
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
+          const res = await fetch('/api/requests');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && Array.isArray(data.requests) && data.requests.length > 0) {
+              setRequests(data.requests);
+            }
+          }
+        }
+      } catch (e) {
+        // fallback
+      }
+    };
+    fetchRequests();
+  }, []);
+
+  const handleStatusChange = async (requestId: string, newStatus: 'accepted' | 'declined') => {
     if (newStatus === 'accepted' && !isVerified) {
       setPendingAcceptReqId(requestId);
       setShowVerifyModal(true);
       return;
     }
+
+    const exactAddress =
+      newStatus === 'accepted'
+        ? (currentUser?.city ? `${currentUser.city}، آدرس دقیق پس از تایید نهایی اشتراک گذاشته شد.` : 'تهران، خیابان ولیعصر، بالاتر از پارک ساعی، کوچه گلستان، پلاک ۵')
+        : undefined;
 
     setRequests((prev) =>
       prev.map((req) => {
@@ -63,19 +87,39 @@ export default function RequestsPage() {
           return {
             ...req,
             status: newStatus,
-            exact_address_unlocked:
-              newStatus === 'accepted'
-                ? 'تهران، خیابان ولیعصر، بالاتر از پارک ساعی، کوچه گلستان، پلاک ۵'
-                : undefined,
+            exact_address_unlocked: exactAddress,
           };
         }
         return req;
       })
     );
+
+    try {
+      if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
+        await fetch(`/api/requests/${requestId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: newStatus,
+            exact_address_unlocked: exactAddress,
+          }),
+        });
+      }
+    } catch (err) {
+      console.error('Failed to update request status in API:', err);
+    }
   };
 
-  const sentRequests = requests.filter((r) => r.sender_id === 'guest-current-user');
-  const receivedRequests = requests.filter((r) => r.receiver_id === 'guest-current-user');
+  const currentUserId = currentUser?.id || 'guest-current-user';
+  const sentRequests = requests.filter(
+    (r) => r.sender_id === currentUserId || (currentUser && r.sender_id === currentUser.username)
+  );
+  const receivedRequests = requests.filter(
+    (r) =>
+      r.receiver_id === currentUserId ||
+      (currentUser && r.receiver_id === currentUser.username) ||
+      r.receiver_id === 'guest-current-user'
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F9F8F6]">

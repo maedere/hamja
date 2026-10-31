@@ -1,0 +1,75 @@
+// Utility functions for Persian digits and numbers parsing
+export function parsePersianNumber(val: string | number | undefined | null): number | undefined {
+  if (val === undefined || val === null) return undefined;
+  if (typeof val === 'number') return isNaN(val) ? undefined : val;
+  const str = val.toString().trim();
+  if (!str) return undefined;
+
+  const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+  const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+
+  let cleanStr = str;
+  for (let i = 0; i < 10; i++) {
+    cleanStr = cleanStr.replaceAll(persianDigits[i], i.toString()).replaceAll(arabicDigits[i], i.toString());
+  }
+
+  // Remove any non-numeric characters except minus sign
+  cleanStr = cleanStr.replace(/[^0-9-]/g, '');
+  if (!cleanStr) return undefined;
+
+  const parsed = parseInt(cleanStr, 10);
+  return isNaN(parsed) ? undefined : parsed;
+}
+
+export function toPersianDigits(num: number | string | undefined | null): string {
+  if (num === undefined || num === null) return '';
+  const str = num.toString();
+  const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+  return str.replace(/\d/g, (d) => persianDigits[parseInt(d, 10)] || d);
+}
+
+export interface IranCityData {
+  name: string;
+  topPercent: number;
+  leftPercent: number;
+  province: string;
+}
+
+export const IRAN_CITIES_MAP: Record<string, IranCityData> = {
+  'تبریز': { name: 'تبریز', topPercent: 12, leftPercent: 13, province: 'آذربایجان شرقی' },
+  'ارومیه': { name: 'ارومیه', topPercent: 15, leftPercent: 7, province: 'آذربایجان غربی' },
+  'اردبیل': { name: 'اردبیل', topPercent: 11, leftPercent: 22, province: 'اردبیل' },
+  'رشت': { name: 'رشت', topPercent: 17, leftPercent: 29, province: 'گیلان' },
+  'ساری': { name: 'ساری', topPercent: 22, leftPercent: 47, province: 'مازندران' },
+  'گرگان': { name: 'گرگان', topPercent: 20, leftPercent: 54, province: 'گلستان' },
+  'مشهد': { name: 'مشهد', topPercent: 24, leftPercent: 81, province: 'خراسان رضوی' },
+  'بجنورد': { name: 'بجنورد', topPercent: 17, leftPercent: 69, province: 'خراسان شمالی' },
+  'بیرجند': { name: 'بیرجند', topPercent: 48, leftPercent: 79, province: 'خراسان جنوبی' },
+  'تهران': { name: 'تهران', topPercent: 28, leftPercent: 38, province: 'تهران' },
+  'کرج': { name: 'کرج', topPercent: 27, leftPercent: 36, province: 'البرز' },
+  'قزوین': { name: 'قزوین', topPercent: 24, leftPercent: 31, province: 'قزوین' },
+  'زنجان': { name: 'زنجان', topPercent: 22, leftPercent: 23, province: 'زنجان' },
+  'سنندج': { name: 'سنندج', topPercent: 30, leftPercent: 16, province: 'کردستان' },
+  'کرمانشاه': { name: 'کرمانشاه', topPercent: 37, leftPercent: 16, province: 'کرمانشاه' },
+  'ایلام': { name: 'ایلام', topPercent: 43, leftPercent: 13, province: 'ایلام' },
+  'همدان': { name: 'همدان', topPercent: 34, leftPercent: 23, province: 'همدان' },
+  'اراک': { name: 'اراک', topPercent: 39, leftPercent: 30, province: 'مرکزی' },
+  'قم': { name: 'قم', topPercent: 35, leftPercent: 36, province: 'قم' },
+  'کاشان': { name: 'کاشان', topPercent: 39, leftPercent: 39, province: 'اصفهان' },
+  'اصفهان': { name: 'اصفهان', topPercent: 48, leftPercent: 40, province: 'اصفهان' },
+  'خرم‌آباد': { name: 'خرم‌آباد', topPercent: 43, leftPercent: 23, province: 'لرستان' },
+  'اهواز': { name: 'اهواز', topPercent: 57, leftPercent: 24, province: 'خوزستان' },
+  'دزفول': { name: 'دزفول', topPercent: 50, leftPercent: 23, province: 'خوزستان' },
+  'آبادان': { name: 'آبادان', topPercent: 64, leftPercent: 22, province: 'خوزستان' },
+  'شهرکرد': { name: 'شهرکرد', topPercent: 51, leftPercent: 35, province: 'چهارمحال و بختیاری' },
+  'یاسوج': { name: 'یاسوج', topPercent: 62, leftPercent: 39, province: 'کهگیلویه و بویراحمد' },
+  'شیراز': { name: 'شیراز', topPercent: 69, leftPercent: 45, province: 'فارس' },
+  'بوشهر': { name: 'بوشهر', topPercent: 74, leftPercent: 35, province: 'بوشهر' },
+  'یزد': { name: 'یزد', topPercent: 53, leftPercent: 54, province: 'یزد' },
+  'کرمان': { name: 'کرمان', topPercent: 64, leftPercent: 68, province: 'کرمان' },
+  'بندرعباس': { name: 'بندرعباس', topPercent: 85, leftPercent: 64, province: 'هرمزگان' },
+  'کیش': { name: 'کیش', topPercent: 90, leftPercent: 52, province: 'هرمزگان' },
+  'قشم': { name: 'قشم', topPercent: 87, leftPercent: 63, province: 'هرمزگان' },
+  'زاهدان': { name: 'زاهدان', topPercent: 70, leftPercent: 87, province: 'سیستان و بلوچستان' },
+  'چابهار': { name: 'چابهار', topPercent: 96, leftPercent: 86, province: 'سیستان و بلوچستان' },
+};

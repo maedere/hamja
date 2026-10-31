@@ -20,6 +20,8 @@ import {
   Lock,
   ChevronLeft,
   Calendar,
+  Compass,
+  Users,
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -37,7 +39,7 @@ import { Suspense } from 'react';
 
 function MemberProfileContent() {
   const router = useRouter();
-  const { isLoggedIn, isVerified } = useAuth();
+  const { usersList, currentUser, isLoggedIn, isVerified } = useAuth();
   const params = useParams();
   const id = params?.id as string;
 
@@ -46,9 +48,17 @@ function MemberProfileContent() {
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [verifyReason, setVerifyReason] = useState('');
 
+  // Find member in usersList
+  const member = usersList.find((p) => p.id === id);
+  const isOwnProfile = !!(currentUser && member && currentUser.id === member.id);
+
   const handleOpenRequest = () => {
     if (!isLoggedIn) {
       router.push('/register');
+      return;
+    }
+    if (isOwnProfile) {
+      alert('شما نمی‌توانید به حساب کاربری خودتان درخواست یا پیام ارسال کنید.');
       return;
     }
     if (!isVerified) {
@@ -59,14 +69,57 @@ function MemberProfileContent() {
     setShowRequestModal(true);
   };
 
-  // Find member or default to Sara Rahimi
-  const member =
-    MOCK_PROFILES.find((p) => p.id === id) ||
-    MOCK_PROFILES[0]; // fallback to Sara
+  if (!member) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#F9F8F6]">
+        <Navbar />
+        <main className="flex-1 max-w-md w-full mx-auto px-4 py-16 text-center space-y-4">
+          <div className="bg-white rounded-3xl p-8 border border-[#EADFD5] shadow-sm space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-gray-100 text-gray-400 flex items-center justify-center mx-auto">
+              <User className="w-8 h-8" />
+            </div>
+            <h2 className="text-lg font-bold text-gray-800">عضوی با این مشخصات یافت نشد</h2>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              ممکن است این کاربر حذف شده باشد یا شناسه وارد شده در آدرس صحیح نباشد.
+            </p>
+            <Link
+              href="/explore"
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#C25E38] hover:bg-[#A84E2D] text-white text-xs font-bold rounded-xl shadow transition-colors"
+            >
+              بازگشت به کاوش اعضا
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
-  const listing = MOCK_LISTINGS[member.id] || MOCK_LISTINGS['sara-rahimi'];
-  const reviews = MOCK_REVIEWS[member.id] || MOCK_REVIEWS['sara-rahimi'] || [];
-  const pastHostings = MOCK_PAST_HOSTINGS[member.id] || MOCK_PAST_HOSTINGS['sara-rahimi'] || [];
+  const fallbackListing = {
+    id: `listing-${member.id}`,
+    host_id: member.id,
+    title: `میزبانی در ${member.city} با ${member.full_name}`,
+    neighborhood_name: `شهر ${member.city}`,
+    room_type: 'private_room' as const,
+    room_type_label:
+      member.sleeping_arrangement === 'private_with_bed'
+        ? 'اتاق اختصاصی با تخت'
+        : member.sleeping_arrangement === 'private_without_bed'
+        ? 'اتاق اختصاصی سنتی (تشک)'
+        : 'فضای مشترک در پذیرایی',
+    capacity: member.max_guests || 2,
+    photos: [
+      'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80',
+    ],
+    amenities: ['اینترنت وای‌فای', 'آشپزخانه برای پخت‌وپز', 'حمام و سرویس بهداشتی', 'امکان کار با لپ‌تاپ'],
+    house_rules: member.house_rules && member.house_rules.length > 0 ? member.house_rules : ['رعایت سکوت در ساعات پایانی شب', 'احترام متقابل و حفظ نظم خانه'],
+  };
+
+  const listing = (member.id && MOCK_LISTINGS[member.id]) || fallbackListing;
+  const reviews = (member.id && MOCK_REVIEWS[member.id]) || [];
+  const pastHostings = (member.id && MOCK_PAST_HOSTINGS[member.id]) || [];
+  const isTraveler = member.can_host === false || member.role === 'traveler';
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F9F8F6]">
@@ -104,13 +157,22 @@ function MemberProfileContent() {
 
             <div className="space-y-3 flex-1">
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EBF5F1] text-[#1E5647] text-xs font-semibold border border-[#1E5647]/20">
-                  <HeartHandshake className="w-3.5 h-3.5" />
-                  آماده میزبانی متقابل
-                </span>
+                {isTraveler ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-50 text-sky-700 text-xs font-semibold border border-sky-200">
+                    <Compass className="w-3.5 h-3.5 text-sky-600" />
+                    {member.target_destination
+                      ? `قصد سفر به ${member.target_destination} (مشتاق میزبان)`
+                      : 'مسافر · در جستجوی میزبان'}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EBF5F1] text-[#1E5647] text-xs font-semibold border border-[#1E5647]/20">
+                    <HeartHandshake className="w-3.5 h-3.5" />
+                    آماده میزبانی متقابل
+                  </span>
+                )}
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-medium">
                   <MapPin className="w-3.5 h-3.5 text-[#C25E38]" />
-                  {member.city}
+                  {isTraveler ? `ساکن ${member.city}` : member.city}
                 </span>
                 {member.is_identity_verified && (
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#EBF5F1] text-[#1E5647] text-xs font-medium">
@@ -124,14 +186,45 @@ function MemberProfileContent() {
                 {member.full_name}
               </h1>
 
+              {(member.age || member.job_education) && (
+                <div className="flex items-center justify-center sm:justify-start gap-2 text-xs text-gray-600 font-medium">
+                  {member.age && <span>{member.age} ساله</span>}
+                  {member.age && member.job_education && <span>•</span>}
+                  {member.job_education && <span>{member.job_education}</span>}
+                </div>
+              )}
+
               <p className="text-sm text-gray-600 leading-relaxed font-medium italic">
                 &ldquo;{member.bio_headline}&rdquo;
               </p>
 
+              {isTraveler && (member.target_destination || member.target_travel_dates) && (
+                <div className="inline-flex flex-wrap items-center gap-3 p-3 bg-sky-50/80 rounded-2xl border border-sky-100 text-xs text-sky-900 mt-2">
+                  {member.target_destination && (
+                    <span className="flex items-center gap-1 font-semibold">
+                      <Compass className="w-3.5 h-3.5 text-sky-600" />
+                      مقصد سفر: {member.target_destination}
+                    </span>
+                  )}
+                  {member.target_travel_dates && (
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5 text-sky-600" />
+                      تاریخ سفر: {member.target_travel_dates}
+                    </span>
+                  )}
+                  {member.target_guests_count && (
+                    <span className="flex items-center gap-1">
+                      <Users className="w-3.5 h-3.5 text-sky-600" />
+                      همراهان: {member.target_guests_count} نفر
+                    </span>
+                  )}
+                </div>
+              )}
+
               <div className="pt-2 flex items-center justify-center sm:justify-start gap-4 text-xs text-gray-500">
                 <span>عضو از {member.member_since_year}</span>
                 <span className="w-1 h-1 rounded-full bg-gray-300" />
-                <span>{member.hosting_count} تجربه میزبانی</span>
+                <span>{isTraveler ? 'علاقه‌مند به سفر و میزبانی شدن' : `${member.hosting_count} تجربه میزبانی`}</span>
               </div>
             </div>
           </div>
@@ -139,22 +232,54 @@ function MemberProfileContent() {
           {/* Action Sidebar Card matching Page 2 (Left visually in RTL, 4 cols) */}
           <div className="lg:col-span-4 bg-white rounded-3xl p-6 border border-[#EADFD5] shadow-sm flex flex-col justify-between text-right space-y-4">
             <div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#C25E38] mb-1">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>یک سلام، شروع یک دوستی</span>
+              <div className={`inline-flex items-center gap-1.5 text-xs font-bold mb-1 ${isOwnProfile ? 'text-amber-800' : isTraveler ? 'text-sky-700' : 'text-[#C25E38]'}`}>
+                {isOwnProfile ? <User className="w-3.5 h-3.5 text-amber-700" /> : isTraveler ? <Compass className="w-3.5 h-3.5 text-sky-600" /> : <Sparkles className="w-3.5 h-3.5" />}
+                <span>{isOwnProfile ? 'پروفایل کاربری شما' : isTraveler ? 'پیشنهاد میزبانی به مسافر' : 'یک سلام، شروع یک دوستی'}</span>
               </div>
               <p className="text-xs text-gray-600 leading-relaxed">
-                از سفرت بگو و برای میزبانی متقابل با {member.full_name.split(' ')[0]} هماهنگ کن.
+                {isOwnProfile
+                  ? 'این صفحه عمومی حساب کاربری شماست که سایر اعضای همجا آن را مشاهده می‌کنند.'
+                  : isTraveler
+                  ? `${member.full_name.split(' ')[0]} قصد سفر به ${member.target_destination || 'شهرهای مختلف'} دارد. می‌توانید او را به خانه خود دعوت کنید!`
+                  : `از سفرت بگو و برای میزبانی متقابل با ${member.full_name.split(' ')[0]} هماهنگ کن.`}
               </p>
             </div>
 
-            <button
-              onClick={handleOpenRequest}
-              className="w-full py-3.5 bg-[#C25E38] hover:bg-[#A84E2D] text-white font-bold rounded-2xl shadow-md transition-all hover:shadow-lg flex items-center justify-center gap-2 text-sm"
-            >
-              <MessageSquare className="w-4 h-4" />
-              <span>درخواست میزبانی / پیام</span>
-            </button>
+            {isOwnProfile ? (
+              <div className="space-y-2">
+                <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-[11px] text-amber-900 leading-relaxed font-medium">
+                  شما نمی‌توانید به حساب کاربری خودتان درخواست ارسال فرمایید.
+                </div>
+                <Link
+                  href="/profile"
+                  className="w-full py-3.5 bg-gray-900 hover:bg-black text-white font-bold rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 text-sm"
+                >
+                  <User className="w-4 h-4" />
+                  <span>مدیریت و ویرایش پروفایل من</span>
+                </Link>
+              </div>
+            ) : (
+              <button
+                onClick={handleOpenRequest}
+                className={`w-full py-3.5 text-white font-bold rounded-2xl shadow-md transition-all hover:shadow-lg flex items-center justify-center gap-2 text-sm ${
+                  isTraveler
+                    ? 'bg-[#1E5647] hover:bg-[#164236]'
+                    : 'bg-[#C25E38] hover:bg-[#A84E2D]'
+                }`}
+              >
+                {isTraveler ? (
+                  <>
+                    <HeartHandshake className="w-4 h-4" />
+                    <span>پیشنهاد میزبانی به {member.full_name.split(' ')[0]} (دعوت به خانه)</span>
+                  </>
+                ) : (
+                  <>
+                    <MessageSquare className="w-4 h-4" />
+                    <span>درخواست میزبانی / پیام</span>
+                  </>
+                )}
+              </button>
+            )}
 
             <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
               <span className="flex items-center gap-1">
@@ -191,8 +316,17 @@ function MemberProfileContent() {
                 : 'border-transparent text-gray-500 hover:text-gray-900'
             }`}
           >
-            <Home className="w-4 h-4" />
-            <span>خانه و امکانات</span>
+            {isTraveler ? (
+              <>
+                <Compass className="w-4 h-4" />
+                <span>برنامه سفر و نیازها</span>
+              </>
+            ) : (
+              <>
+                <Home className="w-4 h-4" />
+                <span>خانه و امکانات</span>
+              </>
+            )}
           </button>
 
           <button
@@ -226,14 +360,18 @@ function MemberProfileContent() {
               <div className="pt-4 border-t border-gray-100">
                 <h4 className="text-xs font-bold text-gray-500 mb-2">علاقه‌مندی‌ها</h4>
                 <div className="flex flex-wrap gap-2">
-                  {member.interests?.map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-3 py-1 rounded-xl text-xs font-semibold text-[#C25E38] bg-[#FBF4F0] border border-[#C25E38]/20"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
+                  {member.interests && member.interests.length > 0 ? (
+                    member.interests.map((tag) => (
+                      <span
+                        key={tag}
+                        className="px-3 py-1 rounded-xl text-xs font-semibold text-[#C25E38] bg-[#FBF4F0] border border-[#C25E38]/20"
+                      >
+                        #{tag}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-xs text-gray-400">علاقه‌مندی خاصی ثبت نشده است</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -244,14 +382,18 @@ function MemberProfileContent() {
                 <div>
                   <h4 className="text-xs font-bold text-gray-500 mb-1.5">زبان‌ها</h4>
                   <p className="text-xs sm:text-sm font-semibold text-gray-800">
-                    {member.languages?.join(' · ') || 'فارسی (زبان مادری)'}
+                    {member.languages && member.languages.length > 0
+                      ? member.languages.join(' · ')
+                      : 'فارسی (زبان مادری)'}
                   </p>
                 </div>
 
                 <div className="pt-3 border-t border-gray-100">
                   <h4 className="text-xs font-bold text-gray-500 mb-1.5">مقصدهای محبوب من</h4>
                   <p className="text-xs sm:text-sm font-semibold text-gray-800 leading-relaxed">
-                    {member.favorite_destinations?.join(' · ') || 'شهرهای مختلف ایران'}
+                    {member.favorite_destinations && member.favorite_destinations.length > 0
+                      ? member.favorite_destinations.join(' · ')
+                      : 'هنوز مقصدی ثبت نشده است'}
                   </p>
                 </div>
               </div>
@@ -259,8 +401,92 @@ function MemberProfileContent() {
           </div>
         )}
 
-        {/* TAB 2: خانه و امکانات (Home & Amenities) matching Page 2 */}
+        {/* TAB 2: خانه و امکانات (Home & Amenities) یا برنامه سفر مسافر */}
         {activeTab === 'home' && (
+          isTraveler ? (
+            <div className="space-y-6 text-right">
+              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#EADFD5] shadow-sm space-y-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
+                  <div>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-sky-50 text-sky-700 text-xs font-bold mb-2">
+                      <Compass className="w-3.5 h-3.5" />
+                      برنامه و مشخصات سفر مسافر
+                    </span>
+                    <h3 className="text-xl font-black text-[#1F2937]">
+                      سفر {member.full_name} به مقصد {member.target_destination || 'مشخص نشده'}
+                    </h3>
+                  </div>
+                  {!isOwnProfile ? (
+                    <button
+                      onClick={handleOpenRequest}
+                      className="px-4 py-2 bg-[#1E5647] hover:bg-[#164236] text-white text-xs font-bold rounded-xl shadow transition-colors flex items-center gap-1.5"
+                    >
+                      <HeartHandshake className="w-4 h-4" />
+                      <span>دعوت به خانه و میزبانی</span>
+                    </button>
+                  ) : (
+                    <Link
+                      href="/profile"
+                      className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold rounded-xl shadow-sm transition-colors flex items-center gap-1.5"
+                    >
+                      <User className="w-4 h-4" />
+                      <span>ویرایش مشخصات</span>
+                    </Link>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="p-4 rounded-2xl bg-[#F9F8F6] border border-[#EADFD5]">
+                    <span className="text-xs text-gray-500 block mb-1">شهر مقصد سفر</span>
+                    <p className="text-base font-bold text-gray-900 flex items-center gap-1.5">
+                      <MapPin className="w-4 h-4 text-[#C25E38]" />
+                      {member.target_destination || member.city || 'هنوز مشخص نشده'}
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-[#F9F8F6] border border-[#EADFD5]">
+                    <span className="text-xs text-gray-500 block mb-1">بازه زمانی مدنظر</span>
+                    <p className="text-base font-bold text-gray-900 flex items-center gap-1.5">
+                      <Calendar className="w-4 h-4 text-[#1E5647]" />
+                      {member.target_travel_dates || 'توافقی و منعطف'}
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-[#F9F8F6] border border-[#EADFD5]">
+                    <span className="text-xs text-gray-500 block mb-1">تعداد همراهان</span>
+                    <p className="text-base font-bold text-gray-900 flex items-center gap-1.5">
+                      <Users className="w-4 h-4 text-sky-600" />
+                      {member.target_guests_count ? `${member.target_guests_count} نفر` : '۱ نفر (تنها سفر می‌کند)'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Traveler Expectations / Rules */}
+                <div className="pt-2">
+                  <h4 className="text-sm font-bold text-gray-800 mb-2">انتظارات و توضیحات مسافر</h4>
+                  <div className="p-4 rounded-2xl bg-sky-50/50 border border-sky-100 text-xs text-gray-700 leading-relaxed space-y-2">
+                    {member.house_rules && member.house_rules.length > 0 ? (
+                      <ul className="space-y-1.5 list-disc list-inside">
+                        {member.house_rules.map((rule, idx) => (
+                          <li key={idx}>{rule}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p>
+                        این مسافر علاقه‌مند به آشنایی با افراد محلی و تبادل تجربیات فرهنگی است و ترجیح می‌دهد با هماهنگی و رعایت نظم و احترام متقابل در خانه میزبان اقامت داشته باشد.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Friendly host invitation note */}
+                <div className="p-4 rounded-2xl bg-[#EBF5F1] border border-[#1E5647]/20 text-xs text-[#1E5647] flex items-center gap-2">
+                  <HeartHandshake className="w-4 h-4 shrink-0" />
+                  <span>
+                    اگر در این شهر ساکن هستید و امکان پذیرایی دارید، پیشنهاد میزبانی بفرستید و میزبان {member.full_name.split(' ')[0]} باشید!
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : (
           <div className="space-y-8 text-right">
             <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#EADFD5] shadow-sm space-y-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -373,6 +599,7 @@ function MemberProfileContent() {
               </div>
             )}
           </div>
+          )
         )}
 
         {/* TAB 3: نظرات اعضا (Reviews) matching Page 2 */}
@@ -439,6 +666,7 @@ function MemberProfileContent() {
         isOpen={showRequestModal}
         onClose={() => setShowRequestModal(false)}
         host={member}
+        mode={isTraveler ? 'offer_hosting' : 'request_stay'}
       />
 
       {/* Verification Modal for Unverified Users */}

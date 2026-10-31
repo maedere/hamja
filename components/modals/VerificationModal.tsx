@@ -14,6 +14,7 @@ import {
   Image as ImageIcon,
   Trash2,
   ExternalLink,
+  AlertTriangle,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 
@@ -217,9 +218,25 @@ export default function VerificationModal({
           </div>
         )}
 
-        {/* Status 3: UNVERIFIED FORM WITH REAL FILE PICKER */}
-        {currentStatus === 'unverified' && (
+        {/* Status 3: UNVERIFIED OR REJECTED FORM WITH REAL FILE PICKER */}
+        {(currentStatus === 'unverified' || currentStatus === 'rejected') && (
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* If Rejected, show rejection reason alert box */}
+            {currentStatus === 'rejected' && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-right animate-fade-in space-y-1.5">
+                <div className="flex items-center gap-2 text-red-700 font-bold text-xs">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>دلیل رد شدن احراز هویت قبلی:</span>
+                </div>
+                <p className="text-xs text-red-900 bg-white/70 p-2.5 rounded-xl border border-red-100 font-semibold leading-relaxed">
+                  {currentUser?.rejection_reason || reason || 'تصویر مدرک ارسالی ناخوانا یا نامعتبر بود.'}
+                </p>
+                <p className="text-[11px] text-red-600">
+                  لطفاً مدارک جدید و واضح‌تری انتخاب و بارگذاری فرمایید تا ادمین بررسی و تایید کند.
+                </p>
+              </div>
+            )}
+
             {/* Hidden Real File Inputs */}
             <input
               type="file"
@@ -363,6 +380,8 @@ export default function VerificationModal({
               >
                 {isSubmitting ? (
                   <span>در حال ارسال مدارک...</span>
+                ) : currentStatus === 'rejected' ? (
+                  <span>بارگذاری مجدد مدارک جهت بررسی مجدد</span>
                 ) : (
                   <span>ارسال مدارک جهت بررسی دستی همجا</span>
                 )}
