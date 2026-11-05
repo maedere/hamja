@@ -19,7 +19,12 @@ function getSupabase() {
   const cleanUrl = getSupabaseUrl();
   const key = getSupabaseServiceRoleKey() || getSupabaseAnonKey();
   if (!cleanUrl || !key) return null;
-  return createSupabaseClient(cleanUrl, key);
+  try {
+    return createSupabaseClient(cleanUrl, key);
+  } catch (err) {
+    console.error('Failed to initialize Supabase client:', err);
+    return null;
+  }
 }
 
 interface LocalDatabaseSchema {

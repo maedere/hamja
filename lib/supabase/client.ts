@@ -9,5 +9,10 @@ export function createClient() {
     return null;
   }
 
-  return createBrowserClient(cleanUrl, supabaseAnonKey);
+  try {
+    return createBrowserClient(cleanUrl, supabaseAnonKey);
+  } catch (err) {
+    console.error('Failed to initialize browser Supabase client:', err);
+    return null;
+  }
 }
