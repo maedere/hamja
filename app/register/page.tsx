@@ -197,7 +197,7 @@ export default function RegisterPage() {
     }
   };
 
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (usernameError || isUsernameTaken(username)) {
@@ -224,57 +224,64 @@ export default function RegisterPage() {
 
     const isHostCapable = selectedRole === 'both' || selectedRole === 'host';
 
+    const res = await register({
+      full_name: fullName,
+      username,
+      password,
+      phone,
+      instagram,
+      city,
+      age: parsedAge,
+      job_education: jobEducation,
+      avatar_url: avatarPreview || undefined,
+      can_host: isHostCapable,
+      role: selectedRole,
+      hosting_status: isHostCapable ? 'ready_for_hosting' : 'not_hosting',
+      max_guests: isHostCapable ? parsedMaxGuests || 2 : undefined,
+      guest_preference: isHostCapable ? guestPreference : undefined,
+      sleeping_arrangement: isHostCapable ? sleepingArrangement : undefined,
+      house_rules: isHostCapable ? houseRules : [],
+      target_destination: targetDestination.trim() || undefined,
+      target_travel_dates: targetDates.trim() || undefined,
+      target_guests_count: parsedTargetGuests || 1,
+      bio_headline: bioSnippet
+        ? bioSnippet.slice(0, 70)
+        : selectedRole === 'traveler' && targetDestination
+        ? `مشتاق سفر به ${targetDestination} و آشنایی با میزبانان محلی`
+        : isHostCapable
+        ? `مشتاق میزبانی صمیمانه در ${city || 'شهر من'}`
+        : 'علاقه‌مند به سفر و آشنایی با فرهنگ و مردم شهرهای مختلف',
+      about_me: bioSnippet || (targetDestination ? `قصد دارم به ${targetDestination} سفر کنم و خوشحال می‌شوم با میزبانان محلی آشنا شوم.` : ''),
+      interests: selectedInterests.length > 0 ? selectedInterests : ['سفر و ماجراجویی', 'عکاسی'],
+      languages: selectedLanguages.length > 0 ? selectedLanguages : ['فارسی (مادری)'],
+      favorite_destinations: selectedDestinations.length > 0 ? selectedDestinations : undefined,
+      agreed_to_provide_id: agreeId,
+      agreed_to_respect_house_rules: agreeEthic,
+      agreed_to_hamja_terms: agreeTerms,
+    });
+
+    setIsSubmitting(false);
+
+    if (!res.success) {
+      alert(res.error || 'خطا در ثبت‌نام. لطفاً دوباره تلاش فرمایید.');
+      return;
+    }
+
+    setSuccessMessage(`خوش آمدید، ${fullName}! حساب کاربری شما با موفقیت ایجاد شد.`);
+
     setTimeout(() => {
-      register({
-        full_name: fullName,
-        username,
-        password,
-        phone,
-        instagram,
-        city,
-        age: parsedAge,
-        job_education: jobEducation,
-        avatar_url: avatarPreview || undefined,
-        can_host: isHostCapable,
-        role: selectedRole,
-        hosting_status: isHostCapable ? 'ready_for_hosting' : 'not_hosting',
-        max_guests: isHostCapable ? parsedMaxGuests || 2 : undefined,
-        guest_preference: isHostCapable ? guestPreference : undefined,
-        sleeping_arrangement: isHostCapable ? sleepingArrangement : undefined,
-        house_rules: isHostCapable ? houseRules : [],
-        target_destination: targetDestination.trim() || undefined,
-        target_travel_dates: targetDates.trim() || undefined,
-        target_guests_count: parsedTargetGuests || 1,
-        bio_headline: bioSnippet
-          ? bioSnippet.slice(0, 70)
-          : selectedRole === 'traveler' && targetDestination
-          ? `مشتاق سفر به ${targetDestination} و آشنایی با میزبانان محلی`
-          : isHostCapable
-          ? `مشتاق میزبانی صمیمانه در ${city || 'شهر من'}`
-          : 'علاقه‌مند به سفر و آشنایی با فرهنگ و مردم شهرهای مختلف',
-        about_me: bioSnippet || (targetDestination ? `قصد دارم به ${targetDestination} سفر کنم و خوشحال می‌شوم با میزبانان محلی آشنا شوم.` : ''),
-        interests: selectedInterests.length > 0 ? selectedInterests : ['سفر و ماجراجویی', 'عکاسی'],
-        languages: selectedLanguages.length > 0 ? selectedLanguages : ['فارسی (مادری)'],
-        favorite_destinations: selectedDestinations.length > 0 ? selectedDestinations : undefined,
-        agreed_to_provide_id: agreeId,
-        agreed_to_respect_house_rules: agreeEthic,
-        agreed_to_hamja_terms: agreeTerms,
-      });
-
-      setIsSubmitting(false);
-      setSuccessMessage(`خوش آمدید، ${fullName}! حساب کاربری شما با موفقیت ایجاد شد.`);
-
-      setTimeout(() => {
-        router.push('/profile');
-      }, 1400);
-    }, 700);
+      router.push('/profile');
+    }, 1200);
   };
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError(null);
+    setIsSubmitting(true);
 
-    const res = login(loginIdentifier, loginPassword);
+    const res = await login(loginIdentifier, loginPassword);
+    setIsSubmitting(false);
+
     if (!res.success) {
       setLoginError(res.error || 'اطلاعات ورود نادرست است.');
     } else {

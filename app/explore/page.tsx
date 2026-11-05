@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -20,9 +20,13 @@ import IranMap from '@/components/explore/IranMap';
 import { useAuth } from '@/lib/auth-context';
 
 function ExploreContent() {
-  const { usersList } = useAuth();
+  const { usersList, refreshUsers } = useAuth();
   const searchParams = useSearchParams();
   const initialCity = searchParams.get('city') || '';
+
+  useEffect(() => {
+    refreshUsers();
+  }, [refreshUsers]);
 
   const [searchTerm, setSearchTerm] = useState(initialCity);
   const [selectedCity, setSelectedCity] = useState(initialCity);

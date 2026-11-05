@@ -1,14 +1,13 @@
 import { createBrowserClient } from '@supabase/ssr';
+import { getSupabaseUrl, getSupabaseAnonKey } from './config';
 
 export function createClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const cleanUrl = getSupabaseUrl();
+  const supabaseAnonKey = getSupabaseAnonKey();
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    // Return null or dummy client if env vars are not set yet
+  if (!cleanUrl || !supabaseAnonKey) {
     return null;
   }
 
-  const cleanUrl = supabaseUrl.replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
   return createBrowserClient(cleanUrl, supabaseAnonKey);
 }

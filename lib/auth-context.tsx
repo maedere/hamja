@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { UserProfile, VerificationStatus } from '@/types/database';
 
 interface AuthContextType {
@@ -8,17 +8,22 @@ interface AuthContextType {
   usersList: UserProfile[];
   isLoggedIn: boolean;
   isVerified: boolean;
-  register: (data: Omit<UserProfile, 'id' | 'member_since_year' | 'response_rate_percent' | 'hosting_count' | 'verification_status' | 'is_identity_verified'>) => UserProfile;
-  login: (identifier: string, password: string) => { success: boolean; error?: string };
+  register: (
+    data: Omit<
+      UserProfile,
+      'id' | 'member_since_year' | 'response_rate_percent' | 'hosting_count' | 'verification_status' | 'is_identity_verified'
+    >
+  ) => Promise<{ success: boolean; user?: UserProfile; error?: string }>;
+  login: (identifier: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   isUsernameTaken: (username: string) => boolean;
-  submitVerification: (nationalCardUrl: string, selfieWithCardUrl: string) => void;
-  approveUser: (userId: string) => void;
-  rejectUser: (userId: string, reason: string) => void;
+  submitVerification: (nationalCardUrl: string, selfieWithCardUrl: string) => Promise<void>;
+  approveUser: (userId: string) => Promise<void>;
+  rejectUser: (userId: string, reason: string) => Promise<void>;
   switchUser: (userId: string) => void;
-  updateUserProfile: (data: Partial<UserProfile>) => void;
-  clearAllUsers: () => void;
-  refreshUsers?: () => Promise<void>;
+  updateUserProfile: (data: Partial<UserProfile>) => Promise<void>;
+  clearAllUsers: () => Promise<void>;
+  refreshUsers: () => Promise<UserProfile[] | void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,37 +31,58 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const LOCAL_STORAGE_USER_KEY = 'hamja_current_user_clean_v1';
 const LOCAL_STORAGE_USERS_KEY = 'hamja_all_users_clean_v1';
 
-// Initial users is completely empty for real testing
-const INITIAL_USERS: UserProfile[] = [];
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [usersList, setUsersList] = useState<UserProfile[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  const refreshUsers = async () => {
+  const saveUsersList = useCallback((newUsers: UserProfile[]) => {
+    setUsersList(newUsers);
+    try {
+      if (typeof window !== 'undefined' && window.localStorage && typeof window.localStorage.setItem === 'function') {
+        window.localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(newUsers));
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
+  const saveCurrentUser = useCallback((user: UserProfile | null) => {
+    setCurrentUser(user);
+    try {
+      if (typeof window !== 'undefined' && window.localStorage && typeof window.localStorage.setItem === 'function') {
+        if (user) {
+          window.localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(user));
+        } else {
+          window.localStorage.removeItem(LOCAL_STORAGE_USER_KEY);
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
+  const refreshUsers = useCallback(async (): Promise<UserProfile[] | void> => {
     try {
       if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
-        const res = await fetch('/api/users');
+        const res = await fetch('/api/users', { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
           if (data.success && Array.isArray(data.users)) {
-            setUsersList(data.users);
-            if (typeof window.localStorage !== 'undefined') {
-              window.localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(data.users));
-            }
+            saveUsersList(data.users);
+            return data.users;
           }
         }
       }
     } catch (e) {
       // ignore in tests / offline
     }
-  };
+  }, [saveUsersList]);
 
   useEffect(() => {
     try {
       if (typeof window !== 'undefined' && window.localStorage && typeof window.localStorage.getItem === 'function') {
-        // Clean up any legacy mock data keys
+        // Clean up legacy keys
         window.localStorage.removeItem('hamja_current_user_v3');
         window.localStorage.removeItem('hamja_all_users_v3');
         window.localStorage.removeItem('hamja_current_user_v2');
@@ -73,7 +99,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         } else {
           setUsersList([]);
-          window.localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify([]));
         }
 
         const storedUser = window.localStorage.getItem(LOCAL_STORAGE_USER_KEY);
@@ -91,46 +116,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // ignore
     } finally {
       setIsLoaded(true);
-      // Fetch latest from server database
       refreshUsers();
     }
-  }, []);
+  }, [refreshUsers]);
 
-  const saveUsersList = (newUsers: UserProfile[]) => {
-    setUsersList(newUsers);
-    try {
-      if (typeof window !== 'undefined' && window.localStorage && typeof window.localStorage.setItem === 'function') {
-        window.localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(newUsers));
-      }
-    } catch (e) {
-      // ignore
-    }
-  };
+  const isUsernameTaken = useCallback(
+    (username: string): boolean => {
+      if (!username) return false;
+      const clean = username.trim().toLowerCase();
+      return usersList.some((u) => u.username?.toLowerCase() === clean);
+    },
+    [usersList]
+  );
 
-  const saveCurrentUser = (user: UserProfile | null) => {
-    setCurrentUser(user);
-    try {
-      if (typeof window !== 'undefined' && window.localStorage && typeof window.localStorage.setItem === 'function') {
-        if (user) {
-          window.localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(user));
-        } else {
-          window.localStorage.removeItem(LOCAL_STORAGE_USER_KEY);
-        }
-      }
-    } catch (e) {
-      // ignore
-    }
-  };
-
-  const isUsernameTaken = (username: string): boolean => {
-    if (!username) return false;
-    const clean = username.trim().toLowerCase();
-    return usersList.some((u) => u.username?.toLowerCase() === clean);
-  };
-
-  const register = (
-    data: Omit<UserProfile, 'id' | 'member_since_year' | 'response_rate_percent' | 'hosting_count' | 'verification_status' | 'is_identity_verified'>
-  ): UserProfile => {
+  const register = async (
+    data: Omit<
+      UserProfile,
+      'id' | 'member_since_year' | 'response_rate_percent' | 'hosting_count' | 'verification_status' | 'is_identity_verified'
+    >
+  ): Promise<{ success: boolean; user?: UserProfile; error?: string }> => {
     const newUser: UserProfile = {
       ...data,
       id: `user-${Date.now()}`,
@@ -146,24 +150,67 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       last_active: 'همین الان',
     };
 
+    // Save to real database
+    if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
+      try {
+        const res = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newUser),
+        });
+        const result = await res.json();
+        if (!res.ok || !result.success) {
+          return {
+            success: false,
+            error: result.error || 'خطا در ثبت اطلاعات در دیتابیس',
+          };
+        }
+
+        const savedUser: UserProfile = result.user || newUser;
+        saveCurrentUser(savedUser);
+        await refreshUsers();
+        return { success: true, user: savedUser };
+      } catch (err: any) {
+        console.error('Failed to sync new user with database', err);
+        return {
+          success: false,
+          error: 'خطا در برقراری ارتباط با سرور دیتابیس. لطفاً اتصال اینترنت خود را بررسی کنید.',
+        };
+      }
+    }
+
+    // Local / Offline fallback
     const updatedUsers = [newUser, ...usersList];
     saveUsersList(updatedUsers);
     saveCurrentUser(newUser);
-
-    // Save to real database
-    if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
-      fetch('/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newUser),
-      }).catch((e) => console.error('Failed to sync new user with database', e));
-    }
-
-    return newUser;
+    return { success: true, user: newUser };
   };
 
-  const login = (identifier: string, pass: string): { success: boolean; error?: string } => {
+  const login = async (identifier: string, pass: string): Promise<{ success: boolean; error?: string }> => {
     const clean = identifier.trim().toLowerCase();
+
+    // 1. Try server authentication first
+    if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ identifier: clean, password: pass }),
+        });
+        const result = await res.json();
+        if (res.ok && result.success && result.user) {
+          saveCurrentUser(result.user);
+          await refreshUsers();
+          return { success: true };
+        } else if (res.status === 400 || res.status === 401 || res.status === 404) {
+          return { success: false, error: result.error || 'اطلاعات ورود نادرست است.' };
+        }
+      } catch (e) {
+        // Server unreachable, fallback to local usersList
+      }
+    }
+
+    // 2. Offline / local fallback
     const found = usersList.find(
       (u) =>
         u.username?.toLowerCase() === clean ||
@@ -187,7 +234,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     saveCurrentUser(null);
   };
 
-  const submitVerification = (nationalCardUrl: string, selfieWithCardUrl: string) => {
+  const submitVerification = async (nationalCardUrl: string, selfieWithCardUrl: string) => {
     if (!currentUser) return;
     const updatedUser: UserProfile = {
       ...currentUser,
@@ -200,24 +247,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     };
 
+    saveCurrentUser(updatedUser);
     const updatedList = usersList.map((u) => (u.id === currentUser.id ? updatedUser : u));
     saveUsersList(updatedList);
-    saveCurrentUser(updatedUser);
 
     if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
-      fetch('/api/admin/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: currentUser.id,
-          action: 'submit_docs',
-          docs: { nationalCardUrl, selfieWithCardUrl },
-        }),
-      }).catch((e) => console.error('Failed to sync verification docs with database', e));
+      try {
+        await fetch('/api/admin/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: currentUser.id,
+            action: 'submit_docs',
+            docs: { nationalCardUrl, selfieWithCardUrl },
+          }),
+        });
+        await refreshUsers();
+      } catch (e) {
+        console.error('Failed to sync verification docs with database', e);
+      }
     }
   };
 
-  const approveUser = (userId: string) => {
+  const approveUser = async (userId: string) => {
     const updatedList = usersList.map((u) => {
       if (u.id === userId) {
         return {
@@ -242,15 +294,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
-      fetch('/api/admin/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, action: 'approve' }),
-      }).catch((e) => console.error('Failed to sync approval with database', e));
+      try {
+        await fetch('/api/admin/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, action: 'approve' }),
+        });
+        await refreshUsers();
+      } catch (e) {
+        console.error('Failed to sync approval with database', e);
+      }
     }
   };
 
-  const rejectUser = (userId: string, reason: string) => {
+  const rejectUser = async (userId: string, reason: string) => {
     const updatedList = usersList.map((u) => {
       if (u.id === userId) {
         return {
@@ -281,11 +338,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
-      fetch('/api/admin/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, action: 'reject', reason }),
-      }).catch((e) => console.error('Failed to sync rejection with database', e));
+      try {
+        await fetch('/api/admin/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, action: 'reject', reason }),
+        });
+        await refreshUsers();
+      } catch (e) {
+        console.error('Failed to sync rejection with database', e);
+      }
     }
   };
 
@@ -296,26 +358,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const updateUserProfile = (data: Partial<UserProfile>) => {
+  const updateUserProfile = async (data: Partial<UserProfile>) => {
     if (!currentUser) return;
     const updatedUser: UserProfile = {
       ...currentUser,
       ...data,
     };
+    saveCurrentUser(updatedUser);
     const updatedList = usersList.map((u) => (u.id === currentUser.id ? updatedUser : u));
     saveUsersList(updatedList);
-    saveCurrentUser(updatedUser);
 
     if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
-      fetch(`/api/users/${currentUser.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      }).catch((e) => console.error('Failed to sync profile update with database', e));
+      try {
+        await fetch(`/api/users/${currentUser.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        await refreshUsers();
+      } catch (e) {
+        console.error('Failed to sync profile update with database', e);
+      }
     }
   };
 
-  const clearAllUsers = () => {
+  const clearAllUsers = async () => {
     setUsersList([]);
     setCurrentUser(null);
     try {
@@ -328,9 +395,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
-      fetch('/api/admin/clear', { method: 'POST' }).catch((e) =>
-        console.error('Failed to clear database on server', e)
-      );
+      try {
+        await fetch('/api/admin/clear', { method: 'POST' });
+        await refreshUsers();
+      } catch (e) {
+        console.error('Failed to clear database on server', e);
+      }
     }
   };
 
@@ -367,16 +437,16 @@ export function useAuth(): AuthContextType {
       usersList: [],
       isLoggedIn: false,
       isVerified: false,
-      register: () => ({} as any),
-      login: () => ({ success: false, error: undefined }),
+      register: async () => ({ success: false, error: 'Auth context not available' }),
+      login: async () => ({ success: false, error: 'Auth context not available' }),
       logout: () => {},
       isUsernameTaken: () => false,
-      submitVerification: () => {},
-      approveUser: () => {},
-      rejectUser: () => {},
+      submitVerification: async () => {},
+      approveUser: async () => {},
+      rejectUser: async () => {},
       switchUser: () => {},
-      updateUserProfile: () => {},
-      clearAllUsers: () => {},
+      updateUserProfile: async () => {},
+      clearAllUsers: async () => {},
       refreshUsers: async () => {},
     };
   }

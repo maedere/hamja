@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -23,10 +23,14 @@ import { useAuth } from '@/lib/auth-context';
 
 export default function HomePage() {
   const router = useRouter();
-  const { usersList } = useAuth();
+  const { usersList, refreshUsers } = useAuth();
   const [searchCity, setSearchCity] = useState('');
   const [hostingFilter, setHostingFilter] = useState<'all' | 'mutual' | 'host'>('all');
   const [showVerifyModal, setShowVerifyModal] = useState(false);
+
+  useEffect(() => {
+    refreshUsers();
+  }, [refreshUsers]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

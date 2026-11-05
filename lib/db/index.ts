@@ -3,21 +3,22 @@ import path from 'path';
 import { UserProfile, HostingRequest, RequestStatus } from '@/types/database';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
+import { getSupabaseUrl, getSupabaseAnonKey, getSupabaseServiceRoleKey } from '@/lib/supabase/config';
+
 const DB_FILE_PATH = path.join(process.cwd(), 'data', 'hamja_db.json');
 
 // Check if Supabase credentials are configured
 export function isSupabaseEnabled(): boolean {
   return Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL &&
-    (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    getSupabaseUrl() &&
+    (getSupabaseServiceRoleKey() || getSupabaseAnonKey())
   );
 }
 
 function getSupabase() {
-  const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!rawUrl || !key) return null;
-  const cleanUrl = rawUrl.replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
+  const cleanUrl = getSupabaseUrl();
+  const key = getSupabaseServiceRoleKey() || getSupabaseAnonKey();
+  if (!cleanUrl || !key) return null;
   return createSupabaseClient(cleanUrl, key);
 }
 
@@ -141,6 +142,7 @@ export async function createUser(profile: UserProfile): Promise<UserProfile> {
 
     if (error) {
       console.error('Supabase createUser error:', error);
+      throw new Error(error.message || 'خطا در ذخیره‌سازی اطلاعات در دیتابیس ابری');
     } else if (data) {
       return data as UserProfile;
     }
@@ -224,6 +226,7 @@ export async function createRequest(req: HostingRequest): Promise<HostingRequest
 
     if (error) {
       console.error('Supabase createRequest error:', error);
+      throw new Error(error.message || 'خطا در ذخیره درخواست در دیتابیس ابری');
     } else if (data) {
       return data as HostingRequest;
     }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, notFound } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -29,6 +29,7 @@ import HostingRequestModal from '@/components/modals/HostingRequestModal';
 import VerificationModal from '@/components/modals/VerificationModal';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
+import { UserProfile } from '@/types/database';
 import {
   MOCK_PROFILES,
   MOCK_LISTINGS,
@@ -48,8 +49,42 @@ function MemberProfileContent() {
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [verifyReason, setVerifyReason] = useState('');
 
-  // Find member in usersList
-  const member = usersList.find((p) => p.id === id);
+  const [fetchedMember, setFetchedMember] = useState<UserProfile | null>(null);
+  const [isLoadingMember, setIsLoadingMember] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const inList = usersList.find((p) => p.id === id);
+    if (inList) {
+      setFetchedMember(inList);
+      setIsLoadingMember(false);
+      return;
+    }
+
+    const loadFromApi = async () => {
+      try {
+        const res = await fetch(`/api/users/${id}`, { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.user && isMounted) {
+            setFetchedMember(data.user);
+          }
+        }
+      } catch (e) {
+        // ignore
+      } finally {
+        if (isMounted) setIsLoadingMember(false);
+      }
+    };
+
+    loadFromApi();
+    return () => {
+      isMounted = false;
+    };
+  }, [id, usersList]);
+
+  // Find member in usersList or directly fetched
+  const member = fetchedMember || usersList.find((p) => p.id === id);
   const isOwnProfile = !!(currentUser && member && currentUser.id === member.id);
 
   const handleOpenRequest = () => {
@@ -68,6 +103,23 @@ function MemberProfileContent() {
     }
     setShowRequestModal(true);
   };
+
+  if (isLoadingMember && !member) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#F9F8F6]">
+        <Navbar />
+        <main className="flex-1 max-w-md w-full mx-auto px-4 py-24 text-center space-y-4">
+          <div className="bg-white rounded-3xl p-8 border border-[#EADFD5] shadow-sm space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-[#C25E38]/10 text-[#C25E38] flex items-center justify-center mx-auto animate-pulse">
+              <Sparkles className="w-6 h-6" />
+            </div>
+            <p className="text-xs font-bold text-gray-700">در حال دریافت مشخصات کاربر از دیتابیس...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!member) {
     return (

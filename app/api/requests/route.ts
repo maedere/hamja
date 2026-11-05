@@ -13,10 +13,24 @@ export async function GET(req: Request) {
       const filtered = requests.filter(
         (r) => r.sender_id === userId || r.receiver_id === userId
       );
-      return NextResponse.json({ success: true, requests: filtered });
+      return NextResponse.json(
+        { success: true, requests: filtered },
+        {
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          },
+        }
+      );
     }
 
-    return NextResponse.json({ success: true, requests });
+    return NextResponse.json(
+      { success: true, requests },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        },
+      }
+    );
   } catch (error: any) {
     console.error('API GET /api/requests error:', error);
     return NextResponse.json(

@@ -5,7 +5,14 @@ import { UserProfile } from '@/types/database';
 export async function GET() {
   try {
     const users = await getAllUsers();
-    return NextResponse.json({ success: true, users });
+    return NextResponse.json(
+      { success: true, users },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        },
+      }
+    );
   } catch (error: any) {
     console.error('API GET /api/users error:', error);
     return NextResponse.json(

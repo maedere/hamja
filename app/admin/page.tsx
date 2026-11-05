@@ -29,13 +29,17 @@ import { useAuth } from '@/lib/auth-context';
 import { UserProfile, VerificationStatus } from '@/types/database';
 
 export default function AdminPage() {
-  const { usersList, approveUser, rejectUser, switchUser, currentUser, clearAllUsers } = useAuth();
+  const { usersList, approveUser, rejectUser, switchUser, currentUser, clearAllUsers, refreshUsers } = useAuth();
 
   // Admin Authentication State
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
   const [adminUsername, setAdminUsername] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [loginError, setLoginError] = useState<string | null>(null);
+
+  useEffect(() => {
+    refreshUsers();
+  }, [refreshUsers]);
 
   useEffect(() => {
     try {
