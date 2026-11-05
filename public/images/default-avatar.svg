@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <!-- Background -->
+  <rect width="200" height="200" fill="#F4EFEA"/>
+  
+  <!-- Subtle circular backdrop -->
+  <circle cx="100" cy="100" r="88" fill="#EAE2D8"/>
+  
+  <!-- User Head -->
+  <circle cx="100" cy="76" r="36" fill="#C25E38" fill-opacity="0.85"/>
+  
+  <!-- User Shoulders / Body -->
+  <path d="M44 176 C44 134 70 120 100 120 C130 120 156 134 156 176 Z" fill="#C25E38" fill-opacity="0.85"/>
+</svg>

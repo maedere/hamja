@@ -21,7 +21,7 @@ import Footer from '@/components/layout/Footer';
 import VerificationModal from '@/components/modals/VerificationModal';
 import { useAuth } from '@/lib/auth-context';
 import { HostingRequest } from '@/types/database';
-import { toPersianDigits } from '@/lib/persian-utils';
+import { toPersianDigits, getAvatarUrl } from '@/lib/persian-utils';
 
 export default function RequestsPage() {
   const { currentUser, isVerified } = useAuth();
@@ -167,9 +167,9 @@ export default function RequestsPage() {
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
                     <div className="flex items-center gap-3">
                       <img
-                        src={req.receiver_avatar}
+                        src={getAvatarUrl(req.receiver_avatar)}
                         alt={req.receiver_name}
-                        className="w-12 h-12 rounded-2xl object-cover ring-2 ring-[#EADFD5]"
+                        className="w-12 h-12 rounded-2xl object-cover ring-2 ring-[#EADFD5] bg-[#F4EFEA]"
                       />
                       <div>
                         <h3 className="text-base font-bold text-gray-800">
@@ -280,9 +280,9 @@ export default function RequestsPage() {
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
                     <div className="flex items-center gap-3">
                       <img
-                        src={req.sender_avatar}
+                        src={getAvatarUrl(req.sender_avatar)}
                         alt={req.sender_name}
-                        className="w-12 h-12 rounded-2xl object-cover ring-2 ring-[#EADFD5]"
+                        className="w-12 h-12 rounded-2xl object-cover ring-2 ring-[#EADFD5] bg-[#F4EFEA]"
                       />
                       <div>
                         <h3 className="text-base font-bold text-gray-800">

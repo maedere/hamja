@@ -37,6 +37,7 @@ import {
   MOCK_PAST_HOSTINGS,
 } from '@/lib/mock-data';
 import { Suspense } from 'react';
+import { getAvatarUrl } from '@/lib/persian-utils';
 
 function MemberProfileContent() {
   const router = useRouter();
@@ -193,9 +194,9 @@ function MemberProfileContent() {
           <div className="lg:col-span-8 bg-white rounded-3xl p-6 sm:p-8 border border-[#EADFD5] shadow-sm flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-right">
             <div className="relative shrink-0">
               <img
-                src={member.avatar_url}
+                src={getAvatarUrl(member.avatar_url)}
                 alt={member.full_name}
-                className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl object-cover ring-4 ring-[#EADFD5] shadow-md"
+                className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl object-cover ring-4 ring-[#EADFD5] shadow-md bg-[#F4EFEA]"
               />
               {member.is_identity_verified && (
                 <span

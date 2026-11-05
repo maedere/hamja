@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { X, Calendar, Users, Send, ShieldCheck, HeartHandshake } from 'lucide-react';
 import { Profile } from '@/types/database';
 import { useAuth } from '@/lib/auth-context';
+import { getAvatarUrl } from '@/lib/persian-utils';
 
 interface HostingRequestModalProps {
   isOpen: boolean;
@@ -70,11 +71,11 @@ export default function HostingRequestModal({
       const payload = {
         sender_id: currentUser?.id || 'guest-current-user',
         sender_name: currentUser?.full_name || 'کاربر مهمان',
-        sender_avatar: currentUser?.avatar_url,
+        sender_avatar: getAvatarUrl(currentUser?.avatar_url),
         sender_city: currentUser?.city || 'تهران',
         receiver_id: host.id,
         receiver_name: host.full_name,
-        receiver_avatar: host.avatar_url,
+        receiver_avatar: getAvatarUrl(host.avatar_url),
         receiver_city: host.city,
         start_date: startDate || '۱۴۰۵/۰۸/۱۰',
         end_date: endDate || '۱۴۰۵/۰۸/۱۴',
@@ -118,9 +119,9 @@ export default function HostingRequestModal({
 
         <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
           <img
-            src={host.avatar_url}
+            src={getAvatarUrl(host.avatar_url)}
             alt={host.full_name}
-            className="w-12 h-12 rounded-full object-cover ring-2 ring-[#C25E38]/20"
+            className="w-12 h-12 rounded-full object-cover ring-2 ring-[#C25E38]/20 bg-[#F4EFEA]"
           />
           <div>
             <h3 className="text-lg font-bold text-[#1F2937]">

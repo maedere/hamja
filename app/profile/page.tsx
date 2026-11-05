@@ -32,7 +32,7 @@ import {
 import { useAuth } from '@/lib/auth-context';
 import VerificationModal from '@/components/modals/VerificationModal';
 import EditProfileModal from '@/components/modals/EditProfileModal';
-import { toPersianDigits } from '@/lib/persian-utils';
+import { toPersianDigits, getAvatarUrl } from '@/lib/persian-utils';
 
 export default function ProfilePage() {
   const { currentUser, isLoggedIn, logout } = useAuth();
@@ -295,9 +295,9 @@ export default function ProfilePage() {
               <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5 text-center sm:text-right">
                 <div className="relative shrink-0">
                   <img
-                    src={currentUser.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&q=80'}
+                    src={getAvatarUrl(currentUser.avatar_url)}
                     alt={currentUser.full_name}
-                    className="w-28 h-28 sm:w-36 sm:h-36 rounded-3xl object-cover border-4 border-white shadow-xl bg-white"
+                    className="w-28 h-28 sm:w-36 sm:h-36 rounded-3xl object-cover border-4 border-white shadow-xl bg-[#F4EFEA]"
                   />
                   {currentUser.is_identity_verified && (
                     <div

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { ShieldCheck, MapPin, ArrowLeft, HeartHandshake, Compass, Quote, CheckCircle } from 'lucide-react';
 import { Profile } from '@/types/database';
 import { useAuth } from '@/lib/auth-context';
-import { toPersianDigits } from '@/lib/persian-utils';
+import { toPersianDigits, getAvatarUrl } from '@/lib/persian-utils';
 
 interface MemberCardProps {
   member: Profile;
@@ -24,9 +24,9 @@ export default function MemberCard({ member }: MemberCardProps) {
         <div className="flex items-center justify-between mb-4">
           <div className="relative">
             <img
-              src={member.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80'}
+              src={getAvatarUrl(member.avatar_url)}
               alt={member.full_name}
-              className="w-16 h-16 rounded-2xl object-cover ring-2 ring-[#EADFD5] group-hover:ring-[#C25E38]/40 group-hover:scale-102 transition-all duration-300"
+              className="w-16 h-16 rounded-2xl object-cover ring-2 ring-[#EADFD5] group-hover:ring-[#C25E38]/40 group-hover:scale-102 transition-all duration-300 bg-[#F4EFEA]"
             />
             {member.is_identity_verified && (
               <span

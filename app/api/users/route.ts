@@ -43,7 +43,7 @@ export async function POST(req: Request) {
       username: body.username?.trim().toLowerCase() || `user_${Date.now().toString().slice(-4)}`,
       avatar_url:
         body.avatar_url ||
-        'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&q=80',
+        '/images/default-avatar.svg',
       member_since_year: body.member_since_year || '۱۴۰۵',
       response_rate_percent: body.response_rate_percent ?? 100,
       hosting_count: body.hosting_count ?? 0,

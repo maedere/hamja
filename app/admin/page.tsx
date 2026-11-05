@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { UserProfile, VerificationStatus } from '@/types/database';
+import { getAvatarUrl } from '@/lib/persian-utils';
 
 export default function AdminPage() {
   const { usersList, approveUser, rejectUser, switchUser, currentUser, clearAllUsers, refreshUsers } = useAuth();
@@ -338,9 +339,9 @@ export default function AdminPage() {
                     {/* User Identity & Info */}
                     <div className="flex items-start gap-4 flex-1">
                       <img
-                        src={user.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&q=80'}
+                        src={getAvatarUrl(user.avatar_url)}
                         alt={user.full_name}
-                        className="w-16 h-16 rounded-2xl object-cover ring-2 ring-[#EADFD5] shrink-0"
+                        className="w-16 h-16 rounded-2xl object-cover ring-2 ring-[#EADFD5] bg-[#F4EFEA] shrink-0"
                       />
 
                       <div className="space-y-1.5 flex-1">

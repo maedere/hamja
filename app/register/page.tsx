@@ -273,7 +273,7 @@ export default function RegisterPage() {
       city: city.trim(),
       age: parsedAge,
       job_education: jobEducation.trim() || undefined,
-      avatar_url: avatarPreview || undefined,
+      avatar_url: avatarPreview || '/images/default-avatar.svg',
       can_host: isHostCapable,
       role: selectedRole,
       hosting_status: isHostCapable ? 'ready_for_hosting' : 'not_hosting',
@@ -617,12 +617,18 @@ export default function RegisterPage() {
 
                     <div
                       onClick={() => avatarInputRef.current?.click()}
-                      className="relative w-14 h-14 rounded-2xl bg-white border-2 border-dashed border-[#C25E38]/40 flex items-center justify-center text-[#C25E38] shadow-xs cursor-pointer hover:border-[#C25E38] transition-all overflow-hidden shrink-0"
+                      className="relative w-14 h-14 rounded-2xl bg-[#FAF7F4] border-2 border-dashed border-[#C25E38]/40 flex items-center justify-center shadow-xs cursor-pointer hover:border-[#C25E38] transition-all overflow-hidden shrink-0 group"
+                      title="انتخاب عکس پروفایل"
                     >
                       {avatarPreview ? (
                         <img src={avatarPreview} alt="عکس پروفایل" className="w-full h-full object-cover" />
                       ) : (
-                        <Camera className="w-6 h-6 text-[#C25E38]" />
+                        <div className="relative w-full h-full flex items-center justify-center">
+                          <img src="/images/default-avatar.svg" alt="آیکون پیش‌فرض پروفایل" className="w-full h-full object-cover opacity-85 group-hover:opacity-100 transition-opacity" />
+                          <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Camera className="w-4 h-4 text-white drop-shadow" />
+                          </div>
+                        </div>
                       )}
                     </div>
                     <div className="space-y-0.5">

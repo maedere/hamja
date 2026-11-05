@@ -39,6 +39,16 @@ export function toPersianDigits(num: number | string | undefined | null): string
   return str.replace(/\d/g, (d) => persianDigits[parseInt(d, 10)] || d);
 }
 
+export const DEFAULT_AVATAR = '/images/default-avatar.svg';
+
+export function getAvatarUrl(url?: string | null): string {
+  if (!url || typeof url !== 'string') return DEFAULT_AVATAR;
+  const trimmed = url.trim();
+  if (!trimmed) return DEFAULT_AVATAR;
+  if (trimmed.includes('1535713875002-d1d0cf377fde')) return DEFAULT_AVATAR;
+  return trimmed;
+}
+
 export interface IranCityData {
   name: string;
   topPercent: number;

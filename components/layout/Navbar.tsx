@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import VerificationModal from '../modals/VerificationModal';
 import { useAuth } from '@/lib/auth-context';
+import { getAvatarUrl } from '@/lib/persian-utils';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -127,9 +128,9 @@ export default function Navbar() {
                     title="مشاهده پروفایل من"
                   >
                     <img
-                      src={currentUser.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80'}
+                      src={getAvatarUrl(currentUser.avatar_url)}
                       alt={currentUser.full_name}
-                      className="w-8 h-8 rounded-full object-cover ring-2 ring-[#EADFD5]"
+                      className="w-8 h-8 rounded-full object-cover ring-2 ring-[#EADFD5] bg-[#F4EFEA]"
                     />
                     <div className="text-right">
                       <p className="text-xs font-extrabold text-gray-800 leading-tight">{currentUser.full_name}</p>
@@ -190,9 +191,9 @@ export default function Navbar() {
                   className="flex items-center gap-3 hover:opacity-85 transition-opacity"
                 >
                   <img
-                    src={currentUser.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80'}
+                    src={getAvatarUrl(currentUser.avatar_url)}
                     alt={currentUser.full_name}
-                    className="w-10 h-10 rounded-full object-cover ring-2 ring-[#EADFD5]"
+                    className="w-10 h-10 rounded-full object-cover ring-2 ring-[#EADFD5] bg-[#F4EFEA]"
                   />
                   <div>
                     <h4 className="text-xs font-black text-gray-800">{currentUser.full_name}</h4>
