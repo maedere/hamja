@@ -47,20 +47,20 @@ async function ensureLocalDb(): Promise<LocalDatabaseSchema> {
     if (!Array.isArray(memCache.requests)) memCache.requests = [];
     return memCache;
   } catch (err: any) {
-    if (err.code === 'ENOENT' || err.name === 'SyntaxError') {
-      memCache = { ...DEFAULT_DB };
-      await persistLocalDb(memCache);
-      return memCache;
-    }
-    throw err;
+    memCache = { ...DEFAULT_DB };
+    return memCache;
   }
 }
 
 async function persistLocalDb(data: LocalDatabaseSchema): Promise<void> {
   memCache = data;
-  const dir = path.dirname(DB_FILE_PATH);
-  await fs.mkdir(dir, { recursive: true });
-  await fs.writeFile(DB_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
+  try {
+    const dir = path.dirname(DB_FILE_PATH);
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(DB_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (e) {
+    // Read-only filesystem in serverless environments (Vercel)
+  }
 }
 
 // ==========================================
@@ -94,10 +94,14 @@ export async function getUserById(id: string): Promise<UserProfile | null> {
       .from('profiles')
       .select('*')
       .eq('id', id)
-      .single();
+      .maybeSingle();
 
-    if (!error && data) {
+    if (data) {
       return data as UserProfile;
+    }
+
+    if (!error) {
+      return null;
     }
   }
 
@@ -105,18 +109,22 @@ export async function getUserById(id: string): Promise<UserProfile | null> {
   return db.users.find((u) => u.id === id) || null;
 }
 
-export async function getUserByUsername(username: string): Promise<UserProfile | null> {
-  const clean = username.trim().toLowerCase();
+export async function getUserByUsername(identifier: string): Promise<UserProfile | null> {
+  const clean = identifier.trim().toLowerCase();
   const supabase = getSupabase();
   if (supabase) {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .ilike('username', clean)
-      .single();
+      .or(`username.ilike.${clean},phone.eq.${clean},instagram.ilike.${clean}`)
+      .limit(1);
 
-    if (!error && data) {
-      return data as UserProfile;
+    if (data && data.length > 0) {
+      return data[0] as UserProfile;
+    }
+
+    if (!error) {
+      return null;
     }
   }
 
@@ -138,7 +146,7 @@ export async function createUser(profile: UserProfile): Promise<UserProfile> {
       .from('profiles')
       .insert([profile])
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Supabase createUser error:', error);
@@ -166,10 +174,14 @@ export async function updateUser(
       .update(updates)
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
-    if (!error && data) {
+    if (data) {
       return data as UserProfile;
+    }
+
+    if (!error) {
+      return null;
     }
   }
 
@@ -253,10 +265,14 @@ export async function updateRequestStatus(
       .update(updates)
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
-    if (!error && data) {
+    if (data) {
       return data as HostingRequest;
+    }
+
+    if (!error) {
+      return null;
     }
   }
 

@@ -58,7 +58,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error('API POST /api/users error:', error);
     return NextResponse.json(
-      { success: false, error: 'خطا در ثبت اطلاعات کاربر در دیتابیس' },
+      { success: false, error: error?.message || 'خطا در ثبت اطلاعات کاربر در دیتابیس' },
       { status: 500 }
     );
   }
