@@ -20,11 +20,11 @@ import {
 } from 'lucide-react';
 import VerificationModal from '../modals/VerificationModal';
 import { useAuth } from '@/lib/auth-context';
-import { getAvatarUrl } from '@/lib/persian-utils';
+import { getAvatarUrl, toPersianDigits } from '@/lib/persian-utils';
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { currentUser, isLoggedIn, isVerified, logout } = useAuth();
+  const { currentUser, isLoggedIn, isVerified, logout, pendingRequestsCount } = useAuth();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showVerifyModal, setShowVerifyModal] = useState(false);
@@ -61,11 +61,13 @@ export default function Navbar() {
               <nav className="hidden lg:flex items-center gap-1.5">
                 {navLinks.map((link) => {
                   const isActive = pathname === link.href;
+                  const isRequests = link.href === '/requests';
+                  const hasBadge = isRequests && pendingRequestsCount > 0;
                   return (
                     <Link
                       key={link.href}
                       href={link.href}
-                      className={`text-sm font-semibold transition-all px-3.5 py-2 rounded-xl flex items-center gap-1.5 ${
+                      className={`text-sm font-semibold transition-all px-3.5 py-2 rounded-xl flex items-center gap-1.5 relative ${
                         isActive
                           ? 'bg-[#FBF4F0] text-[#C25E38] shadow-xs'
                           : 'text-gray-600 hover:text-[#C25E38] hover:bg-white/60'
@@ -73,6 +75,11 @@ export default function Navbar() {
                     >
                       <link.icon className={`w-4 h-4 ${isActive ? 'text-[#C25E38]' : 'text-gray-400'}`} />
                       <span>{link.label}</span>
+                      {hasBadge && (
+                        <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 text-[10px] font-black bg-[#C25E38] text-white rounded-full leading-none shadow-sm animate-pulse mr-0.5">
+                          {toPersianDigits(pendingRequestsCount)}
+                        </span>
+                      )}
                     </Link>
                   );
                 })}
@@ -171,10 +178,16 @@ export default function Navbar() {
             <div className="flex md:hidden items-center gap-2">
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="p-2.5 rounded-2xl text-gray-600 hover:text-gray-900 bg-white border border-[#EADFD5] shadow-xs transition-colors"
+                className="relative p-2.5 rounded-2xl text-gray-600 hover:text-gray-900 bg-white border border-[#EADFD5] shadow-xs transition-colors"
                 aria-label="منو"
               >
                 {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                {!isMenuOpen && pendingRequestsCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C25E38] opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-[#C25E38] border-2 border-white"></span>
+                  </span>
+                )}
               </button>
             </div>
           </div>
@@ -215,19 +228,29 @@ export default function Navbar() {
             <div className="space-y-1">
               {navLinks.map((link) => {
                 const isActive = pathname === link.href;
+                const isRequests = link.href === '/requests';
+                const hasBadge = isRequests && pendingRequestsCount > 0;
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
                     onClick={() => setIsMenuOpen(false)}
-                    className={`flex items-center gap-3 px-3.5 py-3 rounded-2xl text-sm font-bold transition-colors ${
+                    className={`flex items-center justify-between px-3.5 py-3 rounded-2xl text-sm font-bold transition-colors ${
                       isActive
                         ? 'bg-[#FBF4F0] text-[#C25E38]'
                         : 'text-gray-700 hover:bg-white'
                     }`}
                   >
-                    <link.icon className={`w-4 h-4 ${isActive ? 'text-[#C25E38]' : 'text-gray-400'}`} />
-                    <span>{link.label}</span>
+                    <div className="flex items-center gap-3">
+                      <link.icon className={`w-4 h-4 ${isActive ? 'text-[#C25E38]' : 'text-gray-400'}`} />
+                      <span>{link.label}</span>
+                    </div>
+                    {hasBadge && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold bg-[#C25E38] text-white rounded-full animate-pulse shadow-xs">
+                        <span>{toPersianDigits(pendingRequestsCount)}</span>
+                        <span className="text-[10px]">جدید</span>
+                      </span>
+                    )}
                   </Link>
                 );
               })}

@@ -24,6 +24,8 @@ interface AuthContextType {
   updateUserProfile: (data: Partial<UserProfile>) => Promise<void>;
   clearAllUsers: () => Promise<void>;
   refreshUsers: () => Promise<UserProfile[] | void>;
+  pendingRequestsCount: number;
+  refreshRequestsCount: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -404,6 +406,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+
+  const refreshRequestsCount = useCallback(async () => {
+    if (!currentUser) {
+      setPendingRequestsCount(0);
+      return;
+    }
+    try {
+      if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
+        const res = await fetch('/api/requests', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.requests)) {
+            const pending = data.requests.filter(
+              (r: any) =>
+                (r.receiver_id === currentUser.id ||
+                  (currentUser.username && r.receiver_id === currentUser.username) ||
+                  (currentUser.phone && r.receiver_id === currentUser.phone)) &&
+                r.status === 'pending'
+            ).length;
+            setPendingRequestsCount(pending);
+          }
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    refreshRequestsCount();
+  }, [currentUser, refreshRequestsCount]);
+
   return (
     <AuthContext.Provider
       value={{
@@ -422,6 +457,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         updateUserProfile,
         clearAllUsers,
         refreshUsers,
+        pendingRequestsCount,
+        refreshRequestsCount,
       }}
     >
       {children}
@@ -448,6 +485,8 @@ export function useAuth(): AuthContextType {
       updateUserProfile: async () => {},
       clearAllUsers: async () => {},
       refreshUsers: async () => {},
+      pendingRequestsCount: 0,
+      refreshRequestsCount: async () => {},
     };
   }
   return context;

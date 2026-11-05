@@ -277,10 +277,12 @@ export async function createRequest(req: HostingRequest): Promise<HostingRequest
 export async function updateRequestStatus(
   id: string,
   status: RequestStatus,
-  exactAddress?: string
+  exactAddress?: string,
+  hostResponseNote?: string
 ): Promise<HostingRequest | null> {
   const updates: Partial<HostingRequest> = { status };
-  if (exactAddress) updates.exact_address_unlocked = exactAddress;
+  if (exactAddress !== undefined) updates.exact_address_unlocked = exactAddress;
+  if (hostResponseNote !== undefined) updates.host_response_note = hostResponseNote;
 
   const supabase = getSupabase();
   if (supabase) {

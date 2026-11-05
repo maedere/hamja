@@ -7,7 +7,7 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
-    const { status, exact_address_unlocked } = await req.json();
+    const { status, exact_address_unlocked, host_response_note } = await req.json();
 
     if (!status) {
       return NextResponse.json(
@@ -16,7 +16,12 @@ export async function PATCH(
       );
     }
 
-    const updated = await updateRequestStatus(id, status, exact_address_unlocked);
+    const updated = await updateRequestStatus(
+      id,
+      status,
+      exact_address_unlocked,
+      host_response_note
+    );
 
     if (!updated) {
       return NextResponse.json(

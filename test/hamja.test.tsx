@@ -3,10 +3,14 @@ import { describe, it, expect, vi } from 'vitest';
 import MemberCard from '@/components/members/MemberCard';
 import VerificationModal from '@/components/modals/VerificationModal';
 import HostingRequestModal from '@/components/modals/HostingRequestModal';
+import AcceptRequestModal from '@/components/modals/AcceptRequestModal';
+import DeclineRequestModal from '@/components/modals/DeclineRequestModal';
+import ReviewExperienceModal from '@/components/modals/ReviewExperienceModal';
 import IranMap from '@/components/explore/IranMap';
 import ProfilePage from '@/app/profile/page';
+import RequestsPage from '@/app/requests/page';
 import { AuthProvider } from '@/lib/auth-context';
-import { MOCK_PROFILES } from '@/lib/mock-data';
+import { MOCK_PROFILES, INITIAL_REQUESTS } from '@/lib/mock-data';
 
 // Mock Next.js navigation hooks
 vi.mock('next/navigation', () => ({
@@ -356,6 +360,58 @@ describe('Hamja Components & Core Features Test Suite', () => {
 
     // Header should reflect dynamic count
     expect(screen.getByText('۲ عضو در ۱ شهر')).toBeInTheDocument();
+  });
+
+  it('renders AcceptRequestModal with address and phone inputs', () => {
+    const mockReq = INITIAL_REQUESTS[0];
+    const mockUser = MOCK_PROFILES[0];
+    render(
+      <AcceptRequestModal
+        isOpen={true}
+        onClose={vi.fn()}
+        request={mockReq}
+        currentUser={mockUser}
+        onConfirm={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText(`پذیرش درخواست ${mockReq.sender_name}`)).toBeInTheDocument();
+    expect(screen.getByText(/شماره تماس مستقیم شما جهت هماهنگی مسافر/)).toBeInTheDocument();
+    expect(screen.getByText('تایید نهایی و پذیرش درخواست')).toBeInTheDocument();
+  });
+
+  it('renders DeclineRequestModal with preset reasons and confirmation button', () => {
+    const mockReq = INITIAL_REQUESTS[0];
+    render(
+      <DeclineRequestModal
+        isOpen={true}
+        onClose={vi.fn()}
+        request={mockReq}
+        onConfirm={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText(`رد محترمانه درخواست ${mockReq.sender_name}`)).toBeInTheDocument();
+    expect(screen.getByText(/در تاریخ‌های انتخابی در سفر هستم/)).toBeInTheDocument();
+    expect(screen.getByText('تایید رد درخواست')).toBeInTheDocument();
+  });
+
+  it('renders ReviewExperienceModal for rating and tags submission', () => {
+    const mockReq = INITIAL_REQUESTS[0];
+    render(
+      <ReviewExperienceModal
+        isOpen={true}
+        onClose={vi.fn()}
+        request={mockReq}
+        reviewerRole="guest"
+        onConfirm={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText(/مهمان شدم · ثبت تجربه اقامت با/)).toBeInTheDocument();
+    expect(screen.getByText('امتیاز شما به این تجربه:')).toBeInTheDocument();
+    expect(screen.getByText('خوش‌برخورد و صمیمی')).toBeInTheDocument();
+    expect(screen.getByText('ثبت تجربه و پایان موفقیت‌آمیز سفر')).toBeInTheDocument();
   });
 });
 

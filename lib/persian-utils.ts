@@ -94,3 +94,110 @@ export const IRAN_CITIES_MAP: Record<string, IranCityData> = {
   'زاهدان': { name: 'زاهدان', topPercent: 70, leftPercent: 87, province: 'سیستان و بلوچستان' },
   'چابهار': { name: 'چابهار', topPercent: 96, leftPercent: 86, province: 'سیستان و بلوچستان' },
 };
+
+export function extractPhoneAndAddress(raw?: string | null): { address: string; phone?: string } {
+  if (!raw) return { address: '' };
+
+  const trimmed = raw.trim();
+  if (trimmed.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (parsed.address || parsed.phone) {
+        return {
+          address: parsed.address || '',
+          phone: parsed.phone ? toPersianDigits(parsed.phone) : undefined,
+        };
+      }
+    } catch (e) {
+      // not JSON
+    }
+  }
+
+  // Check for "تماس:" or "تلفن:" or "شماره:"
+  const phonePattern = /(?:تماس|تلفن|شماره|همراه)[:\s-]*([0-9۰-۹\s+]{10,14})/i;
+  const match = trimmed.match(phonePattern);
+  if (match) {
+    const phone = match[1].trim();
+    const address = trimmed
+      .replace(match[0], '')
+      .replace(/[-–|،,]\s*$/, '')
+      .trim();
+    return { address: address || trimmed, phone: toPersianDigits(phone) };
+  }
+
+  // Check for standalone 09xx
+  const standalone09 = /(09[0-9]{9}|۰۹[۰-۹]{9})/;
+  const m2 = trimmed.match(standalone09);
+  if (m2) {
+    const phone = m2[1].trim();
+    const address = trimmed
+      .replace(phone, '')
+      .replace(/(?:تماس|تلفن|شماره|همراه)[:\s-]*/gi, '')
+      .replace(/[-–|،,]\s*$/, '')
+      .trim();
+    return { address: address || trimmed, phone: toPersianDigits(phone) };
+  }
+
+  return { address: trimmed };
+}
+
+export function extractDeclineReason(note?: string | null): { reason: string; note?: string } {
+  if (!note) return { reason: 'علتی از سوی میزبان ثبت نشده است.' };
+
+  const trimmed = note.trim();
+  if (trimmed.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (parsed.reason || parsed.note) {
+        return {
+          reason: parsed.reason || 'رد محترمانه درخواست',
+          note: parsed.note,
+        };
+      }
+    } catch (e) {
+      // not JSON
+    }
+  }
+
+  if (trimmed.includes('علت رد:')) {
+    const parts = trimmed.split('|');
+    const reasonPart = parts[0]?.replace('علت رد:', '').trim() || '';
+    const notePart = parts[1]?.replace('یادداشت میزبان:', '').replace('یادداشت:', '').trim();
+    return {
+      reason: reasonPart || trimmed,
+      note: notePart,
+    };
+  }
+
+  return { reason: trimmed };
+}
+
+export interface ReviewExperienceData {
+  rating: number;
+  comment: string;
+  tags?: string[];
+  completed_at?: string;
+  reviewer_role?: 'guest' | 'host';
+}
+
+export function extractReviewInfo(note?: string | null): ReviewExperienceData | null {
+  if (!note) return null;
+  const trimmed = note.trim();
+  if (trimmed.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (parsed.rating !== undefined || parsed.type === 'completed_review') {
+        return {
+          rating: Number(parsed.rating) || 5,
+          comment: parsed.comment || '',
+          tags: Array.isArray(parsed.tags) ? parsed.tags : [],
+          completed_at: parsed.completed_at,
+          reviewer_role: parsed.reviewer_role,
+        };
+      }
+    } catch (e) {
+      // not JSON
+    }
+  }
+  return null;
+}
