@@ -226,6 +226,9 @@ export async function getAllRequests(): Promise<HostingRequest[]> {
     if (!error && data) {
       return data as HostingRequest[];
     }
+    if (error) {
+      console.error('Supabase getAllRequests error:', error);
+    }
   }
 
   const db = await ensureLocalDb();
@@ -233,26 +236,42 @@ export async function getAllRequests(): Promise<HostingRequest[]> {
 }
 
 export async function createRequest(req: HostingRequest): Promise<HostingRequest> {
+  const isoCreatedAt =
+    req.created_at && !isNaN(new Date(req.created_at).getTime())
+      ? new Date(req.created_at).toISOString()
+      : new Date().toISOString();
+
+  const formattedReq: HostingRequest = {
+    ...req,
+    created_at: isoCreatedAt,
+  };
+
   const supabase = getSupabase();
   if (supabase) {
     const { data, error } = await supabase
       .from('hosting_requests')
-      .insert([req])
+      .insert([formattedReq])
       .select()
-      .single();
+      .maybeSingle();
+
+    if (!error && data) {
+      const db = await ensureLocalDb();
+      await persistLocalDb({
+        ...db,
+        requests: [data as HostingRequest, ...db.requests.filter((r) => r.id !== req.id)],
+      });
+      return data as HostingRequest;
+    }
 
     if (error) {
       console.error('Supabase createRequest error:', error);
-      throw new Error(error.message || 'خطا در ذخیره درخواست در دیتابیس ابری');
-    } else if (data) {
-      return data as HostingRequest;
     }
   }
 
   const db = await ensureLocalDb();
-  const updated = [req, ...db.requests];
+  const updated = [formattedReq, ...db.requests.filter((r) => r.id !== req.id)];
   await persistLocalDb({ ...db, requests: updated });
-  return req;
+  return formattedReq;
 }
 
 export async function updateRequestStatus(
@@ -273,20 +292,23 @@ export async function updateRequestStatus(
       .maybeSingle();
 
     if (data) {
+      const db = await ensureLocalDb();
+      const updated = db.requests.map((r) => (r.id === id ? (data as HostingRequest) : r));
+      await persistLocalDb({ ...db, requests: updated });
       return data as HostingRequest;
     }
 
-    if (!error) {
-      return null;
+    if (error) {
+      console.error('Supabase updateRequestStatus error:', error);
     }
   }
 
   const db = await ensureLocalDb();
   const index = db.requests.findIndex((r) => r.id === id);
-  if (index === -1) return null;
-
-  const updatedReq: HostingRequest = { ...db.requests[index], ...updates };
-  db.requests[index] = updatedReq;
-  await persistLocalDb(db);
-  return updatedReq;
+  if (index !== -1) {
+    db.requests[index] = { ...db.requests[index], ...updates };
+    await persistLocalDb(db);
+    return db.requests[index];
+  }
+  return null;
 }

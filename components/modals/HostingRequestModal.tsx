@@ -31,6 +31,69 @@ export default function HostingRequestModal({
 
   if (!isOpen) return null;
 
+  if (!currentUser) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+        <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 sm:p-8 text-right border border-[#EADFD5] space-y-4">
+          <button
+            onClick={onClose}
+            className="absolute top-6 left-6 p-2 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+            aria-label="بستن"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
+            <Users className="w-7 h-7" />
+          </div>
+          <h3 className="text-base font-bold text-gray-900 text-center">ورود به حساب کاربری</h3>
+          <p className="text-xs text-gray-600 leading-relaxed text-center">
+            برای ارسال درخواست میزبانی و ارتباط با کاربران، لطفاً ابتدا وارد حساب کاربری خود شوید یا ثبت‌نام کنید.
+          </p>
+          <button
+            onClick={() => {
+              onClose();
+              router.push('/register');
+            }}
+            className="w-full py-3 bg-[#C25E38] hover:bg-[#A84E2D] text-white font-bold rounded-2xl text-xs transition-colors shadow"
+          >
+            ورود یا ثبت‌نام در همجا
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (currentUser.verification_status !== 'approved') {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+        <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 sm:p-8 text-right border border-[#EADFD5] space-y-4">
+          <button
+            onClick={onClose}
+            className="absolute top-6 left-6 p-2 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+            aria-label="بستن"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
+            <ShieldCheck className="w-7 h-7" />
+          </div>
+          <h3 className="text-base font-bold text-gray-900 text-center">نیاز به تأیید احراز هویت</h3>
+          <p className="text-xs text-gray-600 leading-relaxed text-center">
+            {currentUser.verification_status === 'pending'
+              ? 'مدارک هویتی شما ارسال شده و در حال بررسی توسط کارشناسان همجا است. پس از تأیید نهایی، امکان ارسال درخواست برای شما فعال خواهد شد.'
+              : 'جهت حفظ امنیت جامعه همجا و اعتماد متقابل اعضا، تنها کاربرانی که مدارک هویتی آن‌ها تأیید شده است مجاز به ارسال درخواست یا پیشنهاد میزبانی هستند.'}
+          </p>
+          <button
+            onClick={onClose}
+            className="w-full py-3 bg-[#1E5647] hover:bg-[#163E33] text-white font-bold rounded-2xl text-xs transition-colors shadow"
+          >
+            متوجه شدم
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const isSelf = !!(currentUser && host && currentUser.id === host.id);
   const isOffering = mode === 'offer_hosting';
 
@@ -65,14 +128,19 @@ export default function HostingRequestModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentUser || currentUser.verification_status !== 'approved') {
+      alert('ارسال درخواست فقط برای کاربران با هویت تأییدشده امکان‌پذیر است.');
+      return;
+    }
+
     setIsSending(true);
 
     try {
       const payload = {
-        sender_id: currentUser?.id || 'guest-current-user',
-        sender_name: currentUser?.full_name || 'کاربر مهمان',
-        sender_avatar: getAvatarUrl(currentUser?.avatar_url),
-        sender_city: currentUser?.city || 'تهران',
+        sender_id: currentUser.id,
+        sender_name: currentUser.full_name || 'کاربر همجا',
+        sender_avatar: getAvatarUrl(currentUser.avatar_url),
+        sender_city: currentUser.city || 'تهران',
         receiver_id: host.id,
         receiver_name: host.full_name,
         receiver_avatar: getAvatarUrl(host.avatar_url),
@@ -83,26 +151,31 @@ export default function HostingRequestModal({
         message,
         status: 'pending',
         request_type: isOffering ? 'host_invitation' : 'stay_request',
-        created_at: new Date().toLocaleDateString('fa-IR'),
+        created_at: new Date().toISOString(),
       };
 
-      if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
-        await fetch('/api/requests', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
+      const res = await fetch('/api/requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'خطا در ثبت درخواست');
       }
-    } catch (err) {
-      console.error('Error submitting request to API:', err);
-    } finally {
-      setIsSending(false);
+
       setIsSuccess(true);
       setTimeout(() => {
         setIsSuccess(false);
         onClose();
         router.push('/requests');
       }, 1200);
+    } catch (err: any) {
+      console.error('Error submitting request to API:', err);
+      alert(err.message || 'خطا در ثبت و ارسال درخواست. لطفاً مجدداً بررسی فرمایید.');
+    } finally {
+      setIsSending(false);
     }
   };
 

@@ -97,9 +97,13 @@ function MemberProfileContent() {
       alert('شما نمی‌توانید به حساب کاربری خودتان درخواست یا پیام ارسال کنید.');
       return;
     }
-    if (!isVerified) {
-      setVerifyReason('برای ارسال درخواست میزبانی و حفظ امنیت جامعه همجا، لطفاً ابتدا مدارک هویتی (تصویر کارت ملی و سلفی) خود را ارسال فرمایید.');
-      setShowVerifyModal(true);
+    if (currentUser?.verification_status !== 'approved') {
+      if (currentUser?.verification_status === 'pending') {
+        alert('مدارک هویتی شما قبلاً ارسال شده و در حال بررسی است. به محض تأیید توسط تیم همجا، امکان ارسال درخواست برای شما فعال خواهد شد.');
+      } else {
+        setVerifyReason('برای ارسال درخواست میزبانی و حفظ امنیت جامعه همجا، لطفاً ابتدا مدارک هویتی (تصویر کارت ملی و سلفی) خود را ارسال فرمایید تا پس از تأیید فعال شود.');
+        setShowVerifyModal(true);
+      }
       return;
     }
     setShowRequestModal(true);
@@ -729,7 +733,7 @@ function MemberProfileContent() {
         reason={verifyReason}
         onComplete={() => {
           setShowVerifyModal(false);
-          setShowRequestModal(true);
+          alert('مدارک شما با موفقیت ثبت شد و در صف بررسی قرار گرفت. پس از تأیید هویت توسط مدیر، امکان ارسال درخواست فعال خواهد شد.');
         }}
       />
     </div>

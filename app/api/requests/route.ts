@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAllRequests, createRequest } from '@/lib/db';
+import { getAllRequests, createRequest, getUserById } from '@/lib/db';
 import { HostingRequest } from '@/types/database';
 
 export async function GET(req: Request) {
@@ -58,11 +58,32 @@ export async function POST(req: Request) {
       );
     }
 
+    // Ensure sender is authenticated and identity is approved
+    if (!body.sender_id || body.sender_id === 'guest-current-user') {
+      return NextResponse.json(
+        { success: false, error: 'برای ارسال درخواست میزبانی، لطفاً ابتدا وارد حساب کاربری خود شوید.' },
+        { status: 401 }
+      );
+    }
+
+    const sender = await getUserById(body.sender_id);
+    if (sender && sender.verification_status !== 'approved') {
+      return NextResponse.json(
+        { success: false, error: 'برای ارسال درخواست میزبانی، هویت شما باید توسط ادمین تأیید شده باشد.' },
+        { status: 403 }
+      );
+    }
+
+    const isoCreatedAt =
+      body.created_at && !isNaN(new Date(body.created_at).getTime())
+        ? new Date(body.created_at).toISOString()
+        : new Date().toISOString();
+
     const newRequest: HostingRequest = {
       ...body,
       id: body.id || `req-${Date.now()}`,
       status: body.status || 'pending',
-      created_at: body.created_at || new Date().toLocaleDateString('fa-IR'),
+      created_at: isoCreatedAt,
     };
 
     const saved = await createRequest(newRequest);

@@ -83,12 +83,22 @@ describe('Hamja Components & Core Features Test Suite', () => {
   });
 
   it('renders HostingRequestModal and handles stay submission', () => {
+    const verifiedUser = {
+      ...MOCK_PROFILES[1],
+      id: 'verified-test-user-1',
+      verification_status: 'approved' as const,
+      is_identity_verified: true,
+    };
+    window.localStorage.setItem('hamja_current_user_clean_v1', JSON.stringify(verifiedUser));
+
     render(
-      <HostingRequestModal
-        isOpen={true}
-        onClose={vi.fn()}
-        host={sara}
-      />
+      <AuthProvider>
+        <HostingRequestModal
+          isOpen={true}
+          onClose={vi.fn()}
+          host={sara}
+        />
+      </AuthProvider>
     );
 
     expect(
@@ -231,19 +241,54 @@ describe('Hamja Components & Core Features Test Suite', () => {
       target_destination: 'اصفهان',
     };
 
+    const verifiedUser = {
+      ...MOCK_PROFILES[1],
+      id: 'verified-test-user-2',
+      verification_status: 'approved' as const,
+      is_identity_verified: true,
+    };
+    window.localStorage.setItem('hamja_current_user_clean_v1', JSON.stringify(verifiedUser));
+
     render(
-      <HostingRequestModal
-        isOpen={true}
-        onClose={vi.fn()}
-        host={travelerUser}
-        mode="offer_hosting"
-      />
+      <AuthProvider>
+        <HostingRequestModal
+          isOpen={true}
+          onClose={vi.fn()}
+          host={travelerUser}
+          mode="offer_hosting"
+        />
+      </AuthProvider>
     );
 
     expect(
       screen.getByText(`پیشنهاد میزبانی به ${travelerUser.full_name} (دعوت به خانه شما)`)
     ).toBeInTheDocument();
     expect(screen.getByText('ارسال پیشنهاد و دعوت به میزبانی')).toBeInTheDocument();
+  });
+
+  it('blocks unverified users in HostingRequestModal from sending requests', () => {
+    const unverifiedUser = {
+      ...MOCK_PROFILES[1],
+      id: 'unverified-test-user',
+      verification_status: 'unverified' as const,
+      is_identity_verified: false,
+    };
+    window.localStorage.setItem('hamja_current_user_clean_v1', JSON.stringify(unverifiedUser));
+
+    render(
+      <AuthProvider>
+        <HostingRequestModal
+          isOpen={true}
+          onClose={vi.fn()}
+          host={sara}
+        />
+      </AuthProvider>
+    );
+
+    expect(screen.getByText('نیاز به تأیید احراز هویت')).toBeInTheDocument();
+    expect(
+      screen.getByText(/تنها کاربرانی که مدارک هویتی آن‌ها تأیید شده است مجاز به ارسال درخواست یا پیشنهاد میزبانی هستند/)
+    ).toBeInTheDocument();
   });
 
   it('prevents self-requests in HostingRequestModal when user requests themselves', () => {
