@@ -28,7 +28,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useAuth } from '@/lib/auth-context';
 import { GuestPreference, SleepingArrangement, UserRole } from '@/types/database';
-import { parsePersianNumber, toEnglishDigits } from '@/lib/persian-utils';
+import { parsePersianNumber, toEnglishDigits, toPersianDigits } from '@/lib/persian-utils';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -477,7 +477,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="text-xs font-bold text-[#1E5647] bg-[#E8F3EE] px-2.5 py-0.5 rounded-full border border-[#1E5647]/15">
-                  گام {currentStep} از ۵
+                  گام {toPersianDigits(currentStep)} از ۵
                 </div>
               </div>
 
