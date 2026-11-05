@@ -32,6 +32,7 @@ import {
 import { useAuth } from '@/lib/auth-context';
 import VerificationModal from '@/components/modals/VerificationModal';
 import EditProfileModal from '@/components/modals/EditProfileModal';
+import { toPersianDigits } from '@/lib/persian-utils';
 
 export default function ProfilePage() {
   const { currentUser, isLoggedIn, logout } = useAuth();
@@ -379,23 +380,23 @@ export default function ProfilePage() {
 
             {/* Dedicated 3-Card Stats Grid */}
             <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-6">
-              <div className="p-4 bg-[#F9F8F6] rounded-2xl border border-[#EADFD5] text-center">
-                <span className="block text-lg sm:text-2xl font-black text-gray-900 mb-0.5">
-                  {currentUser.hosting_count}
+              <div className="p-4 bg-[#F9F8F6] rounded-2xl border border-[#EADFD5] text-center shadow-xs">
+                <span className="block text-xl sm:text-2xl font-black text-gray-900 mb-0.5">
+                  {toPersianDigits(currentUser.hosting_count ?? 0)}
                 </span>
-                <span className="text-[11px] sm:text-xs text-gray-500 font-medium">میزبانی‌های انجام‌شده</span>
+                <span className="text-[11px] sm:text-xs text-gray-500 font-bold">میزبانی‌های انجام‌شده</span>
               </div>
-              <div className="p-4 bg-[#F9F8F6] rounded-2xl border border-[#EADFD5] text-center">
-                <span className="block text-lg sm:text-2xl font-black text-gray-900 mb-0.5">
-                  {currentUser.response_rate_percent}٪
+              <div className="p-4 bg-[#F9F8F6] rounded-2xl border border-[#EADFD5] text-center shadow-xs">
+                <span className="block text-xl sm:text-2xl font-black text-gray-900 mb-0.5">
+                  {toPersianDigits(currentUser.response_rate_percent ?? 100)}٪
                 </span>
-                <span className="text-[11px] sm:text-xs text-gray-500 font-medium">نرخ پاسخ‌دهی سریع</span>
+                <span className="text-[11px] sm:text-xs text-gray-500 font-bold">نرخ پاسخ‌دهی</span>
               </div>
-              <div className="p-4 bg-[#F9F8F6] rounded-2xl border border-[#EADFD5] text-center">
-                <span className="block text-lg sm:text-2xl font-black text-gray-900 mb-0.5">
-                  {currentUser.member_since_year}
+              <div className="p-4 bg-[#F9F8F6] rounded-2xl border border-[#EADFD5] text-center shadow-xs">
+                <span className="block text-xl sm:text-2xl font-black text-gray-900 mb-0.5">
+                  {toPersianDigits(currentUser.member_since_year || '۱۴۰۴')}
                 </span>
-                <span className="text-[11px] sm:text-xs text-gray-500 font-medium">سال عضویت در همجا</span>
+                <span className="text-[11px] sm:text-xs text-gray-500 font-bold">سال عضویت در همجا</span>
               </div>
             </div>
 

@@ -294,10 +294,10 @@ export default function IranMap({ selectedCity, onSelectCity, users = [] }: Iran
         <div>
           <span className="font-bold text-gray-800">
             {totalMembers > 0
-              ? `شبکه میزبانی با ${totalMembers} عضو فعال`
+              ? `شبکه میزبانی همجا با ${toPersianDigits(totalMembers)} عضو فعال`
               : 'شروع شبکه همجا'}
           </span>
-          <p className="mt-0.5">
+          <p className="mt-0.5 font-medium">
             با کلیک روی هر شهر روی نقشه، اعضای آن شهر فیلتر می‌شوند. جهت حفظ امنیت و حریم خصوصی، نشان‌ها محدوده کلی شهر را نمایش می‌دهند نه نشانی دقیق.
           </p>
         </div>

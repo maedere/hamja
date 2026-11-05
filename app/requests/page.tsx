@@ -21,6 +21,7 @@ import Footer from '@/components/layout/Footer';
 import VerificationModal from '@/components/modals/VerificationModal';
 import { useAuth } from '@/lib/auth-context';
 import { HostingRequest } from '@/types/database';
+import { toPersianDigits } from '@/lib/persian-utils';
 
 export default function RequestsPage() {
   const { currentUser, isVerified } = useAuth();
@@ -134,8 +135,8 @@ export default function RequestsPage() {
             }`}
           >
             <span>درخواست‌های ارسالی من (مسافر)</span>
-            <span className="w-5 h-5 rounded-full bg-[#FBF4F0] text-[#C25E38] text-xs flex items-center justify-center font-semibold">
-              {sentRequests.length}
+            <span className="w-5 h-5 rounded-full bg-[#FBF4F0] text-[#C25E38] text-xs flex items-center justify-center font-bold">
+              {toPersianDigits(sentRequests.length)}
             </span>
           </button>
 
@@ -148,8 +149,8 @@ export default function RequestsPage() {
             }`}
           >
             <span>درخواست‌های دریافتی من (میزبان)</span>
-            <span className="w-5 h-5 rounded-full bg-[#EBF5F1] text-[#1E5647] text-xs flex items-center justify-center font-semibold">
-              {receivedRequests.length}
+            <span className="w-5 h-5 rounded-full bg-[#EBF5F1] text-[#1E5647] text-xs flex items-center justify-center font-bold">
+              {toPersianDigits(receivedRequests.length)}
             </span>
           </button>
         </div>
@@ -207,15 +208,15 @@ export default function RequestsPage() {
                   {/* Stay Details */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-[#F9F8F6] p-4 rounded-2xl border border-gray-100 text-xs text-gray-700">
                     <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-[#C25E38]" />
+                      <Calendar className="w-4 h-4 text-[#C25E38] shrink-0" />
                       <span>تاریخ سفر: {req.start_date} تا {req.end_date}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-[#C25E38]" />
-                      <span>تعداد مهمانان: {req.guest_count} نفر</span>
+                      <Users className="w-4 h-4 text-[#C25E38] shrink-0" />
+                      <span>تعداد مهمانان: {toPersianDigits(req.guest_count)} نفر</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-[#C25E38]" />
+                      <Clock className="w-4 h-4 text-[#C25E38] shrink-0" />
                       <span>تاریخ ثبت: {req.created_at}</span>
                     </div>
                   </div>
@@ -313,12 +314,12 @@ export default function RequestsPage() {
                   {/* Dates */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#F9F8F6] p-4 rounded-2xl border border-gray-100 text-xs text-gray-700">
                     <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-[#C25E38]" />
+                      <Calendar className="w-4 h-4 text-[#C25E38] shrink-0" />
                       <span>تاریخ اقامت پیشنهادی: {req.start_date} تا {req.end_date}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-[#C25E38]" />
-                      <span>تعداد مهمانان: {req.guest_count} نفر</span>
+                      <Users className="w-4 h-4 text-[#C25E38] shrink-0" />
+                      <span>تعداد مهمانان: {toPersianDigits(req.guest_count)} نفر</span>
                     </div>
                   </div>
 
