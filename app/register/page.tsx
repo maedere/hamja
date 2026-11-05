@@ -15,29 +15,29 @@ import {
   Users,
   Compass,
   ArrowLeft,
+  ArrowRight,
   Sparkles,
   Lock,
   Upload,
   AlertCircle,
-  KeyRound,
   LogIn,
-  Plus,
-  Globe,
-  Heart,
-  Tag,
   HeartHandshake,
+  Check,
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useAuth } from '@/lib/auth-context';
 import { GuestPreference, SleepingArrangement, UserRole } from '@/types/database';
-import { parsePersianNumber } from '@/lib/persian-utils';
+import { parsePersianNumber, toEnglishDigits } from '@/lib/persian-utils';
 
 export default function RegisterPage() {
   const router = useRouter();
   const { register, login, isUsernameTaken } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'register' | 'login'>('register');
+
+  // Wizard Step State (1 to 5)
+  const [currentStep, setCurrentStep] = useState<number>(1);
 
   // Avatar Upload
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -48,37 +48,35 @@ export default function RegisterPage() {
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState<string | null>(null);
 
-  // Register Form State matching Google Form
-  const [fullName, setFullName] = useState('');
+  // Step 1: Credentials & Phone (Mandatory)
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
   const [usernameError, setUsernameError] = useState<string | null>(null);
 
-  const [age, setAge] = useState('');
+  // Step 2: Personal Profile
+  const [fullName, setFullName] = useState('');
   const [city, setCity] = useState('');
-  const [instagram, setInstagram] = useState('');
-  const [phone, setPhone] = useState('');
+  const [age, setAge] = useState('');
   const [jobEducation, setJobEducation] = useState('');
+  const [instagram, setInstagram] = useState('');
 
-  // Page 2: Role & Hosting capability
+  // Step 3: Role & Hosting / Travel Details
   const [selectedRole, setSelectedRole] = useState<UserRole>('both');
   const canHost = selectedRole === 'both' || selectedRole === 'host';
   const [maxGuests, setMaxGuests] = useState('2');
   const [guestPreference, setGuestPreference] = useState<GuestPreference>('any');
   const [sleepingArrangement, setSleepingArrangement] = useState<SleepingArrangement>('private_with_bed');
-
-  // Page 3: House rules & Travel
   const [rulePet, setRulePet] = useState(false);
   const [ruleSmoking, setRuleSmoking] = useState(false);
   const [ruleCurfew, setRuleCurfew] = useState(false);
   const [customRule, setCustomRule] = useState('');
-
   const [targetDestination, setTargetDestination] = useState('');
   const [targetDates, setTargetDates] = useState('');
   const [targetGuests, setTargetGuests] = useState('1');
-  const [bioSnippet, setBioSnippet] = useState('');
 
-  // Interests, Languages, and Destinations
+  // Step 4: Bio, Interests & Languages
+  const [bioSnippet, setBioSnippet] = useState('');
   const PRESET_INTERESTS = [
     'سفر و ماجراجویی',
     'عکاسی',
@@ -109,19 +107,55 @@ export default function RegisterPage() {
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['فارسی (مادری)']);
   const [customLanguage, setCustomLanguage] = useState('');
 
-  const PRESET_DESTINATIONS = [
-    'گیلان و مازندران',
-    'شیراز',
-    'اصفهان',
-    'جزیره هرمز و قشم',
-    'یزد',
-    'کردستان و اورامان',
-    'کویر مصر و لوت',
-    'تبریز و جلفا',
-    'بوشهر و چابهار',
-  ];
-  const [selectedDestinations, setSelectedDestinations] = useState<string[]>([]);
-  const [customDestination, setCustomDestination] = useState('');
+  // Step 5: Agreements
+  const [agreeId, setAgreeId] = useState(false);
+  const [agreeEthic, setAgreeEthic] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(false);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Avatar handler
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setAvatarPreview(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Real-time auto conversion for inputs
+  const handleUsernameChange = (val: string) => {
+    const clean = toEnglishDigits(val).toLowerCase().replace(/[^a-z0-9_.]/g, '');
+    setUsername(clean);
+    if (!clean.trim()) {
+      setUsernameError('نام کاربری نمی‌تواند خالی باشد');
+    } else if (clean.length < 3) {
+      setUsernameError('نام کاربری باید حداقل ۳ کاراکتر باشد.');
+    } else if (isUsernameTaken(clean)) {
+      setUsernameError('این نام کاربری قبلاً توسط کاربر دیگری انتخاب شده است.');
+    } else {
+      setUsernameError(null);
+    }
+  };
+
+  const handlePasswordChange = (val: string) => {
+    const clean = toEnglishDigits(val);
+    setPassword(clean);
+  };
+
+  const handlePhoneChange = (val: string) => {
+    const clean = toEnglishDigits(val).replace(/[^0-9]/g, '');
+    setPhone(clean);
+  };
+
+  const handleAgeChange = (val: string) => {
+    const clean = toEnglishDigits(val).replace(/[^0-9]/g, '');
+    setAge(clean);
+  };
 
   const toggleInterest = (tag: string) => {
     setSelectedInterests((prev) =>
@@ -151,59 +185,65 @@ export default function RegisterPage() {
     }
   };
 
-  const toggleDestination = (dest: string) => {
-    setSelectedDestinations((prev) =>
-      prev.includes(dest) ? prev.filter((d) => d !== dest) : [...prev, dest]
-    );
-  };
+  // Step Validation & Navigation
+  const goToNextStep = () => {
+    // Step 1 Validation: Username, Password, Phone (Mandatory)
+    if (currentStep === 1) {
+      if (!username.trim()) {
+        alert('لطفاً نام کاربری خود را وارد فرمایید.');
+        return;
+      }
+      if (username.length < 3) {
+        alert('نام کاربری باید حداقل ۳ کاراکتر انگلیسی باشد.');
+        return;
+      }
+      if (usernameError || isUsernameTaken(username)) {
+        alert('نام کاربری وارد شده تکراری است. لطفاً نام کاربری دیگری انتخاب فرمایید.');
+        return;
+      }
+      if (!password.trim() || password.length < 4) {
+        alert('رمز عبور باید حداقل ۴ کاراکتر باشد.');
+        return;
+      }
+      if (!phone.trim() || phone.length < 10) {
+        alert('شماره همراه الزامی است (حداقل ۱۰ رقم مانند 09123456789).');
+        return;
+      }
+    }
 
-  const addCustomDestination = () => {
-    const val = customDestination.trim();
-    if (val && !selectedDestinations.includes(val)) {
-      setSelectedDestinations((prev) => [...prev, val]);
-      setCustomDestination('');
+    // Step 2 Validation: Full Name, City, Age
+    if (currentStep === 2) {
+      if (!fullName.trim()) {
+        alert('لطفاً نام و نام خانوادگی خود را وارد فرمایید.');
+        return;
+      }
+      if (!city.trim()) {
+        alert('لطفاً شهر محل سکونت خود را وارد فرمایید.');
+        return;
+      }
+      const parsed = parsePersianNumber(age);
+      if (!parsed || parsed < 16 || parsed > 99) {
+        alert('لطفاً سن معتبر خود را وارد فرمایید (حداقل ۱۶ سال).');
+        return;
+      }
+    }
+
+    if (currentStep < 5) {
+      setCurrentStep((prev) => prev + 1);
+      window.scrollTo({ top: 120, behavior: 'smooth' });
     }
   };
 
-  // Page 4: Agreements
-  const [agreeId, setAgreeId] = useState(false);
-  const [agreeEthic, setAgreeEthic] = useState(false);
-  const [agreeTerms, setAgreeTerms] = useState(false);
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  // Handle Avatar Change
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setAvatarPreview(event.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+  const goToPrevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep((prev) => prev - 1);
+      window.scrollTo({ top: 120, behavior: 'smooth' });
     }
   };
 
-  // Validate Username Uniqueness
-  const handleUsernameChange = (val: string) => {
-    setUsername(val);
-    if (!val.trim()) {
-      setUsernameError('نام کاربری نمی‌تواند خالی باشد');
-    } else if (isUsernameTaken(val)) {
-      setUsernameError('این نام کاربری قبلاً توسط کاربر دیگری انتخاب شده است.');
-    } else {
-      setUsernameError(null);
-    }
-  };
-
+  // Final Registration Submission
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (usernameError || isUsernameTaken(username)) {
-      alert('لطفاً یک نام کاربری یکتا انتخاب فرمایید.');
-      return;
-    }
 
     if (!agreeId || !agreeEthic || !agreeTerms) {
       alert('لطفاً تمامی تاییده‌ها و شرایط امنیتی همجا را تایید فرمایید.');
@@ -225,14 +265,14 @@ export default function RegisterPage() {
     const isHostCapable = selectedRole === 'both' || selectedRole === 'host';
 
     const res = await register({
-      full_name: fullName,
-      username,
-      password,
-      phone,
-      instagram,
-      city,
+      full_name: fullName.trim(),
+      username: username.trim().toLowerCase(),
+      password: password.trim(),
+      phone: phone.trim(),
+      instagram: instagram.trim() || undefined,
+      city: city.trim(),
       age: parsedAge,
-      job_education: jobEducation,
+      job_education: jobEducation.trim() || undefined,
       avatar_url: avatarPreview || undefined,
       can_host: isHostCapable,
       role: selectedRole,
@@ -254,7 +294,6 @@ export default function RegisterPage() {
       about_me: bioSnippet || (targetDestination ? `قصد دارم به ${targetDestination} سفر کنم و خوشحال می‌شوم با میزبانان محلی آشنا شوم.` : ''),
       interests: selectedInterests.length > 0 ? selectedInterests : ['سفر و ماجراجویی', 'عکاسی'],
       languages: selectedLanguages.length > 0 ? selectedLanguages : ['فارسی (مادری)'],
-      favorite_destinations: selectedDestinations.length > 0 ? selectedDestinations : undefined,
       agreed_to_provide_id: agreeId,
       agreed_to_respect_house_rules: agreeEthic,
       agreed_to_hamja_terms: agreeTerms,
@@ -279,7 +318,10 @@ export default function RegisterPage() {
     setLoginError(null);
     setIsSubmitting(true);
 
-    const res = await login(loginIdentifier, loginPassword);
+    const cleanId = toEnglishDigits(loginIdentifier).trim();
+    const cleanPass = toEnglishDigits(loginPassword).trim();
+
+    const res = await login(cleanId, cleanPass);
     setIsSubmitting(false);
 
     if (!res.success) {
@@ -292,99 +334,120 @@ export default function RegisterPage() {
     }
   };
 
+  const stepMeta = [
+    { num: 1, title: 'قدم اول: ایجاد حساب کاربری', sub: 'نام کاربری، رمز عبور و شماره همراه' },
+    { num: 2, title: 'قدم دوم: مشخصات فردی', sub: 'نام، سن، شهر و عکس پروفایل' },
+    { num: 3, title: 'قدم سوم: نقش شما در همجا', sub: 'میزبان، مسافر یا میزبانی متقابل' },
+    { num: 4, title: 'قدم چهارم: روحیات و علایق', sub: 'برای پیدا کردن دوستان هم‌سلیقه' },
+    { num: 5, title: 'قدم پنجم: پیمان اعتماد و امنیت', sub: 'اصول و خط قرمز جامعه همجا' },
+  ];
+
   return (
     <div className="min-h-screen flex flex-col bg-[#F9F8F6]">
       <Navbar />
 
-      <main className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-10 text-right">
+      <main className="flex-1 max-w-xl w-full mx-auto px-4 sm:px-6 py-8 text-right">
         {/* Toggle between Register and Login */}
-        <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="bg-white p-1.5 rounded-2xl border border-[#EADFD5] shadow-sm flex items-center">
+        <div className="flex items-center justify-center gap-3 mb-6">
+          <div className="bg-white p-1 rounded-2xl border border-[#EADFD5] shadow-xs flex items-center">
             <button
               type="button"
               onClick={() => setActiveTab('register')}
-              className={`px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+              className={`px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                 activeTab === 'register'
-                  ? 'bg-[#C25E38] text-white shadow'
+                  ? 'bg-[#C25E38] text-white shadow-xs'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              ثبت‌نام عضو جدید
+              ثبت‌نام گام‌به‌گام
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('login')}
-              className={`px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+              className={`px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                 activeTab === 'login'
-                  ? 'bg-[#C25E38] text-white shadow'
+                  ? 'bg-[#C25E38] text-white shadow-xs'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              ورود به حساب موجود
+              ورود به حساب
             </button>
           </div>
         </div>
 
-        {/* LOGIN FORM TAB */}
+        {/* ============================================================== */}
+        {/* TAB 1: LOGIN FORM                                              */}
+        {/* ============================================================== */}
         {activeTab === 'login' && (
-          <div className="bg-white rounded-3xl p-6 sm:p-10 border border-[#EADFD5] shadow-sm max-w-md mx-auto space-y-6 animate-fade-in">
-            <div className="text-center space-y-2">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#EADFD5] shadow-sm space-y-6 animate-fade-in">
+            <div className="text-center space-y-1.5">
               <div className="w-12 h-12 rounded-2xl bg-[#C25E38]/10 text-[#C25E38] flex items-center justify-center mx-auto">
                 <LogIn className="w-6 h-6" />
               </div>
-              <h2 className="text-xl font-bold text-gray-800">ورود به حساب کاربری همجا</h2>
+              <h2 className="text-lg font-black text-gray-800">ورود به حساب کاربری همجا</h2>
               <p className="text-xs text-gray-500">
                 نام کاربری یا شماره موبایل و رمز عبور خود را وارد کنید.
               </p>
             </div>
 
             {loginError && (
-              <div className="p-3.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-xs flex items-center gap-2">
+              <div className="p-3 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-xs flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{loginError}</span>
               </div>
             )}
 
+            {successMessage && (
+              <div className="p-3 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>{successMessage}</span>
+              </div>
+            )}
+
             <form onSubmit={handleLoginSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  نام کاربری، شماره موبایل یا آیدی اینستاگرام
+                <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                  نام کاربری یا شماره موبایل
                 </label>
                 <input
                   type="text"
                   required
+                  dir="ltr"
                   value={loginIdentifier}
-                  onChange={(e) => setLoginIdentifier(e.target.value)}
-                  placeholder="مثال: arash یا 09355363846"
-                  className="w-full px-4 py-3 text-sm bg-[#F9F8F6] border border-gray-200 rounded-xl outline-none focus:border-[#C25E38]"
+                  onChange={(e) => setLoginIdentifier(toEnglishDigits(e.target.value))}
+                  placeholder="sara_m یا 09123456789"
+                  className="w-full px-3.5 py-2.5 text-xs bg-[#FAF7F4] border border-[#EADFD5] rounded-xl outline-none focus:border-[#C25E38] font-mono text-gray-800"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                <label className="block text-xs font-bold text-gray-700 mb-1.5">
                   رمز عبور
                 </label>
                 <input
                   type="password"
                   required
+                  dir="ltr"
                   value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  placeholder="رمز عبور شما"
-                  className="w-full px-4 py-3 text-sm bg-[#F9F8F6] border border-gray-200 rounded-xl outline-none focus:border-[#C25E38]"
+                  onChange={(e) => setLoginPassword(toEnglishDigits(e.target.value))}
+                  placeholder="••••••••"
+                  className="w-full px-3.5 py-2.5 text-xs bg-[#FAF7F4] border border-[#EADFD5] rounded-xl outline-none focus:border-[#C25E38] font-mono text-gray-800"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full py-3.5 bg-[#C25E38] hover:bg-[#A84E2D] text-white font-bold rounded-2xl shadow transition-all text-sm mt-2"
+                disabled={isSubmitting}
+                className="w-full py-3 bg-[#C25E38] hover:bg-[#A84E2D] text-white font-bold rounded-2xl shadow transition-all text-xs"
               >
-                ورود به حساب کاربری
+                {isSubmitting ? 'در حال بررسی...' : 'ورود به حساب کاربری'}
               </button>
             </form>
 
-            <div className="pt-4 border-t border-gray-100 text-center text-xs text-gray-500">
-              هنوز حساب ندارید؟{' '}
+            <div className="pt-3 border-t border-gray-100 text-center text-xs text-gray-500">
+              هنوز حساب کاربری ندارید؟{' '}
               <button
+                type="button"
                 onClick={() => setActiveTab('register')}
                 className="text-[#C25E38] font-bold hover:underline"
               >
@@ -394,798 +457,716 @@ export default function RegisterPage() {
           </div>
         )}
 
-        {/* REGISTER FORM TAB */}
+        {/* ============================================================== */}
+        {/* TAB 2: STEP-BY-STEP REGISTRATION WIZARD                        */}
+        {/* ============================================================== */}
         {activeTab === 'register' && (
-          <form onSubmit={handleRegisterSubmit} className="space-y-8 animate-fade-in">
-            {/* Header matching Google Form */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#EADFD5] shadow-sm space-y-3">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FBF4F0] text-[#C25E38] text-xs font-bold">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>عضویت ساده و سریع</span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-black text-[#1F2937]">
-                فرم ثبت‌نام اولیه همجا
-              </h1>
-              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
-                به همجا (پلتفرم میزبانی و سفر) خوش آمدید. اطلاعات شما نزد ما محفوظ است و صرفاً جهت هماهنگی و ارتباط امن اعضا استفاده می‌شود. در این مرحله نیازی به ارسال کارت ملی نیست.
-              </p>
-            </div>
-
-            {/* Profile Avatar Selection */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#EADFD5] shadow-sm flex flex-col sm:flex-row items-center gap-6">
-              <input
-                type="file"
-                ref={avatarInputRef}
-                accept="image/*"
-                className="hidden"
-                onChange={handleAvatarChange}
-              />
-
-              <div
-                onClick={() => avatarInputRef.current?.click()}
-                className="relative w-24 h-24 rounded-full border-2 border-dashed border-[#C25E38] bg-[#FBF4F0] cursor-pointer group flex items-center justify-center overflow-hidden shrink-0 shadow-sm"
-              >
-                {avatarPreview ? (
-                  <img
-                    src={avatarPreview}
-                    alt="عکس کاربر"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="flex flex-col items-center justify-center text-[#C25E38]">
-                    <Camera className="w-7 h-7 mb-1" />
-                    <span className="text-[10px] font-bold">عکس شما</span>
+          <div className="bg-white rounded-3xl border border-[#EADFD5] shadow-sm overflow-hidden animate-fade-in flex flex-col">
+            
+            {/* Header with Segmented Progress Bar */}
+            <div className="bg-gradient-to-b from-[#FAF7F4] to-white p-5 border-b border-[#EADFD5]/60">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-[#C25E38] text-white flex items-center justify-center font-black text-xs shadow-xs">
+                    هم
                   </div>
-                )}
-                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] font-medium transition-opacity">
-                  تغییر عکس
-                </div>
-              </div>
-
-              <div className="space-y-1 text-center sm:text-right">
-                <h3 className="text-sm font-bold text-gray-800">عکس چهره / پروفایل کاربر</h3>
-                <p className="text-xs text-gray-500 leading-relaxed max-w-md">
-                  داشتن عکس واقعی اعتماد اعضا را چند برابر می‌کند. می‌توانید عکس چهره خود را از گالری انتخاب کنید.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => avatarInputRef.current?.click()}
-                  className="px-3.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-xl transition-colors mt-2"
-                >
-                  {avatarPreview ? 'تغییر تصویر انتخابی' : 'انتخاب تصویر چهره'}
-                </button>
-              </div>
-            </div>
-
-            {/* Username and Password (Account Credentials) */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#EADFD5] shadow-sm space-y-5">
-              <h2 className="text-base font-bold text-gray-800 pb-2 border-b border-gray-100 flex items-center gap-2">
-                <KeyRound className="w-4 h-4 text-[#C25E38]" />
-                <span>اطلاعات ورود به حساب (نام کاربری و رمز عبور)</span>
-              </h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5 flex items-center justify-between">
-                    <span>نام کاربری یکتا <span className="text-red-500">*</span></span>
-                    <span className="text-[10px] text-gray-400">حروف و اعداد انگلیسی</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={username}
-                    onChange={(e) => handleUsernameChange(e.target.value)}
-                    placeholder="مثال: arash_travel"
-                    dir="ltr"
-                    className={`w-full px-4 py-2.5 text-sm bg-[#F9F8F6] border rounded-xl outline-none font-mono text-left ${
-                      usernameError ? 'border-red-500 focus:ring-1 focus:ring-red-500' : 'border-gray-200 focus:border-[#C25E38]'
-                    }`}
-                  />
-                  {usernameError && (
-                    <p className="text-[11px] text-red-600 mt-1 flex items-center gap-1 font-medium">
-                      <AlertCircle className="w-3 h-3" />
-                      {usernameError}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                    رمز عبور <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    minLength={6}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="حداقل ۶ کاراکتر"
-                    dir="ltr"
-                    className="w-full px-4 py-2.5 text-sm bg-[#F9F8F6] border border-gray-200 rounded-xl focus:border-[#C25E38] outline-none text-left"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* بخش ۱: مشخصات فردی و ارتباطی */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#EADFD5] shadow-sm space-y-5">
-              <h2 className="text-base font-bold text-gray-800 pb-2 border-b border-gray-100 flex items-center gap-2">
-                <User className="w-4 h-4 text-[#C25E38]" />
-                <span>بخش ۱: اطلاعات فردی و ارتباطی</span>
-              </h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                    نام و نام‌خانوادگی کامل <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="مثال: سارا محمدی، علی رضایی..."
-                    className="w-full px-4 py-2.5 text-sm bg-[#F9F8F6] border border-gray-200 rounded-xl focus:border-[#C25E38] outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                    سن
-                  </label>
-                  <input
-                    type="text"
-                    value={age}
-                    onChange={(e) => setAge(e.target.value)}
-                    placeholder="مثال: ۲۸"
-                    className="w-full px-4 py-2.5 text-sm bg-[#F9F8F6] border border-gray-200 rounded-xl focus:border-[#C25E38] outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                    شهر محل سکونت فعلی <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    placeholder="مثال: رشت، اصفهان، شیراز..."
-                    className="w-full px-4 py-2.5 text-sm bg-[#F9F8F6] border border-gray-200 rounded-xl focus:border-[#C25E38] outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                    شماره موبایل (ترجیحاً به نام خود فرد) <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="tel"
-                    required
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="مثال: ۰۹۱۲۳۴۵۶۷۸۹"
-                    className="w-full px-4 py-2.5 text-sm bg-[#F9F8F6] border border-gray-200 rounded-xl focus:border-[#C25E38] outline-none text-left font-mono"
-                    dir="ltr"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                    آیدی اینستاگرام (جهت بررسی اولیه و ارتباط) <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={instagram}
-                    onChange={(e) => setInstagram(e.target.value)}
-                    placeholder="مثال: Arashghadimi701"
-                    className="w-full px-4 py-2.5 text-sm bg-[#F9F8F6] border border-gray-200 rounded-xl focus:border-[#C25E38] outline-none text-left font-mono"
-                    dir="ltr"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                    شغل / وضعیت تحصیلی
-                  </label>
-                  <input
-                    type="text"
-                    value={jobEducation}
-                    onChange={(e) => setJobEducation(e.target.value)}
-                    placeholder="مثال: کاردانی، مهندس، آزاد..."
-                    className="w-full px-4 py-2.5 text-sm bg-[#F9F8F6] border border-gray-200 rounded-xl focus:border-[#C25E38] outline-none"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* بخش ۲: شرایط و امکانات میزبانی (Google Form Page 2) */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#EADFD5] shadow-sm space-y-5">
-              <h2 className="text-base font-bold text-gray-800 pb-2 border-b border-gray-100 flex items-center gap-2">
-                <Home className="w-4 h-4 text-[#C25E38]" />
-                <span>بخش ۲: شرایط و امکانات میزبانی</span>
-              </h2>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-800 mb-3">
-                  نحوه فعالیت شما در شبکه همجا چگونه خواهد بود؟ <span className="text-red-500">*</span>
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {/* Option 1: Mutual Hosting */}
-                  <button
-                    type="button"
-                    onClick={() => setSelectedRole('both')}
-                    className={`p-4 rounded-2xl border text-right transition-all flex flex-col justify-between gap-2.5 ${
-                      selectedRole === 'both'
-                        ? 'border-[#C25E38] bg-[#FBF4F0] ring-2 ring-[#C25E38]/20 shadow-sm'
-                        : 'border-gray-200 hover:border-gray-300 bg-[#F9F8F6]'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <div className="w-8 h-8 rounded-xl bg-[#C25E38]/10 text-[#C25E38] flex items-center justify-center">
-                        <HeartHandshake className="w-4 h-4" />
-                      </div>
-                      <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${selectedRole === 'both' ? 'border-[#C25E38] bg-[#C25E38] text-white' : 'border-gray-300'}`}>
-                        {selectedRole === 'both' && <CheckCircle2 className="w-3.5 h-3.5" />}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-xs font-bold text-gray-900 block mb-0.5">میزبانی متقابل</span>
-                      <span className="text-[11px] text-gray-500 leading-relaxed block">
-                        هم میزبان می‌شوم، هم در سفرهایم مهمان
-                      </span>
-                    </div>
-                  </button>
-
-                  {/* Option 2: Host Only */}
-                  <button
-                    type="button"
-                    onClick={() => setSelectedRole('host')}
-                    className={`p-4 rounded-2xl border text-right transition-all flex flex-col justify-between gap-2.5 ${
-                      selectedRole === 'host'
-                        ? 'border-[#1E5647] bg-[#EBF5F1] ring-2 ring-[#1E5647]/20 shadow-sm'
-                        : 'border-gray-200 hover:border-gray-300 bg-[#F9F8F6]'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <div className="w-8 h-8 rounded-xl bg-[#1E5647]/10 text-[#1E5647] flex items-center justify-center">
-                        <Home className="w-4 h-4" />
-                      </div>
-                      <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${selectedRole === 'host' ? 'border-[#1E5647] bg-[#1E5647] text-white' : 'border-gray-300'}`}>
-                        {selectedRole === 'host' && <CheckCircle2 className="w-3.5 h-3.5" />}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-xs font-bold text-gray-900 block mb-0.5">فقط میزبان</span>
-                      <span className="text-[11px] text-gray-500 leading-relaxed block">
-                        آمادگی پذیرش مسافران در خانه خود
-                      </span>
-                    </div>
-                  </button>
-
-                  {/* Option 3: Traveler Only */}
-                  <button
-                    type="button"
-                    onClick={() => setSelectedRole('traveler')}
-                    className={`p-4 rounded-2xl border text-right transition-all flex flex-col justify-between gap-2.5 ${
-                      selectedRole === 'traveler'
-                        ? 'border-sky-600 bg-sky-50 ring-2 ring-sky-600/20 shadow-sm'
-                        : 'border-gray-200 hover:border-gray-300 bg-[#F9F8F6]'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <div className="w-8 h-8 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center">
-                        <Compass className="w-4 h-4" />
-                      </div>
-                      <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${selectedRole === 'traveler' ? 'border-sky-600 bg-sky-600 text-white' : 'border-gray-300'}`}>
-                        {selectedRole === 'traveler' && <CheckCircle2 className="w-3.5 h-3.5" />}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-xs font-bold text-gray-900 block mb-0.5">فقط مهمان / مسافر</span>
-                      <span className="text-[11px] text-gray-500 leading-relaxed block">
-                        فعلاً امکان میزبانی ندارم و فقط مسافرم
-                      </span>
-                    </div>
-                  </button>
-                </div>
-              </div>
-
-              {(selectedRole === 'both' || selectedRole === 'host') && (
-                <div className="space-y-4 pt-4 border-t border-gray-100 animate-fade-in">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                      حداکثر تعداد مهمانی که می‌توانید بپذیرید
+                    <h2 className="text-xs font-black text-gray-900">عضویت در جامعه همجا</h2>
+                    <p className="text-[11px] text-gray-500">میزبانی صمیمانه و سفر دوستانه</p>
+                  </div>
+                </div>
+
+                <div className="text-xs font-bold text-[#1E5647] bg-[#E8F3EE] px-2.5 py-0.5 rounded-full border border-[#1E5647]/15">
+                  گام {currentStep} از ۵
+                </div>
+              </div>
+
+              {/* 5-Segment Progress Bar */}
+              <div className="grid grid-cols-5 gap-1.5">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <div
+                    key={s}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      s <= currentStep ? 'bg-[#C25E38]' : 'bg-gray-200'
+                    }`}
+                  />
+                ))}
+              </div>
+
+              <div className="mt-2.5 flex items-center justify-between">
+                <span className="text-xs font-black text-gray-800">
+                  {stepMeta[currentStep - 1].title}
+                </span>
+                <span className="text-[11px] text-gray-500 font-medium">
+                  {stepMeta[currentStep - 1].sub}
+                </span>
+              </div>
+            </div>
+
+            {/* Wizard Body Form */}
+            <form onSubmit={handleRegisterSubmit} className="p-5 sm:p-6 space-y-5">
+              
+              {successMessage && (
+                <div className="p-3 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span>{successMessage}</span>
+                </div>
+              )}
+
+              {/* -------------------------------------------------------- */}
+              {/* STEP 1: CREDENTIALS & MANDATORY PHONE                    */}
+              {/* -------------------------------------------------------- */}
+              {currentStep === 1 && (
+                <div className="space-y-4 animate-fade-in">
+                  <div className="p-3 bg-[#FAF7F4] rounded-2xl border border-[#EADFD5] text-right space-y-1">
+                    <span className="text-xs font-black text-[#C25E38] block flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-[#C25E38]" />
+                      <span>حساب کاربری خود را بسازید</span>
+                    </span>
+                    <p className="text-[11px] text-gray-500 leading-relaxed">
+                      با این نام کاربری و رمز عبور می‌توانید در هر زمان از هر مرورگر یا تلفن همراه وارد حساب خود شوید.
+                    </p>
+                  </div>
+
+                  {/* Username */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-800 mb-1 flex items-center justify-between">
+                      <span>نام کاربری (آیدی یکتا) <span className="text-red-500">*</span></span>
+                      <span className="text-[10px] text-emerald-600 font-medium">اعداد خودکار انگلیسی می‌شوند</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        required
+                        dir="ltr"
+                        value={username}
+                        onChange={(e) => handleUsernameChange(e.target.value)}
+                        placeholder="sara_1405"
+                        className={`w-full pl-3 pr-7 py-2.5 bg-[#FAF7F4] border rounded-xl text-xs font-mono font-bold text-gray-800 outline-none transition-all ${
+                          usernameError
+                            ? 'border-red-300 focus:border-red-500 bg-red-50/30'
+                            : 'border-[#EADFD5] focus:border-[#C25E38] focus:bg-white'
+                        }`}
+                      />
+                      <span className="absolute right-2.5 top-2.5 text-xs text-gray-400 font-bold">@</span>
+                    </div>
+                    {usernameError ? (
+                      <span className="text-[10px] text-red-500 mt-1 block font-semibold">{usernameError}</span>
+                    ) : (
+                      <span className="text-[10px] text-gray-400 mt-1 block">فقط حروف انگلیسی، اعداد و خط تیره (_)</span>
+                    )}
+                  </div>
+
+                  {/* Password */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-800 mb-1 flex items-center justify-between">
+                      <span>رمز عبور <span className="text-red-500">*</span></span>
+                      <span className="text-[10px] text-gray-400">حداقل ۴ کاراکتر</span>
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      dir="ltr"
+                      value={password}
+                      onChange={(e) => handlePasswordChange(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full px-3.5 py-2.5 bg-[#FAF7F4] border border-[#EADFD5] rounded-xl text-xs font-mono font-bold text-gray-800 outline-none focus:border-[#C25E38] focus:bg-white transition-all"
+                    />
+                    <span className="text-[10px] text-gray-400 mt-1 block">
+                      با کیبورد فارسی هم تایپ کنید، اعداد خودکار انگلیسی ذخیره می‌شوند.
+                    </span>
+                  </div>
+
+                  {/* Mandatory Phone */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-800 mb-1 flex items-center justify-between">
+                      <span>شماره همراه <span className="text-red-500">* (اجباری)</span></span>
+                      <span className="text-[10px] text-[#C25E38] font-bold">جهت هماهنگی و احراز هویت</span>
                     </label>
                     <input
                       type="text"
-                      value={maxGuests}
-                      onChange={(e) => setMaxGuests(e.target.value)}
-                      placeholder="مثال: ۱، ۲، ۳..."
-                      className="w-full sm:w-48 px-4 py-2 text-sm bg-[#F9F8F6] border border-gray-200 rounded-xl focus:border-[#C25E38] outline-none"
+                      required
+                      dir="ltr"
+                      value={phone}
+                      onChange={(e) => handlePhoneChange(e.target.value)}
+                      placeholder="09123456789"
+                      className="w-full px-3.5 py-2.5 bg-[#FAF7F4] border border-[#EADFD5] rounded-xl text-xs font-mono font-bold text-gray-800 outline-none focus:border-[#C25E38] focus:bg-white transition-all"
                     />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-2">
-                      ترجیح شما برای پذیرش مهمان چیست؟
-                    </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {[
-                        { id: 'any', label: 'تفاوتی ندارد' },
-                        { id: 'females_only', label: 'فقط خانم‌ها' },
-                        { id: 'males_only', label: 'فقط آقایان' },
-                        { id: 'couples_families', label: 'زوج‌ها / خانواده‌ها' },
-                      ].map((pref) => (
-                        <button
-                          key={pref.id}
-                          type="button"
-                          onClick={() => setGuestPreference(pref.id as GuestPreference)}
-                          className={`p-2.5 rounded-xl border text-xs font-semibold transition-all ${
-                            guestPreference === pref.id
-                              ? 'border-[#C25E38] bg-[#FBF4F0] text-[#C25E38]'
-                              : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                          }`}
-                        >
-                          {pref.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-2">
-                      امکانات خواب برای مهمان
-                    </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      {[
-                        { id: 'private_with_bed', label: 'اتاق خواب مجزا با تخت' },
-                        { id: 'private_without_bed', label: 'اتاق مجزا بدون تخت (رختخواب)' },
-                        { id: 'shared_space', label: 'فضای مشترک (پذیرایی / کاناپه)' },
-                      ].map((item) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => setSleepingArrangement(item.id as SleepingArrangement)}
-                          className={`p-2.5 rounded-xl border text-xs font-semibold transition-all ${
-                            sleepingArrangement === item.id
-                              ? 'border-[#C25E38] bg-[#FBF4F0] text-[#C25E38]'
-                              : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                          }`}
-                        >
-                          {item.label}
-                        </button>
-                      ))}
-                    </div>
+                    <span className="text-[10px] text-gray-500 mt-1 block">
+                      شماره تماس شما فقط پس از تأیید دوطرفه میزبانی، با میزبان/مهمان به اشتراک گذاشته می‌شود.
+                    </span>
                   </div>
                 </div>
               )}
 
-              {/* If user is only a traveler (guest), capture where they want to go */}
-              {selectedRole === 'traveler' && (
-                <div className="space-y-4 pt-4 border-t border-gray-100 animate-fade-in">
-                  <div className="p-4 bg-sky-50 rounded-2xl border border-sky-200 flex items-start gap-3">
-                    <Compass className="w-5 h-5 text-sky-700 shrink-0 mt-0.5" />
-                    <div className="space-y-1">
-                      <h4 className="text-xs font-bold text-sky-900">مشخصات برنامه سفر شما به عنوان مسافر و مهمان</h4>
-                      <p className="text-[11px] text-sky-700 leading-relaxed">
-                        با ثبت مقاصد و زمان سفرتان، میزبانان محلی در آن شهرها می‌توانند پروفایل شما را ببینند و به شما پیشنهاد میزبانی بدهند.
+              {/* -------------------------------------------------------- */}
+              {/* STEP 2: PERSONAL PROFILE                                 */}
+              {/* -------------------------------------------------------- */}
+              {currentStep === 2 && (
+                <div className="space-y-4 animate-fade-in">
+                  
+                  {/* Avatar Picker */}
+                  <div className="flex items-center gap-4 bg-[#FBF4F0]/60 p-3 rounded-2xl border border-[#C25E38]/15">
+                    <input
+                      type="file"
+                      ref={avatarInputRef}
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleAvatarChange}
+                    />
+
+                    <div
+                      onClick={() => avatarInputRef.current?.click()}
+                      className="relative w-14 h-14 rounded-2xl bg-white border-2 border-dashed border-[#C25E38]/40 flex items-center justify-center text-[#C25E38] shadow-xs cursor-pointer hover:border-[#C25E38] transition-all overflow-hidden shrink-0"
+                    >
+                      {avatarPreview ? (
+                        <img src={avatarPreview} alt="عکس پروفایل" className="w-full h-full object-cover" />
+                      ) : (
+                        <Camera className="w-6 h-6 text-[#C25E38]" />
+                      )}
+                    </div>
+                    <div className="space-y-0.5">
+                      <span className="text-xs font-bold text-gray-800 block">عکس چهره شما (اختیاری)</span>
+                      <p className="text-[11px] text-gray-500 leading-relaxed">
+                        داشتن عکس واقعی اعتماد اعضای جامعه همجا را چند برابر می‌کند.
                       </p>
                     </div>
                   </div>
 
+                  {/* Full Name */}
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                      شهر یا مقاصدی که قصد سفر داری <span className="text-red-500">*</span>
+                    <label className="block text-xs font-bold text-gray-800 mb-1">
+                      نام و نام خانوادگی <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
-                      value={targetDestination}
-                      onChange={(e) => setTargetDestination(e.target.value)}
-                      placeholder="مثال: شیراز، رشت، یزد، قشم، کاشان..."
-                      className="w-full px-4 py-2.5 text-sm bg-[#F9F8F6] border border-gray-200 rounded-xl focus:border-[#C25E38] outline-none"
+                      required
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="مثال: سارا محمدی، علی رضایی..."
+                      className="w-full px-3.5 py-2.5 bg-[#FAF7F4] border border-[#EADFD5] rounded-xl text-xs font-medium text-gray-800 outline-none focus:border-[#C25E38] focus:bg-white transition-all"
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* City & Age */}
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                        زمان یا تاریخ تقریبی سفر
+                      <label className="block text-xs font-bold text-gray-800 mb-1">
+                        شهر محل سکونت <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
-                        value={targetDates}
-                        onChange={(e) => setTargetDates(e.target.value)}
-                        placeholder="مثال: آبان ماه، آخر این هفته، تعطیلات نوروز..."
-                        className="w-full px-4 py-2.5 text-sm bg-[#F9F8F6] border border-gray-200 rounded-xl focus:border-[#C25E38] outline-none"
+                        required
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        placeholder="مثال: شیراز، تهران..."
+                        className="w-full px-3.5 py-2.5 bg-[#FAF7F4] border border-[#EADFD5] rounded-xl text-xs font-medium text-gray-800 outline-none focus:border-[#C25E38] focus:bg-white transition-all"
                       />
                     </div>
-
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                        تعداد مسافران
+                      <label className="block text-xs font-bold text-gray-800 mb-1 flex items-center justify-between">
+                        <span>سن <span className="text-red-500">*</span></span>
+                        <span className="text-[10px] text-emerald-600">انگلیسی خودکار</span>
                       </label>
                       <input
                         type="text"
-                        value={targetGuests}
-                        onChange={(e) => setTargetGuests(e.target.value)}
-                        placeholder="مثال: ۱ نفر (تنها)، ۲ نفر..."
-                        className="w-full px-4 py-2.5 text-sm bg-[#F9F8F6] border border-gray-200 rounded-xl focus:border-[#C25E38] outline-none"
+                        required
+                        dir="ltr"
+                        value={age}
+                        onChange={(e) => handleAgeChange(e.target.value)}
+                        placeholder="مثال: 28"
+                        className="w-full px-3.5 py-2.5 bg-[#FAF7F4] border border-[#EADFD5] rounded-xl text-xs font-mono font-bold text-gray-800 outline-none focus:border-[#C25E38] focus:bg-white transition-all"
                       />
                     </div>
                   </div>
+
+                  {/* Job & Instagram */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-800 mb-1">
+                        شغل یا تحصیلات
+                      </label>
+                      <input
+                        type="text"
+                        value={jobEducation}
+                        onChange={(e) => setJobEducation(e.target.value)}
+                        placeholder="مثال: معمار، دانشجو..."
+                        className="w-full px-3.5 py-2.5 bg-[#FAF7F4] border border-[#EADFD5] rounded-xl text-xs text-gray-800 outline-none focus:border-[#C25E38] focus:bg-white transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-800 mb-1">
+                        آیدی اینستاگرام (اختیاری)
+                      </label>
+                      <input
+                        type="text"
+                        dir="ltr"
+                        value={instagram}
+                        onChange={(e) => setInstagram(e.target.value)}
+                        placeholder="sara_art"
+                        className="w-full px-3.5 py-2.5 bg-[#FAF7F4] border border-[#EADFD5] rounded-xl text-xs font-mono text-gray-800 outline-none focus:border-[#C25E38] focus:bg-white transition-all"
+                      />
+                    </div>
+                  </div>
+
                 </div>
               )}
-            </div>
 
-            {/* بخش ۳: قوانین خانه یا معرفی سفر */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#EADFD5] shadow-sm space-y-5">
-              <h2 className="text-base font-bold text-gray-800 pb-2 border-b border-gray-100 flex items-center gap-2">
-                <Compass className="w-4 h-4 text-[#C25E38]" />
-                <span>{canHost ? 'بخش ۳: قوانین خانه و معرفی' : 'بخش ۳: معرفی و انتظارات از سفر'}</span>
-              </h2>
+              {/* -------------------------------------------------------- */}
+              {/* STEP 3: ROLE & HOSTING/TRAVEL PREFERENCES                */}
+              {/* -------------------------------------------------------- */}
+              {currentStep === 3 && (
+                <div className="space-y-4 animate-fade-in">
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    دوست دارید چطور در جامعه همجا مشارکت کنید؟ (همیشه بعداً می‌توانید این وضعیت را تغییر دهید):
+                  </p>
 
-              {canHost && (
-                <div>
-                  <label className="block text-xs font-semibold text-gray-800 mb-2">
-                    قوانین خاص خانه شما (House Rules)
-                  </label>
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2.5 text-xs text-gray-700 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={rulePet}
-                        onChange={(e) => setRulePet(e.target.checked)}
-                        className="w-4 h-4 text-[#C25E38] rounded accent-[#C25E38]"
-                      />
-                      <span>ورود حیوان خانگی ممنوع است</span>
+                  {/* 3 Role Choice Cards */}
+                  <div className="grid grid-cols-1 gap-2.5">
+                    {/* Role 1: Both */}
+                    <div
+                      onClick={() => setSelectedRole('both')}
+                      className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
+                        selectedRole === 'both'
+                          ? 'border-[#C25E38] bg-[#FBF4F0]'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-[#C25E38]/10 text-[#C25E38] flex items-center justify-center font-bold text-lg shrink-0">
+                          <HeartHandshake className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-black text-gray-900">میزبانی متقابل (پیشنهادی)</span>
+                            <span className="text-[10px] font-bold text-white bg-[#C25E38] px-1.5 py-0.5 rounded-md">محبوب</span>
+                          </div>
+                          <span className="text-[11px] text-gray-600 block mt-0.5">هم در شهرم میزبان می‌شوم، هم در سفرهایم مهمان دوستان</span>
+                        </div>
+                      </div>
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center text-white text-[10px] ${
+                          selectedRole === 'both' ? 'border-[#C25E38] bg-[#C25E38]' : 'border-gray-300'
+                        }`}
+                      >
+                        {selectedRole === 'both' && <Check className="w-3.5 h-3.5" />}
+                      </div>
+                    </div>
+
+                    {/* Role 2: Host Only */}
+                    <div
+                      onClick={() => setSelectedRole('host')}
+                      className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
+                        selectedRole === 'host'
+                          ? 'border-[#1E5647] bg-[#E8F3EE]'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-[#1E5647]/10 text-[#1E5647] flex items-center justify-center font-bold text-lg shrink-0">
+                          <Home className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <span className="text-xs font-black text-gray-900 block">فقط میزبان هستم</span>
+                          <span className="text-[11px] text-gray-600 block mt-0.5">خانه‌ام را به روی مسافران باز می‌کنم، فعلاً قصد سفر ندارم</span>
+                        </div>
+                      </div>
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center text-white text-[10px] ${
+                          selectedRole === 'host' ? 'border-[#1E5647] bg-[#1E5647]' : 'border-gray-300'
+                        }`}
+                      >
+                        {selectedRole === 'host' && <Check className="w-3.5 h-3.5" />}
+                      </div>
+                    </div>
+
+                    {/* Role 3: Traveler Only */}
+                    <div
+                      onClick={() => setSelectedRole('traveler')}
+                      className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
+                        selectedRole === 'traveler'
+                          ? 'border-amber-500 bg-amber-50/50'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold text-lg shrink-0">
+                          <Compass className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <span className="text-xs font-black text-gray-900 block">فقط مسافر / مهمان هستم</span>
+                          <span className="text-[11px] text-gray-600 block mt-0.5">امکان میزبانی ندارم، اما مشتاقم در سفرها مهمان شوم</span>
+                        </div>
+                      </div>
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center text-white text-[10px] ${
+                          selectedRole === 'traveler' ? 'border-amber-500 bg-amber-500' : 'border-gray-300'
+                        }`}
+                      >
+                        {selectedRole === 'traveler' && <Check className="w-3.5 h-3.5" />}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Host specific details */}
+                  {canHost && (
+                    <div className="bg-[#FAF7F4] p-4 rounded-2xl border border-[#EADFD5] space-y-3">
+                      <span className="text-xs font-black text-gray-800 block border-b border-[#EADFD5] pb-2">
+                        شرایط پذیرش در خانه شما:
+                      </span>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-bold text-gray-700 mb-1">ظرفیت مهمان</label>
+                          <select
+                            value={maxGuests}
+                            onChange={(e) => setMaxGuests(e.target.value)}
+                            className="w-full px-3 py-2 bg-white border border-[#EADFD5] rounded-xl text-xs font-medium text-gray-800 outline-none"
+                          >
+                            <option value="1">۱ نفر</option>
+                            <option value="2">۲ نفر</option>
+                            <option value="3">۳ نفر</option>
+                            <option value="4">۴ نفر یا بیشتر</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-gray-700 mb-1">نحوه استقرار</label>
+                          <select
+                            value={sleepingArrangement}
+                            onChange={(e) => setSleepingArrangement(e.target.value as SleepingArrangement)}
+                            className="w-full px-3 py-2 bg-white border border-[#EADFD5] rounded-xl text-xs font-medium text-gray-800 outline-none"
+                          >
+                            <option value="private_with_bed">اتاق اختصاصی با تخت</option>
+                            <option value="private_without_bed">اتاق اختصاصی بدون تخت (سنتی)</option>
+                            <option value="shared_space">فضای مشترک (سالن / کاناپه)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1.5">اولویت پذیرش مهمان</label>
+                        <div className="grid grid-cols-3 gap-2">
+                          {[
+                            { id: 'any', label: 'هرکسی' },
+                            { id: 'females_only', label: 'فقط خانم‌ها' },
+                            { id: 'couples_families', label: 'خانواده / زوج' },
+                          ].map((pref) => (
+                            <button
+                              key={pref.id}
+                              type="button"
+                              onClick={() => setGuestPreference(pref.id as GuestPreference)}
+                              className={`py-1.5 px-2 rounded-xl text-[11px] font-bold transition-all ${
+                                guestPreference === pref.id
+                                  ? 'bg-[#C25E38] text-white shadow-xs'
+                                  : 'bg-white border border-gray-200 text-gray-700 hover:border-gray-300'
+                              }`}
+                            >
+                              {pref.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* House Rules Checkboxes */}
+                      <div className="pt-2 border-t border-[#EADFD5] space-y-2">
+                        <span className="block text-[11px] font-bold text-gray-800">قوانین خاص خانه شما:</span>
+                        <div className="space-y-1.5">
+                          <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={rulePet}
+                              onChange={(e) => setRulePet(e.target.checked)}
+                              className="w-3.5 h-3.5 rounded text-[#C25E38] accent-[#C25E38]"
+                            />
+                            <span>ورود حیوان خانگی ممنوع است</span>
+                          </label>
+                          <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={ruleSmoking}
+                              onChange={(e) => setRuleSmoking(e.target.checked)}
+                              className="w-3.5 h-3.5 rounded text-[#C25E38] accent-[#C25E38]"
+                            />
+                            <span>استعمال دخانیات داخل خانه ممنوع است</span>
+                          </label>
+                          <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={ruleCurfew}
+                              onChange={(e) => setRuleCurfew(e.target.checked)}
+                              className="w-3.5 h-3.5 rounded text-[#C25E38] accent-[#C25E38]"
+                            />
+                            <span>محدوده ساعت رفت‌وآمد (ورود قبل از ۱۱ شب)</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Traveler specific details */}
+                  {!canHost && (
+                    <div className="bg-[#FAF7F4] p-4 rounded-2xl border border-[#EADFD5] space-y-3">
+                      <span className="text-xs font-black text-gray-800 block border-b border-[#EADFD5] pb-2">
+                        برنامه و مقصد سفر شما:
+                      </span>
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          مقصد بعدی که قصد سفر دارید
+                        </label>
+                        <input
+                          type="text"
+                          value={targetDestination}
+                          onChange={(e) => setTargetDestination(e.target.value)}
+                          placeholder="مثال: یزد، قشم، رشت، چابهار..."
+                          className="w-full px-3 py-2 bg-white border border-[#EADFD5] rounded-xl text-xs font-medium text-gray-800 outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          زمان احتمالی سفر
+                        </label>
+                        <input
+                          type="text"
+                          value={targetDates}
+                          onChange={(e) => setTargetDates(e.target.value)}
+                          placeholder="مثال: نوروز ۱۴۰۵ یا اواسط اردیبهشت"
+                          className="w-full px-3 py-2 bg-white border border-[#EADFD5] rounded-xl text-xs font-medium text-gray-800 outline-none"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* -------------------------------------------------------- */}
+              {/* STEP 4: BIO, INTERESTS & LANGUAGES                       */}
+              {/* -------------------------------------------------------- */}
+              {currentStep === 4 && (
+                <div className="space-y-4 animate-fade-in">
+                  
+                  {/* Bio */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-800 mb-1">
+                      درباره خودت یک جمله بنویس (Bio)
                     </label>
-                    <label className="flex items-center gap-2.5 text-xs text-gray-700 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={ruleSmoking}
-                        onChange={(e) => setRuleSmoking(e.target.checked)}
-                        className="w-4 h-4 text-[#C25E38] rounded accent-[#C25E38]"
-                      />
-                      <span>استعمال دخانیات داخل خانه ممنوع است</span>
-                    </label>
-                    <label className="flex items-center gap-2.5 text-xs text-gray-700 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={ruleCurfew}
-                        onChange={(e) => setRuleCurfew(e.target.checked)}
-                        className="w-4 h-4 text-[#C25E38] rounded accent-[#C25E38]"
-                      />
-                      <span>محدوده ساعت رفت‌وآمد (ورود قبل از ۱۱ شب)</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={customRule}
-                      onChange={(e) => setCustomRule(e.target.value)}
-                      placeholder="قانون خاص دیگر اگر دارید بنویسید..."
-                      className="w-full px-3.5 py-2 text-xs bg-[#F9F8F6] border border-gray-200 rounded-xl outline-none"
+                    <textarea
+                      rows={2}
+                      value={bioSnippet}
+                      onChange={(e) => setBioSnippet(e.target.value)}
+                      placeholder="چند خط از علایق، کار یا حال و هوای خودت بنویس..."
+                      className="w-full p-3 bg-[#FAF7F4] border border-[#EADFD5] rounded-xl text-xs text-gray-800 outline-none focus:border-[#C25E38] focus:bg-white transition-all leading-relaxed"
                     />
                   </div>
+
+                  {/* Interests Pill Tags */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-800 mb-1.5 flex items-center justify-between">
+                      <span>علاقه‌مندی‌ها (انتخاب سریع):</span>
+                      <span className="text-[10px] text-gray-400">روی تگ‌ها کلیک کنید</span>
+                    </label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {PRESET_INTERESTS.map((tag) => {
+                        const isSelected = selectedInterests.includes(tag);
+                        return (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => toggleInterest(tag)}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                              isSelected
+                                ? 'bg-[#C25E38] text-white border border-[#C25E38] shadow-xs'
+                                : 'bg-[#FAF7F4] text-gray-700 border border-[#EADFD5] hover:border-gray-300'
+                            }`}
+                          >
+                            #{tag} {isSelected && '✓'}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    
+                    {/* Add Custom Interest */}
+                    <div className="flex items-center gap-2 mt-2">
+                      <input
+                        type="text"
+                        value={customInterest}
+                        onChange={(e) => setCustomInterest(e.target.value)}
+                        placeholder="افزودن علاقه دیگر..."
+                        className="flex-1 px-3 py-1.5 text-xs bg-[#FAF7F4] border border-[#EADFD5] rounded-xl outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={addCustomInterest}
+                        className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl"
+                      >
+                        افزودن
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Languages */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-800 mb-1.5">
+                      زبان‌های مسلط:
+                    </label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {PRESET_LANGUAGES.map((lang) => {
+                        const isSelected = selectedLanguages.includes(lang);
+                        return (
+                          <button
+                            key={lang}
+                            type="button"
+                            onClick={() => toggleLanguage(lang)}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                              isSelected
+                                ? 'bg-[#1E5647] text-white border border-[#1E5647] shadow-xs'
+                                : 'bg-[#FAF7F4] text-gray-700 border border-[#EADFD5] hover:border-gray-300'
+                            }`}
+                          >
+                            {lang} {isSelected && '✓'}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                 </div>
               )}
 
-              <div className="pt-2">
-                <label className="block text-xs font-semibold text-gray-800 mb-2">
-                  {canHost
-                    ? 'معرفی کوتاه از خودتان و شرایط میزبانی / سفر'
-                    : 'معرفی کوتاه، دلیل این سفر و انتظارات شما از میزبانی'}
-                </label>
-                <textarea
-                  rows={3}
-                  value={bioSnippet}
-                  onChange={(e) => setBioSnippet(e.target.value)}
-                  placeholder={
-                    canHost
-                      ? 'چند خط درباره خودتان، علایق، شغل و شرایط میزبانی بگویید...'
-                      : 'چند خط درباره خودتان، برنامه و هدف‌تان از این سفر بنویسید...'
-                  }
-                  className="w-full p-3.5 text-xs sm:text-sm bg-[#F9F8F6] border border-gray-200 rounded-2xl outline-none focus:border-[#C25E38] leading-relaxed"
-                />
-              </div>
+              {/* -------------------------------------------------------- */}
+              {/* STEP 5: TRUST & COMMUNITY COMMITMENTS                    */}
+              {/* -------------------------------------------------------- */}
+              {currentStep === 5 && (
+                <div className="space-y-4 animate-fade-in">
+                  
+                  <div className="p-3.5 bg-[#E8F3EE] rounded-2xl border border-[#1E5647]/20 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#1E5647] text-white flex items-center justify-center font-bold text-lg shrink-0">
+                      <ShieldCheck className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-[#1E5647]">پیمان اعتماد جامعه همجا</h4>
+                      <p className="text-[11px] text-[#1E5647]/80 leading-relaxed">
+                        امنیت، شفافیت و مهمان‌نوازی اصیل ایرانی خط قرمز همجاست.
+                      </p>
+                    </div>
+                  </div>
 
-              {/* علاقه‌مندی‌ها (Interests) */}
-              <div className="pt-3 border-t border-gray-100 space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-gray-800 flex items-center gap-1.5">
-                    <Heart className="w-3.5 h-3.5 text-[#C25E38]" />
-                    <span>علاقه‌مندی‌ها و سبک زندگی (انتخاب چندتایی یا افزودن دلخواه)</span>
-                  </label>
-                  <span className="text-[11px] text-gray-400">
-                    {selectedInterests.length} مورد انتخاب شده
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {PRESET_INTERESTS.map((tag) => {
-                    const isSelected = selectedInterests.includes(tag);
-                    return (
-                      <button
-                        type="button"
-                        key={tag}
-                        onClick={() => toggleInterest(tag)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                          isSelected
-                            ? 'bg-[#C25E38] text-white shadow-sm ring-2 ring-[#C25E38]/20'
-                            : 'bg-[#F9F8F6] text-gray-700 border border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        {isSelected ? '✓ ' : '+ '}
-                        {tag}
-                      </button>
-                    );
-                  })}
-                  {selectedInterests
-                    .filter((t) => !PRESET_INTERESTS.includes(t))
-                    .map((tag) => (
-                      <button
-                        type="button"
-                        key={tag}
-                        onClick={() => toggleInterest(tag)}
-                        className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#C25E38] text-white shadow-sm ring-2 ring-[#C25E38]/20 flex items-center gap-1"
-                      >
-                        <span>✓ {tag}</span>
-                        <span className="text-[10px] opacity-75">×</span>
-                      </button>
-                    ))}
-                </div>
-                <div className="flex items-center gap-2 pt-1">
-                  <input
-                    type="text"
-                    value={customInterest}
-                    onChange={(e) => setCustomInterest(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        addCustomInterest();
-                      }
-                    }}
-                    placeholder="افزودن علاقه‌مندی دلخواه دیگر (مثلاً: نجوم، بازی رومیزی)..."
-                    className="flex-1 px-3.5 py-2 text-xs bg-[#F9F8F6] border border-gray-200 rounded-xl outline-none focus:border-[#C25E38]"
-                  />
-                  <button
-                    type="button"
-                    onClick={addCustomInterest}
-                    className="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition-colors flex items-center gap-1 shrink-0"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>افزودن</span>
-                  </button>
-                </div>
-              </div>
+                  <div className="space-y-2.5">
+                    {/* Agreement 1 */}
+                    <label className="flex items-start gap-3 p-3.5 rounded-2xl border border-[#EADFD5] bg-[#FAF7F4] cursor-pointer hover:bg-white transition-all">
+                      <input
+                        type="checkbox"
+                        checked={agreeId}
+                        onChange={(e) => setAgreeId(e.target.checked)}
+                        className="mt-0.5 w-4 h-4 rounded text-[#C25E38] accent-[#C25E38]"
+                      />
+                      <div className="space-y-0.5">
+                        <span className="text-xs font-bold text-gray-900 block">احراز هویت واقعی</span>
+                        <p className="text-[11px] text-gray-500 leading-relaxed">
+                          متعهدم جهت ارسال درخواست و پذیرش مهمان، تصویر کارت ملی معتبر خود را در بخش احراز هویت بارگذاری کنم.
+                        </p>
+                      </div>
+                    </label>
 
-              {/* زبان‌ها (Languages) */}
-              <div className="pt-3 border-t border-gray-100 space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-gray-800 flex items-center gap-1.5">
-                    <Globe className="w-3.5 h-3.5 text-[#1E5647]" />
-                    <span>زبان‌هایی که به آن‌ها مسلط هستید</span>
-                  </label>
-                  <span className="text-[11px] text-gray-400">
-                    {selectedLanguages.length} زبان
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {PRESET_LANGUAGES.map((lang) => {
-                    const isSelected = selectedLanguages.includes(lang);
-                    return (
-                      <button
-                        type="button"
-                        key={lang}
-                        onClick={() => toggleLanguage(lang)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                          isSelected
-                            ? 'bg-[#1E5647] text-white shadow-sm ring-2 ring-[#1E5647]/20'
-                            : 'bg-[#F9F8F6] text-gray-700 border border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        {isSelected ? '✓ ' : '+ '}
-                        {lang}
-                      </button>
-                    );
-                  })}
-                  {selectedLanguages
-                    .filter((l) => !PRESET_LANGUAGES.includes(l))
-                    .map((lang) => (
-                      <button
-                        type="button"
-                        key={lang}
-                        onClick={() => toggleLanguage(lang)}
-                        className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#1E5647] text-white shadow-sm ring-2 ring-[#1E5647]/20 flex items-center gap-1"
-                      >
-                        <span>✓ {lang}</span>
-                        <span className="text-[10px] opacity-75">×</span>
-                      </button>
-                    ))}
-                </div>
-                <div className="flex items-center gap-2 pt-1">
-                  <input
-                    type="text"
-                    value={customLanguage}
-                    onChange={(e) => setCustomLanguage(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        addCustomLanguage();
-                      }
-                    }}
-                    placeholder="افزودن زبان دیگر (مثلاً: اسپانیایی، ایتالیایی)..."
-                    className="flex-1 px-3.5 py-2 text-xs bg-[#F9F8F6] border border-gray-200 rounded-xl outline-none focus:border-[#1E5647]"
-                  />
-                  <button
-                    type="button"
-                    onClick={addCustomLanguage}
-                    className="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition-colors flex items-center gap-1 shrink-0"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>افزودن</span>
-                  </button>
-                </div>
-              </div>
+                    {/* Agreement 2 */}
+                    <label className="flex items-start gap-3 p-3.5 rounded-2xl border border-[#EADFD5] bg-[#FAF7F4] cursor-pointer hover:bg-white transition-all">
+                      <input
+                        type="checkbox"
+                        checked={agreeEthic}
+                        onChange={(e) => setAgreeEthic(e.target.checked)}
+                        className="mt-0.5 w-4 h-4 rounded text-[#C25E38] accent-[#C25E38]"
+                      />
+                      <div className="space-y-0.5">
+                        <span className="text-xs font-bold text-gray-900 block">احترام به قوانین خانه میزبان</span>
+                        <p className="text-[11px] text-gray-500 leading-relaxed">
+                          به حریم شخصی، ساعات رفت‌وآمد و مقررات خانه میزبان احترام کامل می‌گذارم.
+                        </p>
+                      </div>
+                    </label>
 
-              {/* مقصدهای محبوب برای سفر */}
-              <div className="pt-3 border-t border-gray-100 space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-gray-800 flex items-center gap-1.5">
-                    <Compass className="w-3.5 h-3.5 text-[#C25E38]" />
-                    <span>مقصدهای محبوب شما برای سفر و اقامت</span>
-                  </label>
-                  <span className="text-[11px] text-gray-400">
-                    {selectedDestinations.length} مقصد
-                  </span>
+                    {/* Agreement 3 */}
+                    <label className="flex items-start gap-3 p-3.5 rounded-2xl border border-[#EADFD5] bg-[#FAF7F4] cursor-pointer hover:bg-white transition-all">
+                      <input
+                        type="checkbox"
+                        checked={agreeTerms}
+                        onChange={(e) => setAgreeTerms(e.target.checked)}
+                        className="mt-0.5 w-4 h-4 rounded text-[#C25E38] accent-[#C25E38]"
+                      />
+                      <div className="space-y-0.5">
+                        <span className="text-xs font-bold text-gray-900 block">میزبانی دوستانه و بدون تبادل مالی</span>
+                        <p className="text-[11px] text-gray-500 leading-relaxed">
+                          همجا یک بستر مالی یا هتل نیست؛ هدف ما گسترش دوستی، اعتماد و میزبانی اصیل در سراسر ایران است.
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+
+                  {!agreeId || !agreeEthic || !agreeTerms ? (
+                    <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-center">
+                      <span className="text-[11px] text-amber-800 font-bold block">
+                        جهت تکمیل عضویت، لطفاً هر ۳ گزینه بالا را تأیید فرمایید.
+                      </span>
+                    </div>
+                  ) : null}
+
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {PRESET_DESTINATIONS.map((dest) => {
-                    const isSelected = selectedDestinations.includes(dest);
-                    return (
-                      <button
-                        type="button"
-                        key={dest}
-                        onClick={() => toggleDestination(dest)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                          isSelected
-                            ? 'bg-[#C25E38] text-white shadow-sm ring-2 ring-[#C25E38]/20'
-                            : 'bg-[#F9F8F6] text-gray-700 border border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        {isSelected ? '✓ ' : '+ '}
-                        {dest}
-                      </button>
-                    );
-                  })}
-                  {selectedDestinations
-                    .filter((d) => !PRESET_DESTINATIONS.includes(d))
-                    .map((dest) => (
-                      <button
-                        type="button"
-                        key={dest}
-                        onClick={() => toggleDestination(dest)}
-                        className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#C25E38] text-white shadow-sm ring-2 ring-[#C25E38]/20 flex items-center gap-1"
-                      >
-                        <span>✓ {dest}</span>
-                        <span className="text-[10px] opacity-75">×</span>
-                      </button>
-                    ))}
-                </div>
-                <div className="flex items-center gap-2 pt-1">
-                  <input
-                    type="text"
-                    value={customDestination}
-                    onChange={(e) => setCustomDestination(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        addCustomDestination();
-                      }
-                    }}
-                    placeholder="افزودن مقصد محبوب دیگر (مثلاً: هورامان، لارک، دزفول)..."
-                    className="flex-1 px-3.5 py-2 text-xs bg-[#F9F8F6] border border-gray-200 rounded-xl outline-none focus:border-[#C25E38]"
-                  />
-                  <button
-                    type="button"
-                    onClick={addCustomDestination}
-                    className="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition-colors flex items-center gap-1 shrink-0"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>افزودن</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* بخش ۴: تایید قوانین و تعهدات امنیتی (Google Form Page 4) */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#EADFD5] shadow-sm space-y-4">
-              <h2 className="text-base font-bold text-gray-800 pb-2 border-b border-gray-100 flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-[#1E5647]" />
-                <span>بخش ۴: تأیید قوانین و تعهدات امنیتی</span>
-              </h2>
-
-              <div className="space-y-3">
-                <label className="flex items-start gap-3 p-3 rounded-2xl bg-[#F9F8F6] border border-gray-200 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    required
-                    checked={agreeId}
-                    onChange={(e) => setAgreeId(e.target.checked)}
-                    className="w-4 h-4 text-[#1E5647] rounded accent-[#1E5647] mt-0.5 shrink-0"
-                  />
-                  <span className="text-xs text-gray-700 leading-relaxed">
-                    <strong className="text-gray-900 block mb-0.5">تأییدیه مدارک شناسایی:</strong>
-                    تایید می‌کنم که در صورت پیدا شدن میزبان/مهمان مناسب و هنگام ارسال یا پذیرش درخواست، تصویر کارت ملی و سلفی خود را جهت احراز هویت ارائه دهم.
-                  </span>
-                </label>
-
-                <label className="flex items-start gap-3 p-3 rounded-2xl bg-[#F9F8F6] border border-gray-200 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    required
-                    checked={agreeEthic}
-                    onChange={(e) => setAgreeEthic(e.target.checked)}
-                    className="w-4 h-4 text-[#1E5647] rounded accent-[#1E5647] mt-0.5 shrink-0"
-                  />
-                  <span className="text-xs text-gray-700 leading-relaxed">
-                    <strong className="text-gray-900 block mb-0.5">تأیید قوانین اخلاقی و حفظ امنیت:</strong>
-                    متعهد می‌شوم به قوانین خانه میزبان احترام گذاشته و در حفظ امنیت و نظافت کوشا باشم.
-                  </span>
-                </label>
-
-                <label className="flex items-start gap-3 p-3 rounded-2xl bg-[#F9F8F6] border border-gray-200 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    required
-                    checked={agreeTerms}
-                    onChange={(e) => setAgreeTerms(e.target.checked)}
-                    className="w-4 h-4 text-[#1E5647] rounded accent-[#1E5647] mt-0.5 shrink-0"
-                  />
-                  <span className="text-xs text-gray-700 leading-relaxed">
-                    <strong className="text-gray-900 block mb-0.5">تأیید شرایط و توافق‌نامه همجا:</strong>
-                    &ldquo;همجا&rdquo; صرفاً بستر ارتباطی و معرفی کاربران اهل سفر به یکدیگر است. مسئولیت حفظ اموال شخصی و رعایت قوانین کشور بر عهده مهمان و میزبان است و ارسال این فرم به منزله پذیرش مسئولیت شخصی در ارتباط با سایر کاربران است.
-                  </span>
-                </label>
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <div className="space-y-3">
-              {(!agreeId || !agreeEthic || !agreeTerms) && (
-                <p className="text-[11px] text-amber-800 text-center font-bold bg-amber-50 py-2.5 px-3 rounded-2xl border border-amber-200">
-                  برای فعال‌سازی ثبت‌نام، لطفاً تیک هر ۳ بند تعهدات امنیتی و توافق‌نامه در بخش ۴ را بزنید.
-                </p>
               )}
-              <button
-                type="submit"
-                disabled={isSubmitting || !!usernameError || !agreeId || !agreeEthic || !agreeTerms}
-                className="w-full py-4 bg-[#C25E38] hover:bg-[#A84E2D] text-white font-bold rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 text-base disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? (
-                  <span>در حال ایجاد حساب کاربری...</span>
-                ) : (
-                  <>
-                    <span>ثبت‌نام و عضویت در همجا</span>
-                    <ArrowLeft className="w-5 h-5" />
-                  </>
+
+              {/* Wizard Bottom Actions */}
+              <div className="pt-4 border-t border-gray-100 flex items-center gap-3">
+                {currentStep > 1 && (
+                  <button
+                    type="button"
+                    onClick={goToPrevStep}
+                    className="py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-2xl transition-all flex items-center justify-center gap-1.5 shrink-0"
+                  >
+                    <ArrowRight className="w-4 h-4" />
+                    <span>مرحله قبلی</span>
+                  </button>
                 )}
-              </button>
-            </div>
-          </form>
-        )}
 
-        {successMessage && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-            <div className="bg-white rounded-3xl p-8 max-w-md w-full text-center space-y-4 shadow-2xl border border-[#EADFD5]">
-              <div className="w-16 h-16 rounded-full bg-[#1E5647] text-white flex items-center justify-center mx-auto">
-                <CheckCircle2 className="w-8 h-8" />
+                {currentStep < 5 ? (
+                  <button
+                    type="button"
+                    onClick={goToNextStep}
+                    className="flex-1 py-3 px-5 bg-[#C25E38] hover:bg-[#A84E2D] text-white text-xs font-bold rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2"
+                  >
+                    <span>
+                      {currentStep === 1
+                        ? 'مرحله بعد: مشخصات فردی'
+                        : currentStep === 2
+                        ? 'مرحله بعد: نقش در همجا'
+                        : currentStep === 3
+                        ? 'مرحله بعد: علایق و روحیات'
+                        : 'مرحله بعد: قوانین و امنیت'}
+                    </span>
+                    <ArrowLeft className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || !agreeId || !agreeEthic || !agreeTerms}
+                    className={`flex-1 py-3 px-5 font-bold rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2 text-xs text-white ${
+                      isSubmitting || !agreeId || !agreeEthic || !agreeTerms
+                        ? 'bg-gray-400 cursor-not-allowed opacity-60'
+                        : 'bg-[#1E5647] hover:bg-[#164337]'
+                    }`}
+                  >
+                    {isSubmitting ? (
+                      <span>در حال ذخیره و ایجاد حساب...</span>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        <span>تکمیل عضویت در همجا 🎉</span>
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
-              <h3 className="text-xl font-bold text-gray-800">عملیات با موفقیت انجام شد</h3>
-              <p className="text-xs text-gray-600 leading-relaxed">{successMessage}</p>
-            </div>
+
+            </form>
+
           </div>
         )}
+
       </main>
 
       <Footer />

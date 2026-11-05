@@ -21,6 +21,17 @@ export function parsePersianNumber(val: string | number | undefined | null): num
   return isNaN(parsed) ? undefined : parsed;
 }
 
+export function toEnglishDigits(str: string | number | undefined | null): string {
+  if (str === undefined || str === null) return '';
+  const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+  const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+  let res = str.toString();
+  for (let i = 0; i < 10; i++) {
+    res = res.replaceAll(persianDigits[i], i.toString()).replaceAll(arabicDigits[i], i.toString());
+  }
+  return res;
+}
+
 export function toPersianDigits(num: number | string | undefined | null): string {
   if (num === undefined || num === null) return '';
   const str = num.toString();
