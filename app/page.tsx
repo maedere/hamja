@@ -121,20 +121,20 @@ export default function HomePage() {
 
               {/* Hero Image Card */}
               <div className="lg:col-span-5 relative">
-                <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[4/3] sm:aspect-[1/1] max-w-md mx-auto group">
+                <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[4/5] sm:aspect-[4/5] max-w-md mx-auto group">
                   <img
-                    src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1000&q=80"
-                    alt="یک خانه، شروع یک دوستی"
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    src="/images/hero-hosting.jpg"
+                    alt="یک خانه، شروع یک دوستی ماندگار"
+                    className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent flex items-end p-6">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent flex items-end p-6">
                     <div className="bg-white/95 backdrop-blur-md p-4 rounded-2xl text-right w-full border border-white/50 shadow-xl">
                       <p className="text-xs font-black text-[#1F2937] flex items-center gap-1.5">
                         <HeartHandshake className="w-4 h-4 text-[#C25E38]" />
                         یک خانه امن، شروع یک دوستی ماندگار
                       </p>
                       <p className="text-[11px] text-[#6B7280] mt-1 font-medium">
-                        میزبانی صمیمانه، گفتگوی شبانه و تبادل فرهنگ در سراسر ایران
+                        میزبانی صمیمانه، چای دورهمی و آشنایی با دوستان جدید در سراسر ایران
                       </p>
                     </div>
                   </div>
