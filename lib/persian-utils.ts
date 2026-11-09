@@ -172,6 +172,60 @@ export function extractDeclineReason(note?: string | null): { reason: string; no
   return { reason: trimmed };
 }
 
+export interface SingleReviewData {
+  rating: number;
+  comment: string;
+  tags?: string[];
+  reviewer_id?: string;
+  reviewer_name?: string;
+  reviewer_city?: string;
+  reviewer_avatar?: string;
+  target_user_id?: string;
+  completed_at?: string;
+}
+
+export interface MutualReviewsData {
+  guest_review?: SingleReviewData;
+  host_review?: SingleReviewData;
+}
+
+export function extractMutualReviews(note?: string | null): MutualReviewsData {
+  if (!note) return {};
+  const trimmed = note.trim();
+  if (trimmed.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (parsed.guest_review || parsed.host_review) {
+        return {
+          guest_review: parsed.guest_review,
+          host_review: parsed.host_review,
+        };
+      }
+      if (parsed.rating !== undefined || parsed.type === 'completed_review') {
+        const single: SingleReviewData = {
+          rating: Number(parsed.rating) || 5,
+          comment: parsed.comment || '',
+          tags: Array.isArray(parsed.tags) ? parsed.tags : [],
+          reviewer_id: parsed.reviewer_id,
+          reviewer_name: parsed.reviewer_name,
+          reviewer_city: parsed.reviewer_city,
+          reviewer_avatar: parsed.reviewer_avatar,
+          target_user_id: parsed.target_user_id,
+          completed_at: parsed.completed_at,
+        };
+        if (parsed.reviewer_role === 'host') {
+          return { host_review: single };
+        } else {
+          return { guest_review: single };
+        }
+      }
+    } catch (e) {
+      // not JSON
+    }
+  }
+  return {};
+}
+
 export interface ReviewExperienceData {
   rating: number;
   comment: string;
@@ -180,24 +234,24 @@ export interface ReviewExperienceData {
   reviewer_role?: 'guest' | 'host';
 }
 
-export function extractReviewInfo(note?: string | null): ReviewExperienceData | null {
-  if (!note) return null;
-  const trimmed = note.trim();
-  if (trimmed.startsWith('{')) {
-    try {
-      const parsed = JSON.parse(trimmed);
-      if (parsed.rating !== undefined || parsed.type === 'completed_review') {
-        return {
-          rating: Number(parsed.rating) || 5,
-          comment: parsed.comment || '',
-          tags: Array.isArray(parsed.tags) ? parsed.tags : [],
-          completed_at: parsed.completed_at,
-          reviewer_role: parsed.reviewer_role,
-        };
-      }
-    } catch (e) {
-      // not JSON
-    }
+export function extractReviewInfo(
+  note?: string | null,
+  preferredRole?: 'guest' | 'host'
+): ReviewExperienceData | null {
+  const mutual = extractMutualReviews(note);
+  const rev =
+    preferredRole === 'host'
+      ? mutual.host_review || mutual.guest_review
+      : mutual.guest_review || mutual.host_review;
+
+  if (rev) {
+    return {
+      rating: rev.rating,
+      comment: rev.comment,
+      tags: rev.tags,
+      completed_at: rev.completed_at,
+      reviewer_role: rev === mutual.host_review ? 'host' : 'guest',
+    };
   }
   return null;
 }

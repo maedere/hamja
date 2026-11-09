@@ -26,6 +26,7 @@ interface AuthContextType {
   refreshUsers: () => Promise<UserProfile[] | void>;
   pendingRequestsCount: number;
   refreshRequestsCount: () => Promise<void>;
+  markRequestsAsSeen: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -408,6 +409,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
 
+  const getSeenStatuses = useCallback((): Record<string, string> => {
+    if (!currentUser || typeof window === 'undefined' || !window.localStorage) return {};
+    try {
+      const stored = window.localStorage.getItem(`hamja_seen_request_statuses_${currentUser.id}`);
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  }, [currentUser]);
+
   const refreshRequestsCount = useCallback(async () => {
     if (!currentUser) {
       setPendingRequestsCount(0);
@@ -419,21 +430,76 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (res.ok) {
           const data = await res.json();
           if (data.success && Array.isArray(data.requests)) {
-            const pending = data.requests.filter(
+            const seenMap = getSeenStatuses();
+
+            // 1. As host: pending requests received
+            const pendingReceived = data.requests.filter(
               (r: any) =>
                 (r.receiver_id === currentUser.id ||
                   (currentUser.username && r.receiver_id === currentUser.username) ||
                   (currentUser.phone && r.receiver_id === currentUser.phone)) &&
                 r.status === 'pending'
             ).length;
-            setPendingRequestsCount(pending);
+
+            // 2. As traveler (sender): answered requests (accepted or declined) not yet acknowledged
+            const answeredSent = data.requests.filter((r: any) => {
+              const isSender =
+                r.sender_id === currentUser.id ||
+                (currentUser.username && r.sender_id === currentUser.username) ||
+                (currentUser.phone && r.sender_id === currentUser.phone);
+
+              if (!isSender) return false;
+              if (r.status !== 'accepted' && r.status !== 'declined') return false;
+
+              // If status has changed since user last saw it:
+              return seenMap[r.id] !== r.status;
+            }).length;
+
+            setPendingRequestsCount(pendingReceived + answeredSent);
           }
         }
       }
     } catch (e) {
       // ignore
     }
-  }, [currentUser]);
+  }, [currentUser, getSeenStatuses]);
+
+  const markRequestsAsSeen = useCallback(async () => {
+    if (!currentUser || typeof window === 'undefined' || !window.localStorage) return;
+    try {
+      const res = await fetch('/api/requests', { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.requests)) {
+          const seenMap = getSeenStatuses();
+          data.requests.forEach((r: any) => {
+            const isSender =
+              r.sender_id === currentUser.id ||
+              (currentUser.username && r.sender_id === currentUser.username) ||
+              (currentUser.phone && r.sender_id === currentUser.phone);
+            if (isSender) {
+              seenMap[r.id] = r.status;
+            }
+          });
+          window.localStorage.setItem(
+            `hamja_seen_request_statuses_${currentUser.id}`,
+            JSON.stringify(seenMap)
+          );
+          // Recalculate pending requests (will only count remaining pending received)
+          const pendingReceived = data.requests.filter(
+            (r: any) =>
+              (r.receiver_id === currentUser.id ||
+                (currentUser.username && r.receiver_id === currentUser.username) ||
+                (currentUser.phone && r.receiver_id === currentUser.phone)) &&
+              r.status === 'pending'
+          ).length;
+          setPendingRequestsCount(pendingReceived);
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, [currentUser, getSeenStatuses]);
 
   useEffect(() => {
     refreshRequestsCount();
@@ -459,6 +525,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         refreshUsers,
         pendingRequestsCount,
         refreshRequestsCount,
+        markRequestsAsSeen,
       }}
     >
       {children}
@@ -487,6 +554,7 @@ export function useAuth(): AuthContextType {
       refreshUsers: async () => {},
       pendingRequestsCount: 0,
       refreshRequestsCount: async () => {},
+      markRequestsAsSeen: async () => {},
     };
   }
   return context;

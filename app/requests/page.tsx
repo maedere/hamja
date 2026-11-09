@@ -37,12 +37,15 @@ import {
   extractPhoneAndAddress,
   extractDeclineReason,
   extractReviewInfo,
+  extractMutualReviews,
+  SingleReviewData,
+  MutualReviewsData,
 } from '@/lib/persian-utils';
 
 type StatusFilterType = 'all' | 'pending' | 'accepted' | 'completed' | 'declined';
 
 export default function RequestsPage() {
-  const { currentUser, isVerified, refreshRequestsCount } = useAuth();
+  const { currentUser, isVerified, refreshRequestsCount, markRequestsAsSeen } = useAuth();
   const [activeTab, setActiveTab] = useState<'sent' | 'received'>('sent');
   const [statusFilter, setStatusFilter] = useState<StatusFilterType>('all');
 
@@ -100,7 +103,10 @@ export default function RequestsPage() {
 
   useEffect(() => {
     fetchRequests();
-  }, [currentUser]);
+    if (markRequestsAsSeen) {
+      markRequestsAsSeen();
+    }
+  }, [currentUser, markRequestsAsSeen]);
 
   const handleCopyPhone = (phone: string, id: string) => {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -212,20 +218,42 @@ export default function RequestsPage() {
     setReviewRole(role);
   };
 
-  // Confirm Review & Complete Stay
+  // Confirm Review & Complete Stay (Two-sided mutual review support)
   const handleConfirmReview = async (
     requestId: string,
     rating: number,
     comment: string,
     tags: string[]
   ) => {
-    const reviewPayload = JSON.stringify({
-      type: 'completed_review',
+    const targetReq = requests.find((r) => r.id === requestId);
+    const existingMutual = extractMutualReviews(targetReq?.host_response_note);
+
+    const singleReview: SingleReviewData = {
       rating,
       comment,
       tags,
+      reviewer_id: currentUser?.id || 'user',
+      reviewer_name: currentUser?.full_name || 'کاربر همجا',
+      reviewer_city: currentUser?.city || 'ایران',
+      reviewer_avatar: currentUser?.avatar_url,
+      target_user_id:
+        reviewRole === 'guest'
+          ? targetReq?.receiver_id || ''
+          : targetReq?.sender_id || '',
       completed_at: new Date().toISOString(),
-      reviewer_role: reviewRole,
+    };
+
+    const updatedMutual: MutualReviewsData = {
+      ...existingMutual,
+      ...(reviewRole === 'guest'
+        ? { guest_review: singleReview }
+        : { host_review: singleReview }),
+    };
+
+    const reviewPayload = JSON.stringify({
+      type: 'completed_reviews',
+      guest_review: updatedMutual.guest_review,
+      host_review: updatedMutual.host_review,
     });
 
     setRequests((prev) =>
@@ -251,7 +279,7 @@ export default function RequestsPage() {
         }),
       });
       await refreshRequestsCount();
-      alert('سپاس از شما! تجربه اقامت با موفقیت ثبت شد و به ارتقای اعتبار دوطرفه کمک کرد.');
+      alert('سپاس از شما! نظر و امتیاز شما با موفقیت ثبت شد و در پروفایل کاربر مقابل به عنوان تجربه تأییدشده نمایش می‌یابد.');
     } catch (err) {
       console.error('Failed to complete review:', err);
     }
@@ -496,155 +524,213 @@ export default function RequestsPage() {
                         &ldquo;{req.message}&rdquo;
                       </div>
 
-                      {/* CASE 1: UNLOCKED CONTACT & ADDRESS (Accepted State) */}
-                      {req.status === 'accepted' && (
-                        <div className="p-5 rounded-2xl bg-[#EBF5F1] border border-[#1E5647]/30 space-y-4 animate-fade-in">
-                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-[#1E5647]/15">
-                            <div className="flex items-center gap-2 text-sm font-bold text-[#1E5647]">
-                              <ShieldCheck className="w-5 h-5 text-[#1E5647]" />
-                              <span>
-                                {activeTab === 'sent'
-                                  ? 'اطلاعات تماس مستقیم و نشانی میزبان بازگشایی شد'
-                                  : 'نشانی و شماره تماس شما با مسافر به اشتراک گذاشته شد'}
+                      {/* CASE 1 & 2: ACCEPTED OR COMPLETED STAY (UNLOCKED CONTACT & MUTUAL REVIEWS) */}
+                      {(req.status === 'accepted' || req.status === 'completed') && (() => {
+                        const mutualReviews = extractMutualReviews(req.host_response_note);
+                        const isGuest = activeTab === 'sent';
+                        const myReview = isGuest ? mutualReviews.guest_review : mutualReviews.host_review;
+                        const otherReview = isGuest ? mutualReviews.host_review : mutualReviews.guest_review;
+                        const otherName = isGuest ? req.receiver_name : req.sender_name;
+                        const hasMyReview = !!myReview;
+                        const hasOtherReview = !!otherReview;
+
+                        return (
+                          <div className="p-5 rounded-2xl bg-[#EBF5F1] border border-[#1E5647]/30 space-y-4 animate-fade-in">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-[#1E5647]/15">
+                              <div className="flex items-center gap-2 text-sm font-bold text-[#1E5647]">
+                                <ShieldCheck className="w-5 h-5 text-[#1E5647]" />
+                                <span>
+                                  {isGuest
+                                    ? 'اطلاعات تماس مستقیم و نشانی میزبان بازگشایی شد'
+                                    : 'نشانی و شماره تماس شما با مسافر به اشتراک گذاشته شد'}
+                                </span>
+                              </div>
+                              <span className="text-[11px] text-[#1E5647] font-semibold bg-white/70 px-2.5 py-1 rounded-full">
+                                {req.status === 'completed' ? 'اقامت پایان‌یافته' : 'هماهنگی مستقیم'}
                               </span>
                             </div>
-                            <span className="text-[11px] text-[#1E5647] font-semibold bg-white/70 px-2.5 py-1 rounded-full">
-                              هماهنگی مستقیم
-                            </span>
-                          </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-800">
-                            {/* Phone Box with Direct Actions */}
-                            {phoneAddress.phone && (
-                              <div className="bg-white p-4 rounded-xl border border-[#1E5647]/20 space-y-2.5">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-gray-500 font-medium flex items-center gap-1.5">
-                                    <Phone className="w-3.5 h-3.5 text-[#1E5647]" />
-                                    <span>شماره تماس میزبان:</span>
-                                  </span>
-                                  <span className="text-sm font-black text-gray-900 tracking-wider">
-                                    {phoneAddress.phone}
-                                  </span>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-800">
+                              {/* Phone Box with Direct Actions */}
+                              {phoneAddress.phone && (
+                                <div className="bg-white p-4 rounded-xl border border-[#1E5647]/20 space-y-2.5">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-gray-500 font-medium flex items-center gap-1.5">
+                                      <Phone className="w-3.5 h-3.5 text-[#1E5647]" />
+                                      <span>شماره تماس {isGuest ? 'میزبان' : 'مسافر'}:</span>
+                                    </span>
+                                    <span className="text-sm font-black text-gray-900 tracking-wider">
+                                      {phoneAddress.phone}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2 pt-1">
+                                    <a
+                                      href={`tel:${phoneAddress.phone.replace(/[^0-9]/g, '')}`}
+                                      className="flex-1 py-2 bg-[#1E5647] hover:bg-[#164337] text-white font-bold rounded-lg text-center transition-colors flex items-center justify-center gap-1 text-[11px]"
+                                    >
+                                      <PhoneCall className="w-3 h-3" />
+                                      <span>تماس تلفنی</span>
+                                    </a>
+                                    <button
+                                      onClick={() => handleCopyPhone(phoneAddress.phone!, req.id)}
+                                      className="py-2 px-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-colors flex items-center gap-1 text-[11px]"
+                                    >
+                                      {copiedId === req.id ? (
+                                        <>
+                                          <Check className="w-3 h-3 text-emerald-600" />
+                                          <span className="text-emerald-700">کپی شد!</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Copy className="w-3 h-3" />
+                                          <span>کپی شماره</span>
+                                        </>
+                                      )}
+                                    </button>
+                                    <a
+                                      href={`sms:${phoneAddress.phone.replace(/[^0-9]/g, '')}`}
+                                      className="py-2 px-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-colors text-[11px]"
+                                    >
+                                      پیامک
+                                    </a>
+                                  </div>
                                 </div>
-                                <div className="flex items-center gap-2 pt-1">
-                                  <a
-                                    href={`tel:${phoneAddress.phone.replace(/[^0-9]/g, '')}`}
-                                    className="flex-1 py-2 bg-[#1E5647] hover:bg-[#164337] text-white font-bold rounded-lg text-center transition-colors flex items-center justify-center gap-1 text-[11px]"
-                                  >
-                                    <PhoneCall className="w-3 h-3" />
-                                    <span>تماس تلفنی</span>
-                                  </a>
-                                  <button
-                                    onClick={() => handleCopyPhone(phoneAddress.phone!, req.id)}
-                                    className="py-2 px-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-colors flex items-center gap-1 text-[11px]"
-                                  >
-                                    {copiedId === req.id ? (
-                                      <>
-                                        <Check className="w-3 h-3 text-emerald-600" />
-                                        <span className="text-emerald-700">کپی شد!</span>
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Copy className="w-3 h-3" />
-                                        <span>کپی شماره</span>
-                                      </>
-                                    )}
-                                  </button>
-                                  <a
-                                    href={`sms:${phoneAddress.phone.replace(/[^0-9]/g, '')}`}
-                                    className="py-2 px-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-colors text-[11px]"
-                                  >
-                                    پیامک
-                                  </a>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Address Box */}
-                            <div className="bg-white p-4 rounded-xl border border-[#1E5647]/20 space-y-1.5 flex flex-col justify-center">
-                              <span className="text-gray-500 font-medium flex items-center gap-1.5">
-                                <Home className="w-3.5 h-3.5 text-[#1E5647]" />
-                                <span>نشانی دقیق اقامتگاه:</span>
-                              </span>
-                              <p className="font-bold text-gray-900 leading-relaxed text-xs">
-                                {phoneAddress.address || 'نشانی پس از تماس هماهنگ می‌شود.'}
-                              </p>
-                              {req.host_response_note && !req.host_response_note.startsWith('{') && (
-                                <p className="text-[11px] text-gray-500 pt-1 border-t border-gray-100 mt-1">
-                                  یادداشت میزبان: &ldquo;{req.host_response_note}&rdquo;
-                                </p>
                               )}
-                            </div>
-                          </div>
 
-                          {/* COMPLETION / RATING CTA BUTTON */}
-                          <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 bg-white/60 p-3.5 rounded-xl border border-[#1E5647]/20">
-                            <div className="text-xs text-gray-600">
-                              <span className="font-bold text-gray-800 block">
-                                آیا اقامت انجام شد و سفر به پایان رسید؟
-                              </span>
-                              <span>
-                                با اعلام پایان سفر می‌توانید به طرف مقابل امتیاز دهید و تجربه خود را ثبت کنید.
-                              </span>
-                            </div>
-                            <button
-                              onClick={() =>
-                                handleOpenReview(req, activeTab === 'sent' ? 'guest' : 'host')
-                              }
-                              className="w-full sm:w-auto px-4 py-2.5 bg-[#C25E38] hover:bg-[#A84E2D] text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 shrink-0"
-                            >
-                              <Heart className="w-3.5 h-3.5 fill-white" />
-                              <span>
-                                {activeTab === 'sent'
-                                  ? 'مهمان شدم (ثبت پایان سفر و امتیازدهی)'
-                                  : 'میزبان شدم (ثبت پایان میزبانی و امتیازدهی)'}
-                              </span>
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* CASE 2: COMPLETED STAY WITH RATING & REVIEW */}
-                      {req.status === 'completed' && (
-                        <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200 text-xs text-emerald-950 space-y-2.5 animate-fade-in">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 font-bold text-emerald-900">
-                              <CheckCircle2 className="w-4 h-4 text-emerald-700" />
-                              <span>این اقامت با موفقیت انجام شد و تجربه طرفین ثبت گردید</span>
-                            </div>
-                            {reviewInfo?.rating && (
-                              <div className="flex items-center gap-1 bg-white px-2.5 py-1 rounded-lg border border-emerald-200 shadow-xs">
-                                <span className="font-black text-amber-600">
-                                  {toPersianDigits(reviewInfo.rating)}
+                              {/* Address Box */}
+                              <div className="bg-white p-4 rounded-xl border border-[#1E5647]/20 space-y-1.5 flex flex-col justify-center">
+                                <span className="text-gray-500 font-medium flex items-center gap-1.5">
+                                  <Home className="w-3.5 h-3.5 text-[#1E5647]" />
+                                  <span>نشانی دقیق اقامتگاه:</span>
                                 </span>
-                                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
+                                <p className="font-bold text-gray-900 leading-relaxed text-xs">
+                                  {phoneAddress.address || 'نشانی پس از تماس هماهنگ می‌شود.'}
+                                </p>
+                                {req.host_response_note && !req.host_response_note.startsWith('{') && (
+                                  <p className="text-[11px] text-gray-500 pt-1 border-t border-gray-100 mt-1">
+                                    یادداشت میزبان: &ldquo;{req.host_response_note}&rdquo;
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* MUTUAL REVIEWS SECTION */}
+                            {(hasMyReview || hasOtherReview) && (
+                              <div className="space-y-3 pt-2 border-t border-[#1E5647]/15">
+                                <div className="flex items-center justify-between text-xs font-bold text-[#1E5647]">
+                                  <span className="flex items-center gap-1.5">
+                                    <Star className="w-4 h-4 fill-amber-400 text-amber-500" />
+                                    <span>نظرات و امتیازهای ثبت‌شده برای این اقامت:</span>
+                                  </span>
+                                  {hasMyReview && hasOtherReview && (
+                                    <span className="text-[10px] bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded-full">
+                                      ثبت دوطرفه کامل
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                                  {/* My review */}
+                                  {myReview && (
+                                    <div className="bg-white/90 p-3.5 rounded-xl border border-emerald-200 space-y-1.5">
+                                      <div className="flex items-center justify-between">
+                                        <span className="font-bold text-gray-800 text-[11px]">
+                                          نظر شما درباره {otherName}:
+                                        </span>
+                                        <div className="flex items-center gap-1 text-amber-600 font-black text-xs">
+                                          <span>{toPersianDigits(myReview.rating)}</span>
+                                          <Star className="w-3 h-3 fill-amber-400 text-amber-500" />
+                                        </div>
+                                      </div>
+                                      <p className="text-gray-700 italic leading-relaxed text-[11px]">
+                                        &ldquo;{myReview.comment}&rdquo;
+                                      </p>
+                                      {myReview.tags && myReview.tags.length > 0 && (
+                                        <div className="flex flex-wrap gap-1 pt-1">
+                                          {myReview.tags.map((t) => (
+                                            <span
+                                              key={t}
+                                              className="text-[10px] bg-emerald-50 text-emerald-800 px-1.5 py-0.5 rounded border border-emerald-100"
+                                            >
+                                              ✓ {t}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {/* Other person's review */}
+                                  {otherReview && (
+                                    <div className="bg-white/90 p-3.5 rounded-xl border border-emerald-200 space-y-1.5">
+                                      <div className="flex items-center justify-between">
+                                        <span className="font-bold text-gray-800 text-[11px]">
+                                          نظر {otherName} درباره شما:
+                                        </span>
+                                        <div className="flex items-center gap-1 text-amber-600 font-black text-xs">
+                                          <span>{toPersianDigits(otherReview.rating)}</span>
+                                          <Star className="w-3 h-3 fill-amber-400 text-amber-500" />
+                                        </div>
+                                      </div>
+                                      <p className="text-gray-700 italic leading-relaxed text-[11px]">
+                                        &ldquo;{otherReview.comment}&rdquo;
+                                      </p>
+                                      {otherReview.tags && otherReview.tags.length > 0 && (
+                                        <div className="flex flex-wrap gap-1 pt-1">
+                                          {otherReview.tags.map((t) => (
+                                            <span
+                                              key={t}
+                                              className="text-[10px] bg-emerald-50 text-emerald-800 px-1.5 py-0.5 rounded border border-emerald-100"
+                                            >
+                                              ✓ {t}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             )}
-                          </div>
 
-                          {/* Tags if available */}
-                          {reviewInfo?.tags && reviewInfo.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 pt-1">
-                              {reviewInfo.tags.map((tag) => (
-                                <span
-                                  key={tag}
-                                  className="px-2 py-0.5 rounded-lg bg-white/80 border border-emerald-200 text-[11px] font-semibold text-emerald-800"
+                            {/* REVIEW CALL-TO-ACTION (Visible for whoever hasn't reviewed yet!) */}
+                            {!hasMyReview ? (
+                              <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 bg-white/70 p-3.5 rounded-xl border border-[#1E5647]/20">
+                                <div className="text-xs text-gray-700">
+                                  <span className="font-bold text-gray-900 block">
+                                    {hasOtherReview
+                                      ? `${otherName} نظر و امتیاز خود را ثبت کرد. حالا نوبت شماست!`
+                                      : 'آیا اقامت انجام شد و سفر به پایان رسید؟'}
+                                  </span>
+                                  <span className="text-[11px] text-gray-500">
+                                    با ثبت نظر و امتیاز، تجربه تأییدشده در پروفایل {otherName} ثبت خواهد شد.
+                                  </span>
+                                </div>
+                                <button
+                                  onClick={() =>
+                                    handleOpenReview(req, isGuest ? 'guest' : 'host')
+                                  }
+                                  className="w-full sm:w-auto px-4 py-2.5 bg-[#C25E38] hover:bg-[#A84E2D] text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 shrink-0"
                                 >
-                                  ✓ {tag}
+                                  <Heart className="w-3.5 h-3.5 fill-white" />
+                                  <span>
+                                    {isGuest
+                                      ? 'مهمان شدم (ثبت پایان سفر و امتیازدهی)'
+                                      : 'میزبان شدم (ثبت پایان میزبانی و امتیازدهی)'}
+                                  </span>
+                                </button>
+                              </div>
+                            ) : !hasOtherReview ? (
+                              <div className="p-3 bg-white/60 rounded-xl border border-emerald-200 text-xs text-emerald-900 flex items-center justify-between">
+                                <span className="flex items-center gap-1.5 font-medium">
+                                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                  <span>شما نظر خود را ثبت کردید. در انتظار ثبت نظر توسط {otherName}...</span>
                                 </span>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* Review comment quote */}
-                          {reviewInfo?.comment && (
-                            <p className="text-xs text-gray-700 bg-white/90 p-3 rounded-xl border border-emerald-100 leading-relaxed">
-                              <span className="font-bold text-gray-800">روایت ثبت‌شده: </span>
-                              &ldquo;{reviewInfo.comment}&rdquo;
-                            </p>
-                          )}
-                        </div>
-                      )}
+                              </div>
+                            ) : null}
+                          </div>
+                        );
+                      })()}
 
                       {/* CASE 3: DECLINED REQUEST WITH REASON & HELPFUL ALTERNATIVES */}
                       {req.status === 'declined' && (

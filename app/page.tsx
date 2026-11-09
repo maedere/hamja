@@ -23,6 +23,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import MemberCard from '@/components/members/MemberCard';
 import VerificationModal from '@/components/modals/VerificationModal';
+import LatestHostingsStories from '@/components/home/LatestHostingsStories';
 import { useAuth } from '@/lib/auth-context';
 import { toPersianDigits } from '@/lib/persian-utils';
 
@@ -449,59 +450,8 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 6. Real Story Spotlight matching Page 3 (Ali & Behnam) */}
-        <section id="stories" className="py-20">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="bg-[#FBF4F0] rounded-3xl p-8 sm:p-12 border border-[#C25E38]/20 flex flex-col md:flex-row items-center gap-10 text-right shadow-sm">
-              <div className="w-full md:w-1/2 flex items-center justify-center">
-                <div className="relative flex items-center">
-                  <div className="w-36 h-36 rounded-3xl overflow-hidden border-4 border-white shadow-xl -rotate-6">
-                    <img
-                      src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80"
-                      alt="علی از تبریز"
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-xs text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full">
-                      علی، تبریز
-                    </div>
-                  </div>
-                  <div className="w-36 h-36 rounded-3xl overflow-hidden border-4 border-white shadow-xl rotate-6 -mr-10 z-10">
-                    <img
-                      src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80"
-                      alt="بهنام از بوشهر"
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-xs text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full">
-                      بهنام، بوشهر
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="w-full md:w-1/2 space-y-4">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white text-[#C25E38] text-xs font-bold border border-[#C25E38]/20">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>یک میزبانی، دو مقصد، یک دوستی</span>
-                </div>
-                <h3 className="text-xl sm:text-2xl font-black text-gray-800 leading-snug">
-                  علی از تبریز میزبان بهنام از بوشهر شد؛ چند ماه بعد در بوشهر مهمان او بود!
-                </h3>
-                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed font-medium">
-                  &ldquo;وقتی در تبریز بودیم، از موسیقی جنوب گفتیم. شش ماه بعد در بوشهر کنار آتش لب ساحل با هم خیام‌خوانی کردیم. همجا برای ما فراتر از یک سقف بود؛ شروع یک برادری.&rdquo;
-                </p>
-                <div>
-                  <Link
-                    href="/explore"
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#C25E38] hover:text-[#A84E2D] hover:underline pt-2"
-                  >
-                    <span>داستان‌های دیگر همجا را بخوان</span>
-                    <ArrowLeft className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* 6. Real Stories & Latest 5 Hostings Showcase */}
+        <LatestHostingsStories />
 
         {/* 7. Call to Action Banner matching Page 3 */}
         <section className="py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

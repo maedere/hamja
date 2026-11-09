@@ -532,7 +532,6 @@ export default function RegisterPage() {
                   <div>
                     <label className="block text-xs font-bold text-gray-800 mb-1 flex items-center justify-between">
                       <span>نام کاربری (آیدی یکتا) <span className="text-red-500">*</span></span>
-                      <span className="text-[10px] text-emerald-600 font-medium">اعداد خودکار انگلیسی می‌شوند</span>
                     </label>
                     <div className="relative">
                       <input
@@ -572,9 +571,6 @@ export default function RegisterPage() {
                       placeholder="••••••••"
                       className="w-full px-3.5 py-2.5 bg-[#FAF7F4] border border-[#EADFD5] rounded-xl text-xs font-mono font-bold text-gray-800 outline-none focus:border-[#C25E38] focus:bg-white transition-all"
                     />
-                    <span className="text-[10px] text-gray-400 mt-1 block">
-                      با کیبورد فارسی هم تایپ کنید، اعداد خودکار انگلیسی ذخیره می‌شوند.
-                    </span>
                   </div>
 
                   {/* Mandatory Phone */}

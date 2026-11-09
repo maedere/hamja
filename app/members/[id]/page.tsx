@@ -29,7 +29,7 @@ import HostingRequestModal from '@/components/modals/HostingRequestModal';
 import VerificationModal from '@/components/modals/VerificationModal';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
-import { UserProfile } from '@/types/database';
+import { UserProfile, Review, HostingRequest } from '@/types/database';
 import {
   MOCK_PROFILES,
   MOCK_LISTINGS,
@@ -37,7 +37,7 @@ import {
   MOCK_PAST_HOSTINGS,
 } from '@/lib/mock-data';
 import { Suspense } from 'react';
-import { getAvatarUrl } from '@/lib/persian-utils';
+import { getAvatarUrl, toPersianDigits, extractMutualReviews } from '@/lib/persian-utils';
 
 function MemberProfileContent() {
   const router = useRouter();
@@ -87,6 +87,76 @@ function MemberProfileContent() {
   // Find member in usersList or directly fetched
   const member = fetchedMember || usersList.find((p) => p.id === id);
   const isOwnProfile = !!(currentUser && member && currentUser.id === member.id);
+
+  const [dynamicReviews, setDynamicReviews] = useState<Review[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchMemberReviews = async () => {
+      try {
+        const res = await fetch('/api/requests', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.requests)) {
+            const list: Review[] = [];
+            data.requests.forEach((req: HostingRequest) => {
+              const mutual = extractMutualReviews(req.host_response_note);
+              // 1. If this member was the Host (receiver), then the guest's review is about THIS member!
+              const isHost =
+                req.receiver_id === id ||
+                (member?.username && req.receiver_id === member.username) ||
+                (member?.id && req.receiver_id === member.id);
+              if (isHost && mutual.guest_review) {
+                list.push({
+                  id: `dyn-rev-guest-${req.id}`,
+                  reviewer_name: mutual.guest_review.reviewer_name || req.sender_name,
+                  reviewer_city: mutual.guest_review.reviewer_city || req.sender_city,
+                  reviewer_avatar: getAvatarUrl(
+                    mutual.guest_review.reviewer_avatar || req.sender_avatar
+                  ),
+                  rating: mutual.guest_review.rating || 5,
+                  comment: mutual.guest_review.comment,
+                  stay_date_label: `اقامت در ${toPersianDigits(req.start_date || 'آبان ۱۴۰۵')}`,
+                  is_verified_experience: true,
+                });
+              }
+
+              // 2. If this member was the Guest (sender), then the host's review is about THIS member!
+              const isGuest =
+                req.sender_id === id ||
+                (member?.username && req.sender_id === member.username) ||
+                (member?.id && req.sender_id === member.id);
+              if (isGuest && mutual.host_review) {
+                list.push({
+                  id: `dyn-rev-host-${req.id}`,
+                  reviewer_name: mutual.host_review.reviewer_name || req.receiver_name,
+                  reviewer_city: mutual.host_review.reviewer_city || req.receiver_city,
+                  reviewer_avatar: getAvatarUrl(
+                    mutual.host_review.reviewer_avatar || req.receiver_avatar
+                  ),
+                  rating: mutual.host_review.rating || 5,
+                  comment: mutual.host_review.comment,
+                  stay_date_label: `میزبانی در ${toPersianDigits(req.start_date || 'آبان ۱۴۰۵')}`,
+                  is_verified_experience: true,
+                });
+              }
+            });
+
+            if (isMounted) {
+              setDynamicReviews(list);
+            }
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+
+    fetchMemberReviews();
+    return () => {
+      isMounted = false;
+    };
+  }, [id, member]);
 
   const handleOpenRequest = () => {
     if (!isLoggedIn) {
@@ -174,7 +244,16 @@ function MemberProfileContent() {
   };
 
   const listing = (member.id && MOCK_LISTINGS[member.id]) || fallbackListing;
-  const reviews = (member.id && MOCK_REVIEWS[member.id]) || [];
+  const staticReviews =
+    (member?.id && MOCK_REVIEWS[member.id]) ||
+    (member?.username && MOCK_REVIEWS[member.username]) ||
+    [];
+  const reviews = [...dynamicReviews, ...staticReviews];
+  const avgRatingNum =
+    reviews.length > 0
+      ? reviews.reduce((acc, r) => acc + (r.rating || 5), 0) / reviews.length
+      : 5;
+  const avgRatingStr = toPersianDigits(avgRatingNum.toFixed(1));
   const pastHostings = (member.id && MOCK_PAST_HOSTINGS[member.id]) || [];
   const isTraveler = member.can_host === false || member.role === 'traveler';
 
@@ -282,6 +361,15 @@ function MemberProfileContent() {
                 <span>عضو از {member.member_since_year}</span>
                 <span className="w-1 h-1 rounded-full bg-gray-300" />
                 <span>{isTraveler ? 'علاقه‌مند به سفر و میزبانی شدن' : `${member.hosting_count} تجربه میزبانی`}</span>
+                {reviews.length > 0 && (
+                  <>
+                    <span className="w-1 h-1 rounded-full bg-gray-300" />
+                    <span className="inline-flex items-center gap-1 font-bold text-gray-700">
+                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
+                      {avgRatingStr} ({toPersianDigits(reviews.length)} نظر)
+                    </span>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -395,7 +483,7 @@ function MemberProfileContent() {
             }`}
           >
             <Star className="w-4 h-4" />
-            <span>نظرات اعضا ({reviews.length})</span>
+            <span>نظرات اعضا ({toPersianDigits(reviews.length)})</span>
           </button>
         </div>
 
@@ -659,59 +747,85 @@ function MemberProfileContent() {
           )
         )}
 
-        {/* TAB 3: نظرات اعضا (Reviews) matching Page 2 */}
+        {/* TAB 3: نظرات اعضا (Reviews) */}
         {activeTab === 'reviews' && (
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#EADFD5] shadow-sm space-y-6 text-right">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
               <div>
-                <h3 className="text-lg font-bold text-[#1F2937]">نظرات اعضا از نگاه دوستان سارا</h3>
-                <p className="text-xs text-gray-500 mt-0.5">۵ از ۵ بر اساس ۲ نظر</p>
+                <h3 className="text-lg font-bold text-[#1F2937]">
+                  نظرات و تجربیات اعضا درباره {member.full_name}
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {reviews.length > 0
+                    ? `${avgRatingStr} از ۵ بر اساس ${toPersianDigits(reviews.length)} نظر و میزبانی ثبت‌شده`
+                    : 'هنوز نظری برای این عضو ثبت نشده است.'}
+                </p>
               </div>
-              <div className="flex items-center gap-1 text-amber-500 text-sm">
-                <span>★★★★★</span>
-                <span className="text-xs font-bold text-gray-800 mr-1">۵٫۰</span>
-              </div>
+              {reviews.length > 0 && (
+                <div className="flex items-center gap-1.5 text-amber-500 text-sm bg-amber-50/70 px-3 py-1.5 rounded-xl border border-amber-200/50">
+                  <span className="tracking-widest">
+                    {'★'.repeat(Math.min(5, Math.max(1, Math.round(avgRatingNum))))}
+                  </span>
+                  <span className="text-xs font-bold text-gray-800 mr-1">{avgRatingStr}</span>
+                </div>
+              )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {reviews.map((rev) => (
-                <div
-                  key={rev.id}
-                  className="p-5 rounded-2xl bg-[#F9F8F6] border border-[#EADFD5] space-y-3 flex flex-col justify-between"
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <img
-                          src={rev.reviewer_avatar}
-                          alt={rev.reviewer_name}
-                          className="w-9 h-9 rounded-full object-cover ring-1 ring-gray-300"
-                        />
-                        <div>
-                          <h4 className="text-xs font-bold text-gray-800">{rev.reviewer_name}</h4>
-                          <span className="text-[10px] text-gray-500">{rev.reviewer_city}</span>
+            {reviews.length === 0 ? (
+              <div className="py-12 text-center space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
+                  <Star className="w-6 h-6" />
+                </div>
+                <p className="text-sm font-bold text-gray-800">
+                  اولین نفری باشید که با {member.full_name} ارتباط می‌گیرد!
+                </p>
+                <p className="text-xs text-gray-500 max-w-sm mx-auto leading-relaxed">
+                  پس از اتمام سفر یا میزبانی، نظر و تجربه ارزشمند شما در این بخش برای سایر اعضای جامعه همجا به نمایش درمی‌آید.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {reviews.map((rev) => (
+                  <div
+                    key={rev.id}
+                    className="p-5 rounded-2xl bg-[#F9F8F6] border border-[#EADFD5] space-y-3 flex flex-col justify-between hover:border-[#C25E38]/30 transition-all"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <img
+                            src={getAvatarUrl(rev.reviewer_avatar)}
+                            alt={rev.reviewer_name}
+                            className="w-9 h-9 rounded-full object-cover ring-1 ring-gray-300"
+                          />
+                          <div>
+                            <h4 className="text-xs font-bold text-gray-800">{rev.reviewer_name}</h4>
+                            <span className="text-[10px] text-gray-500">{rev.reviewer_city}</span>
+                          </div>
+                        </div>
+                        <div className="text-amber-500 text-xs tracking-wider">
+                          {'★'.repeat(Math.min(5, Math.max(1, Math.round(rev.rating || 5))))}
                         </div>
                       </div>
-                      <div className="text-amber-500 text-xs">★★★★★</div>
+
+                      <p className="text-xs text-gray-700 leading-relaxed italic">
+                        &ldquo;{rev.comment}&rdquo;
+                      </p>
                     </div>
 
-                    <p className="text-xs text-gray-700 leading-relaxed italic">
-                      &ldquo;{rev.comment}&rdquo;
-                    </p>
+                    <div className="pt-2 border-t border-gray-200/60 flex items-center justify-between text-[10px] text-gray-500">
+                      <span>{rev.stay_date_label}</span>
+                      {rev.is_verified_experience && (
+                        <span className="inline-flex items-center gap-1 text-[#1E5647] font-semibold">
+                          <CheckCircle2 className="w-3 h-3" />
+                          تجربه تأییدشده
+                        </span>
+                      )}
+                    </div>
                   </div>
-
-                  <div className="pt-2 border-t border-gray-200/60 flex items-center justify-between text-[10px] text-gray-500">
-                    <span>{rev.stay_date_label}</span>
-                    {rev.is_verified_experience && (
-                      <span className="inline-flex items-center gap-1 text-[#1E5647] font-semibold">
-                        <CheckCircle2 className="w-3 h-3" />
-                        تجربه تأییدشده
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </main>
