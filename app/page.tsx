@@ -421,9 +421,9 @@ export default function HomePage() {
                 <div className="w-12 h-12 rounded-2xl bg-[#1E5647]/10 text-[#1E5647] flex items-center justify-center shadow-xs">
                   <UserCheck className="w-6 h-6" />
                 </div>
-                <h3 className="text-base font-black text-[#1F2937]">استعلام رسمی کد ملی</h3>
+                <h3 className="text-base font-black text-[#1F2937]">ثبت کد ملی و مدارک شناسایی</h3>
                 <p className="text-xs sm:text-sm text-gray-600 leading-relaxed font-medium">
-                  هویت اعضا پیش از آغاز تعاملات بررسی می‌شود تا آشنایی‌ها با خیال آسوده‌تری آغاز شوند.
+                  کد ملی و تصویر مدارک هویتی اعضا در سامانه ثبت و جهت امنیت جامعه و پیگیری‌های لازم نزد همجا محفوظ می‌ماند.
                 </p>
               </div>
 

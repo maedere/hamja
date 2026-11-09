@@ -75,6 +75,61 @@ export default function RegisterPage() {
   const [targetDates, setTargetDates] = useState('');
   const [targetGuests, setTargetGuests] = useState('1');
 
+  // Step 3 Optional Home & Amenities Details (for Hosts)
+  const AVAILABLE_AMENITIES = [
+    'اینترنت وای‌فای',
+    'حمام و سرویس بهداشتی',
+    'آشپزخانه برای پخت‌وپز',
+    'سیستم سرمایش و گرمایش',
+    'ماشین لباسشویی',
+    'پارکینگ اختصاصی',
+    'فضای کار با لپ‌تاپ (میز کار)',
+    'آسانسور',
+    'حیاط یا بالکن',
+    'یخچال و چای‌ساز',
+  ];
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  const [neighborhoodName, setNeighborhoodName] = useState('');
+  const [homeDescription, setHomeDescription] = useState('');
+  const [homePhotos, setHomePhotos] = useState<string[]>([]);
+
+  const toggleAmenity = (item: string) => {
+    setSelectedAmenities((prev) =>
+      prev.includes(item) ? prev.filter((a) => a !== item) : [...prev, item]
+    );
+  };
+
+  const handleHomePhotosUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const remainingSlots = 2 - homePhotos.length;
+    if (remainingSlots <= 0) {
+      alert('حداکثر می‌توانید ۲ تصویر از خانه یا اتاق بارگذاری فرمایید.');
+      return;
+    }
+
+    const filesToRead = Array.from(files).slice(0, remainingSlots);
+    filesToRead.forEach((file) => {
+      if (file.size > 2 * 1024 * 1024) {
+        alert('حجم هر تصویر باید کمتر از ۲ مگابایت باشد.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (uploadEvent) => {
+        const base64 = uploadEvent.target?.result as string;
+        if (base64) {
+          setHomePhotos((prev) => [...prev, base64].slice(0, 2));
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeHomePhoto = (indexToRemove: number) => {
+    setHomePhotos((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
   // Step 4: Bio, Interests & Languages
   const [bioSnippet, setBioSnippet] = useState('');
   const PRESET_INTERESTS = [
@@ -280,6 +335,10 @@ export default function RegisterPage() {
       max_guests: isHostCapable ? parsedMaxGuests || 2 : undefined,
       guest_preference: isHostCapable ? guestPreference : undefined,
       sleeping_arrangement: isHostCapable ? sleepingArrangement : undefined,
+      amenities: isHostCapable && selectedAmenities.length > 0 ? selectedAmenities : undefined,
+      neighborhood_name: isHostCapable && neighborhoodName.trim() ? neighborhoodName.trim() : undefined,
+      home_description: isHostCapable && homeDescription.trim() ? homeDescription.trim() : undefined,
+      home_photos: isHostCapable && homePhotos.length > 0 ? homePhotos : undefined,
       house_rules: isHostCapable ? houseRules : [],
       target_destination: targetDestination.trim() || undefined,
       target_travel_dates: targetDates.trim() || undefined,
@@ -899,6 +958,108 @@ export default function RegisterPage() {
                             />
                             <span>محدوده ساعت رفت‌وآمد (ورود قبل از ۱۱ شب)</span>
                           </label>
+                        </div>
+                      </div>
+
+                      {/* Optional Home & Amenities Section */}
+                      <div className="pt-3 border-t border-[#EADFD5] space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="block text-[11px] font-black text-gray-800">
+                            امکانات و جزئیات خانه (اختیاری):
+                          </span>
+                          <span className="text-[10px] text-gray-500 bg-white px-2 py-0.5 rounded-md border border-gray-200">
+                            اختیاری
+                          </span>
+                        </div>
+
+                        {/* Amenities Chips Multi-Select */}
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-600 mb-1.5">
+                            امکانات موجود در اقامتگاه:
+                          </label>
+                          <div className="flex flex-wrap gap-1.5">
+                            {AVAILABLE_AMENITIES.map((item) => {
+                              const isSelected = selectedAmenities.includes(item);
+                              return (
+                                <button
+                                  key={item}
+                                  type="button"
+                                  onClick={() => toggleAmenity(item)}
+                                  className={`px-2.5 py-1 rounded-xl text-[11px] font-medium transition-all border ${
+                                    isSelected
+                                      ? 'bg-[#1E5647] text-white border-[#1E5647] shadow-xs'
+                                      : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
+                                  }`}
+                                >
+                                  {isSelected ? `✓ ${item}` : `+ ${item}`}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Neighborhood name */}
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-600 mb-1">
+                            نام محله یا منطقه خانه (اختیاری)
+                          </label>
+                          <input
+                            type="text"
+                            value={neighborhoodName}
+                            onChange={(e) => setNeighborhoodName(e.target.value)}
+                            placeholder="مثال: محله جلفا، نزدیک به مرکز شهر، منطقه آرام و دنج..."
+                            className="w-full px-3 py-2 bg-white border border-[#EADFD5] rounded-xl text-xs font-medium text-gray-800 outline-none focus:border-[#C25E38]"
+                          />
+                        </div>
+
+                        {/* Home description */}
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-600 mb-1">
+                            توضیح کوتاه درباره فضای خانه (اختیاری)
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={homeDescription}
+                            onChange={(e) => setHomeDescription(e.target.value)}
+                            placeholder="توضیحاتی درباره حال‌وهوای خانه، نورگیر بودن، آرامش یا دسترسی اتاق..."
+                            className="w-full px-3 py-2 bg-white border border-[#EADFD5] rounded-xl text-xs text-gray-800 outline-none focus:border-[#C25E38] resize-none"
+                          />
+                        </div>
+
+                        {/* Home Photos Upload (Optional, max 2) */}
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-600 mb-1">
+                            تصاویر فضای خانه یا اتاق مهمان (اختیاری - حداکثر ۲ تصویر)
+                          </label>
+                          <div className="flex flex-wrap items-center gap-3">
+                            {homePhotos.length < 2 && (
+                              <label className="px-3.5 py-2 bg-white hover:bg-gray-50 border border-dashed border-[#C25E38] text-[#C25E38] text-xs font-bold rounded-xl cursor-pointer transition-colors inline-flex items-center gap-1.5 shadow-xs">
+                                <Camera className="w-3.5 h-3.5" />
+                                <span>انتخاب تصویر خانه</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  multiple
+                                  onChange={handleHomePhotosUpload}
+                                  className="hidden"
+                                />
+                              </label>
+                            )}
+
+                            {homePhotos.map((photo, idx) => (
+                              <div key={idx} className="relative w-12 h-12 rounded-xl overflow-hidden border border-gray-200 shadow-xs">
+                                <img src={photo} alt={`خانه ${idx + 1}`} className="w-full h-full object-cover" />
+                                <button
+                                  type="button"
+                                  onClick={() => removeHomePhoto(idx)}
+                                  className="absolute top-0.5 right-0.5 w-4 h-4 bg-red-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold"
+                                  title="حذف تصویر"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </div>

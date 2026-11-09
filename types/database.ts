@@ -27,6 +27,12 @@ export interface UserProfile {
   guest_preference?: GuestPreference;
   sleeping_arrangement?: SleepingArrangement;
 
+  // Home & Listing Details (for Hosts)
+  amenities?: string[];
+  neighborhood_name?: string;
+  home_description?: string;
+  home_photos?: string[];
+
   // House Rules & Travel Plans (Google Form Page 3)
   house_rules?: string[];
   target_destination?: string;
@@ -56,6 +62,12 @@ export interface UserProfile {
     selfie_with_card_url?: string;
     submitted_at?: string;
     rejection_reason?: string;
+    home_details?: {
+      amenities?: string[];
+      neighborhood_name?: string;
+      home_description?: string;
+      home_photos?: string[];
+    };
   };
 
   // Metadata

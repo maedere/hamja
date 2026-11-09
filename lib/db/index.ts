@@ -72,6 +72,50 @@ async function persistLocalDb(data: LocalDatabaseSchema): Promise<void> {
 // User / Profile Operations
 // ==========================================
 
+// Helper to serialize UserProfile for Supabase schema compatibility
+// Stores home details inside verification_docs.home_details (JSONB) so Postgres doesn't reject missing columns
+function serializeProfileForSupabase(profile: Partial<UserProfile>): any {
+  const copy: any = { ...profile };
+
+  const homeDetails = {
+    ...(copy.verification_docs?.home_details || {}),
+    ...(copy.amenities !== undefined ? { amenities: copy.amenities } : {}),
+    ...(copy.neighborhood_name !== undefined ? { neighborhood_name: copy.neighborhood_name } : {}),
+    ...(copy.home_description !== undefined ? { home_description: copy.home_description } : {}),
+    ...(copy.home_photos !== undefined ? { home_photos: copy.home_photos } : {}),
+  };
+
+  const hasHomeDetails = Object.keys(homeDetails).length > 0;
+
+  if (hasHomeDetails) {
+    copy.verification_docs = {
+      ...(copy.verification_docs || {}),
+      home_details: homeDetails,
+    };
+  }
+
+  // Remove top-level custom properties not in Supabase profiles schema
+  delete copy.amenities;
+  delete copy.neighborhood_name;
+  delete copy.home_description;
+  delete copy.home_photos;
+
+  return copy;
+}
+
+function deserializeProfileFromSupabase(raw: any): UserProfile {
+  if (!raw) return raw;
+  const p = { ...raw };
+  if (p.verification_docs?.home_details) {
+    const hd = p.verification_docs.home_details;
+    if (hd.amenities && !p.amenities) p.amenities = hd.amenities;
+    if (hd.neighborhood_name && !p.neighborhood_name) p.neighborhood_name = hd.neighborhood_name;
+    if (hd.home_description && !p.home_description) p.home_description = hd.home_description;
+    if (hd.home_photos && !p.home_photos) p.home_photos = hd.home_photos;
+  }
+  return p as UserProfile;
+}
+
 export async function getAllUsers(): Promise<UserProfile[]> {
   const supabase = getSupabase();
   if (supabase) {
@@ -84,7 +128,7 @@ export async function getAllUsers(): Promise<UserProfile[]> {
       console.error('Supabase getAllUsers error:', error);
       // Fallback to local
     } else if (data) {
-      return data as UserProfile[];
+      return data.map(deserializeProfileFromSupabase);
     }
   }
 
@@ -102,7 +146,7 @@ export async function getUserById(id: string): Promise<UserProfile | null> {
       .maybeSingle();
 
     if (data) {
-      return data as UserProfile;
+      return deserializeProfileFromSupabase(data);
     }
 
     if (!error) {
@@ -125,7 +169,7 @@ export async function getUserByUsername(identifier: string): Promise<UserProfile
       .limit(1);
 
     if (data && data.length > 0) {
-      return data[0] as UserProfile;
+      return deserializeProfileFromSupabase(data[0]);
     }
 
     if (!error) {
@@ -147,9 +191,10 @@ export async function getUserByUsername(identifier: string): Promise<UserProfile
 export async function createUser(profile: UserProfile): Promise<UserProfile> {
   const supabase = getSupabase();
   if (supabase) {
+    const serialized = serializeProfileForSupabase(profile);
     const { data, error } = await supabase
       .from('profiles')
-      .insert([profile])
+      .insert([serialized])
       .select()
       .maybeSingle();
 
@@ -157,7 +202,7 @@ export async function createUser(profile: UserProfile): Promise<UserProfile> {
       console.error('Supabase createUser error:', error);
       throw new Error(error.message || 'خطا در ذخیره‌سازی اطلاعات در دیتابیس ابری');
     } else if (data) {
-      return data as UserProfile;
+      return deserializeProfileFromSupabase(data);
     }
   }
 
@@ -174,15 +219,16 @@ export async function updateUser(
 ): Promise<UserProfile | null> {
   const supabase = getSupabase();
   if (supabase) {
+    const serialized = serializeProfileForSupabase(updates);
     const { data, error } = await supabase
       .from('profiles')
-      .update(updates)
+      .update(serialized)
       .eq('id', id)
       .select()
       .maybeSingle();
 
     if (data) {
-      return data as UserProfile;
+      return deserializeProfileFromSupabase(data);
     }
 
     if (!error) {

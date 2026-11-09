@@ -32,9 +32,7 @@ import { useRouter } from 'next/navigation';
 import { UserProfile, Review, HostingRequest } from '@/types/database';
 import {
   MOCK_PROFILES,
-  MOCK_LISTINGS,
   MOCK_REVIEWS,
-  MOCK_PAST_HOSTINGS,
 } from '@/lib/mock-data';
 import { Suspense } from 'react';
 import { getAvatarUrl, toPersianDigits, extractMutualReviews } from '@/lib/persian-utils';
@@ -89,6 +87,7 @@ function MemberProfileContent() {
   const isOwnProfile = !!(currentUser && member && currentUser.id === member.id);
 
   const [dynamicReviews, setDynamicReviews] = useState<Review[]>([]);
+  const [dynamicPastHostings, setDynamicPastHostings] = useState<any[]>([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -99,6 +98,7 @@ function MemberProfileContent() {
           const data = await res.json();
           if (data.success && Array.isArray(data.requests)) {
             const list: Review[] = [];
+            const pastList: any[] = [];
             data.requests.forEach((req: HostingRequest) => {
               const mutual = extractMutualReviews(req.host_response_note);
               // 1. If this member was the Host (receiver), then the guest's review is about THIS member!
@@ -140,10 +140,24 @@ function MemberProfileContent() {
                   is_verified_experience: true,
                 });
               }
+
+              // 3. Past Hostings for this host
+              if (isHost && req.status === 'completed') {
+                pastList.push({
+                  id: `past-${req.id}`,
+                  guest_name: req.sender_name,
+                  guest_avatar: getAvatarUrl(req.sender_avatar),
+                  stay_date: toPersianDigits(req.start_date || 'اخیر'),
+                  nights_count: req.guest_count || 1,
+                  story_snippet:
+                    mutual.guest_review?.comment || 'میزبانی با موفقیت انجام شد.',
+                });
+              }
             });
 
             if (isMounted) {
               setDynamicReviews(list);
+              setDynamicPastHostings(pastList);
             }
           }
         }
@@ -222,28 +236,22 @@ function MemberProfileContent() {
     );
   }
 
-  const fallbackListing = {
-    id: `listing-${member.id}`,
-    host_id: member.id,
-    title: `میزبانی در ${member.city} با ${member.full_name}`,
-    neighborhood_name: `شهر ${member.city}`,
-    room_type: 'private_room' as const,
-    room_type_label:
-      member.sleeping_arrangement === 'private_with_bed'
-        ? 'اتاق اختصاصی با تخت'
-        : member.sleeping_arrangement === 'private_without_bed'
-        ? 'اتاق اختصاصی سنتی (تشک)'
-        : 'فضای مشترک در پذیرایی',
-    capacity: member.max_guests || 2,
-    photos: [
-      'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80',
-    ],
-    amenities: ['اینترنت وای‌فای', 'آشپزخانه برای پخت‌وپز', 'حمام و سرویس بهداشتی', 'امکان کار با لپ‌تاپ'],
-    house_rules: member.house_rules && member.house_rules.length > 0 ? member.house_rules : ['رعایت سکوت در ساعات پایانی شب', 'احترام متقابل و حفظ نظم خانه'],
-  };
+  const roomTypeLabel =
+    member.sleeping_arrangement === 'private_with_bed'
+      ? 'اتاق اختصاصی با تخت'
+      : member.sleeping_arrangement === 'private_without_bed'
+      ? 'اتاق اختصاصی سنتی (تشک)'
+      : member.sleeping_arrangement === 'shared_space'
+      ? 'فضای مشترک در پذیرایی'
+      : 'فضای استراحت در خانه میزبان';
 
-  const listing = (member.id && MOCK_LISTINGS[member.id]) || fallbackListing;
+  const roomCapacity = member.max_guests || 1;
+  const neighborhoodLabel = member.neighborhood_name || `شهر ${member.city}`;
+  const homePhotos = member.home_photos || [];
+  const amenitiesList = member.amenities || [];
+  const houseRulesList = member.house_rules || [];
+  const pastHostings = dynamicPastHostings;
+
   const staticReviews =
     (member?.id && MOCK_REVIEWS[member.id]) ||
     (member?.username && MOCK_REVIEWS[member.username]) ||
@@ -254,7 +262,6 @@ function MemberProfileContent() {
       ? reviews.reduce((acc, r) => acc + (r.rating || 5), 0) / reviews.length
       : 5;
   const avgRatingStr = toPersianDigits(avgRatingNum.toFixed(1));
-  const pastHostings = (member.id && MOCK_PAST_HOSTINGS[member.id]) || [];
   const isTraveler = member.can_host === false || member.role === 'traveler';
 
   return (
@@ -636,59 +643,106 @@ function MemberProfileContent() {
             <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#EADFD5] shadow-sm space-y-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-xl font-black text-[#1F2937]">{listing.title}</h3>
-                  <p className="text-xs text-gray-500 mt-1">{listing.neighborhood_name}</p>
+                  <h3 className="text-xl font-black text-[#1F2937]">
+                    میزبانی در {member.city} با {member.full_name}
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1">{neighborhoodLabel}</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2.5">
                   <span className="px-3 py-1 rounded-xl bg-[#FBF4F0] text-[#C25E38] text-xs font-bold">
-                    نوع فضا: {listing.room_type_label}
+                    نوع فضا: {roomTypeLabel}
                   </span>
                   <span className="px-3 py-1 rounded-xl bg-gray-100 text-gray-700 text-xs font-bold">
-                    ظرفیت: {listing.capacity} نفر
+                    ظرفیت: {toPersianDigits(roomCapacity)} نفر
                   </span>
+                  {member.guest_preference && (
+                    <span className="px-3 py-1 rounded-xl bg-[#EBF5F1] text-[#1E5647] text-xs font-bold">
+                      {member.guest_preference === 'females_only'
+                        ? 'فقط خانم‌ها'
+                        : member.guest_preference === 'couples_families'
+                        ? 'خانواده / زوج'
+                        : 'پذیرش عمومی'}
+                    </span>
+                  )}
                 </div>
               </div>
 
-              {/* Photos Gallery */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-2xl overflow-hidden">
-                {listing.photos.map((photo, idx) => (
-                  <div key={idx} className="relative aspect-[16/10] rounded-2xl overflow-hidden shadow-sm">
-                    <img
-                      src={photo}
-                      alt={listing.title}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2.5 py-1 rounded-lg backdrop-blur-sm">
-                      اتاقی برای یک دوست
+              {/* Photos Gallery or Authentic Placeholder */}
+              {homePhotos.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-2xl overflow-hidden">
+                  {homePhotos.map((photo, idx) => (
+                    <div key={idx} className="relative aspect-[16/10] rounded-2xl overflow-hidden shadow-sm border border-[#EADFD5]">
+                      <img
+                        src={photo}
+                        alt={`فضای اقامتگاه ${member.full_name}`}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2.5 py-1 rounded-lg backdrop-blur-sm">
+                        تصویر ثبت‌شده توسط میزبان
+                      </div>
                     </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-6 sm:p-8 rounded-2xl bg-[#FAF7F4] border border-dashed border-[#EADFD5] text-center space-y-2">
+                  <div className="w-12 h-12 rounded-2xl bg-[#C25E38]/10 text-[#C25E38] flex items-center justify-center mx-auto">
+                    <Home className="w-6 h-6" />
                   </div>
-                ))}
-              </div>
+                  <p className="text-xs font-bold text-gray-800">
+                    میزبان هنوز عکسی از فضای خانه بارگذاری نکرده است
+                  </p>
+                  <p className="text-[11px] text-gray-500 max-w-md mx-auto leading-relaxed">
+                    در همجا خانه‌ها اقامتگاه تجاری نیستند؛ پس از ارسال درخواست و تایید میزبانی، نشانی دقیق و هماهنگی‌های لازم به صورت مستقیم انجام می‌شود.
+                  </p>
+                </div>
+              )}
+
+              {/* Home Description */}
+              {member.home_description && (
+                <div className="pt-4 border-t border-gray-100">
+                  <h4 className="text-sm font-bold text-gray-800 mb-2">توضیحات فضای خانه</h4>
+                  <p className="text-xs text-gray-700 leading-relaxed bg-[#FAF7F4] p-4 rounded-2xl border border-[#EADFD5]">
+                    {member.home_description}
+                  </p>
+                </div>
+              )}
 
               {/* Amenities */}
               <div className="pt-4 border-t border-gray-100">
                 <h4 className="text-sm font-bold text-gray-800 mb-3">امکانات اقامتگاه</h4>
-                <div className="flex flex-wrap gap-2.5">
-                  {listing.amenities.map((item) => (
-                    <span
-                      key={item}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F9F8F6] text-gray-700 text-xs font-medium border border-gray-200"
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#1E5647]" />
-                      {item}
-                    </span>
-                  ))}
-                </div>
+                {amenitiesList.length > 0 ? (
+                  <div className="flex flex-wrap gap-2.5">
+                    {amenitiesList.map((item) => (
+                      <span
+                        key={item}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F9F8F6] text-gray-700 text-xs font-medium border border-gray-200"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#1E5647]" />
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-3.5 rounded-xl bg-[#FAF7F4] text-xs text-gray-500 border border-gray-200">
+                    امکانات خاصی توسط میزبان مشخص نشده است؛ جزئیات اقامت پس از تایید درخواست قابل هماهنگی است.
+                  </div>
+                )}
               </div>
 
               {/* House Rules matching Page 2 */}
               <div className="pt-4 border-t border-gray-100">
                 <h4 className="text-sm font-bold text-gray-800 mb-2">قوانین خانه</h4>
-                <ul className="space-y-1.5 text-xs text-gray-600 list-disc list-inside leading-relaxed">
-                  {listing.house_rules.map((rule, idx) => (
-                    <li key={idx}>{rule}</li>
-                  ))}
-                </ul>
+                {houseRulesList.length > 0 ? (
+                  <ul className="space-y-1.5 text-xs text-gray-600 list-disc list-inside leading-relaxed">
+                    {houseRulesList.map((rule, idx) => (
+                      <li key={idx}>{rule}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-xs text-gray-500 bg-[#FAF7F4] p-3 rounded-xl border border-gray-200">
+                    میزبان قانون سخت‌گیرانه خاصی ثبت نکرده است؛ حفظ آرامش خانه و احترام متقابل اساس همجا است.
+                  </p>
+                )}
               </div>
 
               {/* Exact Address Privacy Note matching Page 2 */}
