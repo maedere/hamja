@@ -10,10 +10,8 @@ import {
   MapPin,
   ChevronRight,
   ChevronLeft,
-  Calendar,
-  MessageSquare,
   ArrowLeft,
-  ShieldCheck,
+  Clock,
 } from 'lucide-react';
 import { toPersianDigits, getAvatarUrl, extractMutualReviews } from '@/lib/persian-utils';
 import { HostingRequest } from '@/types/database';
@@ -23,212 +21,216 @@ export interface HostingStory {
   title: string;
   stayDateLabel: string;
   isMutual?: boolean;
+  completedAt?: string;
   guest: {
     name: string;
     city: string;
     avatar: string;
-    quote: string;
-    rating: number;
+    quote?: string | null;
+    rating?: number;
     tags?: string[];
   };
   host: {
     name: string;
     city: string;
     avatar: string;
-    quote: string;
-    rating: number;
+    quote?: string | null;
+    rating?: number;
     tags?: string[];
   };
 }
 
-const STATIC_5_STORIES: HostingStory[] = [
-  {
-    id: 'story-maryam-mahsa',
-    title: 'مریم از رشت مهمان مهسا در تهران شد',
-    stayDateLabel: 'آبان ۱۴۰۵ · ۲ شب اقامت',
-    isMutual: false,
+function formatStayLabel(startDate?: string, endDate?: string, createdAt?: string): string {
+  const hasValidStart =
+    startDate && (startDate.includes('۱۴') || startDate.includes('14') || startDate.includes('/'));
+  const hasValidEnd =
+    endDate && (endDate.includes('۱۴') || endDate.includes('14') || endDate.includes('/'));
+
+  if (hasValidStart && hasValidEnd) {
+    return `${toPersianDigits(startDate)} تا ${toPersianDigits(endDate)} · اقامت تأییدشده`;
+  } else if (hasValidStart) {
+    return `تاریخ اقامت: ${toPersianDigits(startDate)} · اقامت تأییدشده`;
+  }
+
+  if (createdAt) {
+    try {
+      const d = new Date(createdAt);
+      if (!isNaN(d.getTime())) {
+        const persianMonthYear = new Intl.DateTimeFormat('fa-IR', {
+          month: 'long',
+          year: 'numeric',
+        }).format(d);
+        return `${persianMonthYear} · اقامت تأییدشده`;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  return 'اقامت تأییدشده همجا';
+}
+
+function parseStoryFromRequest(req: HostingRequest): HostingStory | null {
+  const mutual = extractMutualReviews(req.host_response_note);
+  const guestRev = mutual.guest_review;
+  const hostRev = mutual.host_review;
+
+  const hasGuestReview = Boolean(guestRev && guestRev.comment && guestRev.comment.trim());
+  const hasHostReview = Boolean(hostRev && hostRev.comment && hostRev.comment.trim());
+
+  // Must have at least one real written review from actual user
+  if (!hasGuestReview && !hasHostReview) {
+    return null;
+  }
+
+  const guestName = req.sender_name || guestRev?.reviewer_name || 'مهمان همجا';
+  const guestCity = req.sender_city || guestRev?.reviewer_city || 'ایران';
+  const guestAvatar = getAvatarUrl(req.sender_avatar || guestRev?.reviewer_avatar);
+
+  const hostName = req.receiver_name || hostRev?.reviewer_name || 'میزبان همجا';
+  const hostCity = req.receiver_city || hostRev?.reviewer_city || 'ایران';
+  const hostAvatar = getAvatarUrl(req.receiver_avatar || hostRev?.reviewer_avatar);
+
+  const isMutual = hasGuestReview && hasHostReview;
+
+  return {
+    id: `story-${req.id}`,
+    title: `${guestName} از ${guestCity} مهمان ${hostName} در ${hostCity} شد`,
+    stayDateLabel: formatStayLabel(req.start_date, req.end_date, req.created_at),
+    isMutual,
+    completedAt:
+      guestRev?.completed_at ||
+      hostRev?.completed_at ||
+      (req as any).updated_at ||
+      req.created_at ||
+      '',
     guest: {
-      name: 'مریم احمدی',
-      city: 'رشت',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&q=80',
-      rating: 5,
-      tags: ['خانه تمیز و پرنور', 'خوش‌برخورد و صمیمی'],
-      quote:
-        'پیش مهسا از لحظه ورود حس امنیت و راحتی کامل داشتم. خانه‌اش تمیز و پر از گل‌های قشنگ بود. بعدازظهر با هم در کافه‌های خیابان انقلاب کلی گپ زدیم. حالا بی‌صبرانه منتظرم به رشت بیاد تا من میزبانش باشم!',
+      name: guestName,
+      city: guestCity,
+      avatar: guestAvatar,
+      rating: guestRev?.rating || 5,
+      tags: guestRev?.tags || [],
+      quote: guestRev?.comment?.trim() || null,
     },
     host: {
-      name: 'مهسا امینی',
-      city: 'تهران',
-      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300&q=80',
-      rating: 5,
-      tags: ['مهمان باوقار و مرتب', 'احترام به قوانین خانه'],
-      quote:
-        'مریم فوق‌العاده باادب، خوش‌صحبت و مرتب بود. برای من از فرهنگ گیلان گفت و با خودش سوغاتی کلوچه فومن آورده بود. همجا واقعاً برای من مثل پیدا کردن یک دوست صمیمی و ارزشمند بود.',
+      name: hostName,
+      city: hostCity,
+      avatar: hostAvatar,
+      rating: hostRev?.rating || 5,
+      tags: hostRev?.tags || [],
+      quote: hostRev?.comment?.trim() || null,
     },
-  },
-  {
-    id: 'story-ali-behnam',
-    title: 'علی از تبریز میزبان بهنام از بوشهر شد؛ چند ماه بعد در بوشهر مهمان او بود!',
-    stayDateLabel: 'شهریور و آبان ۱۴۰۵ · میزبانی متقابل',
-    isMutual: true,
-    guest: {
-      name: 'بهنام رضایی',
-      city: 'بوشهر',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80',
-      rating: 5,
-      tags: ['میزبانی بی‌نظیر', 'راهنمایی عالی در تبریزگردی'],
-      quote:
-        'وقتی در تبریز بودم، علی با روی باز من رو به خانه‌اش برد و بازار تاریخی تبریز و کوچه‌های ایل‌گلی رو نشونم داد. یک تجربه اصیل که هیچ هتل یا اقامتگاه تجاری نمی‌تونست به من بده.',
-    },
-    host: {
-      name: 'علی محمدی',
-      city: 'تبریز',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80',
-      rating: 5,
-      tags: ['شروع یک برادری', 'صمیمی و پرانرژی'],
-      quote:
-        'شش ماه بعد من در بوشهر مهمان خانه بهنام بودم. کنار آتش لب ساحل خلیج فارس با هم خیام‌خوانی کردیم و از موسیقی جنوب گفتیم. همجا برای ما فراتر از یک سقف بود؛ شروع یک برادری همیشگی.',
-    },
-  },
-  {
-    id: 'story-kimia-sara',
-    title: 'کیمیا از شیراز مهمان سارا در اصفهان شد',
-    stayDateLabel: 'مهر ۱۴۰۵ · ۳ شب اقامت عکاسی',
-    isMutual: false,
-    guest: {
-      name: 'کیمیا راد',
-      city: 'شیراز',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
-      rating: 5,
-      tags: ['هنرمند و مهربان', 'کوچه‌های جلفا'],
-      quote:
-        'سارا یک میزبان هنرمند و فوق‌العاده باحوصله است. کوچه‌های جلفا و زاینده‌رود رو با دید عکاسانه‌اش نشونم داد و شب‌ها ساعت‌ها از ادبیات و تاریخ گفتیم. حس می‌کردم سال‌هاست می‌شناسمش.',
-    },
-    host: {
-      name: 'سارا رحیمی',
-      city: 'اصفهان',
-      avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=300&q=80',
-      rating: 5,
-      tags: ['همسفر عالی', 'پرانرژی و متواضع'],
-      quote:
-        'کیمیا پرانرژی، خوش‌سفر و بی‌نهایت مهربان بود. صحبت از شعر حافظ و هنر اصفهان، شب‌های فراموش‌نشدنی برامون ساخت. خوشحالم که خانه‌ام در اصفهان محلی برای این پیوند عمیق بود.',
-    },
-  },
-  {
-    id: 'story-navid-reza',
-    title: 'نوید از مشهد مهمان رضا در یزد شد',
-    stayDateLabel: 'آبان ۱۴۰۵ · ۲ شب اقامت کویری',
-    isMutual: false,
-    guest: {
-      name: 'نوید حسینی',
-      city: 'مشهد',
-      avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=300&q=80',
-      rating: 5,
-      tags: ['مهمان‌نوازی کویری', 'آرامش و سکوت خانه'],
-      quote:
-        'رضا با چای آتشی و قطاب تازه یزد ازم استقبال کرد. پشت‌بام خانه‌اش رو به بادگیرهای خشتی یزد چشم‌اندازی داشت که روح آدم رو تازه می‌کرد. سفر کاری من تبدیل به یکی از آرام‌ترین روزهام شد.',
-    },
-    host: {
-      name: 'رضا کمالی',
-      city: 'یزد',
-      avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=300&q=80',
-      rating: 5,
-      tags: ['خوش‌قول و بادقت', 'احترام به فرهنگ سنتی'],
-      quote:
-        'نوید خیلی باوقار، اهل مطالعه و خوش‌قول بود. احترام کامل به آرامش خانه گذاشت و کلی گپ علمی و فرهنگی زدیم. به تمام میزبان‌های همجا اقامت دادن به نوید عزیز رو توصیه می‌کنم.',
-    },
-  },
-  {
-    id: 'story-niloufar-zahra',
-    title: 'نیلوفر از تهران مهمان زهرا در سنندج شد',
-    stayDateLabel: 'مهر ۱۴۰۵ · ۲ شب اقامت خانوادگی',
-    isMutual: false,
-    guest: {
-      name: 'نیلوفر معتمد',
-      city: 'تهران',
-      avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=300&q=80',
-      rating: 5,
-      tags: ['غذای محلی کردی', 'مهمان‌نوازی بی‌نظیر'],
-      quote:
-        'گرمای دل خانواده زهرا در سنندج برای همیشه در یادم می‌مونه. کلانه محلی پختند و برام از تاریخ کردستان و کوه‌های آبیدر گفتند. این دوستی زیباترین هدیه‌ای بود که همجا بهم داد.',
-    },
-    host: {
-      name: 'زهرا کریمی',
-      city: 'سنندج',
-      avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=300&q=80',
-      rating: 5,
-      tags: ['بااحترام و مهربان', 'دوست خانواده ما'],
-      quote:
-        'نیلوفر با ادب و صمیمیتش خیلی زود عضوی از خانواده ما شد. احترامش به سنت‌ها و فرهنگ ما بسیار دلنشین بود. مشتاقانه منتظر دیدارش دوباره در سنندج هستیم.',
-    },
-  },
-];
+  };
+}
 
 export default function LatestHostingsStories() {
-  const [stories, setStories] = useState<HostingStory[]>(STATIC_5_STORIES);
+  const [stories, setStories] = useState<HostingStory[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Try to load any dynamic completed mutual reviews from API and merge them on top!
   useEffect(() => {
-    const fetchDynamicHostings = async () => {
+    let isMounted = true;
+
+    const fetchRealHostings = async () => {
       try {
         const res = await fetch('/api/requests', { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
           if (data.success && Array.isArray(data.requests)) {
-            const dynamicList: HostingStory[] = [];
+            const parsedList: HostingStory[] = [];
+
             data.requests.forEach((req: HostingRequest) => {
-              const mutual = extractMutualReviews(req.host_response_note);
-              if (mutual.guest_review && mutual.host_review) {
-                dynamicList.push({
-                  id: `dyn-story-${req.id}`,
-                  title: `${req.sender_name} از ${req.sender_city} مهمان ${req.receiver_name} در ${req.receiver_city} شد`,
-                  stayDateLabel: `${toPersianDigits(req.start_date)} تا ${toPersianDigits(req.end_date)} · اقامت تأییدشده`,
-                  isMutual: true,
-                  guest: {
-                    name: req.sender_name,
-                    city: req.sender_city,
-                    avatar: getAvatarUrl(req.sender_avatar),
-                    rating: mutual.guest_review.rating || 5,
-                    tags: mutual.guest_review.tags || ['تجربه عالی'],
-                    quote: mutual.guest_review.comment,
-                  },
-                  host: {
-                    name: req.receiver_name,
-                    city: req.receiver_city,
-                    avatar: getAvatarUrl(req.receiver_avatar),
-                    rating: mutual.host_review.rating || 5,
-                    tags: mutual.host_review.tags || ['مهمان‌نواز و امن'],
-                    quote: mutual.host_review.comment,
-                  },
-                });
+              const story = parseStoryFromRequest(req);
+              if (story) {
+                parsedList.push(story);
               }
             });
 
-            if (dynamicList.length > 0) {
-              // Combine dynamic stories with static stories and keep up to 5
-              const combined = [...dynamicList, ...STATIC_5_STORIES].slice(0, 5);
-              setStories(combined);
+            // Sort newest first
+            parsedList.sort((a, b) => {
+              const timeA = a.completedAt ? new Date(a.completedAt).getTime() : 0;
+              const timeB = b.completedAt ? new Date(b.completedAt).getTime() : 0;
+              return timeB - timeA;
+            });
+
+            if (isMounted) {
+              setStories(parsedList.slice(0, 5));
             }
           }
         }
       } catch (e) {
-        // keep static 5 stories
+        // network or server error
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
-    fetchDynamicHostings();
+    fetchRealHostings();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const story = stories[currentIndex] || STATIC_5_STORIES[0];
-
   const handleNext = () => {
+    if (stories.length <= 1) return;
     setCurrentIndex((prev) => (prev + 1) % stories.length);
   };
 
   const handlePrev = () => {
+    if (stories.length <= 1) return;
     setCurrentIndex((prev) => (prev - 1 + stories.length) % stories.length);
   };
+
+  // Loading skeleton
+  if (isLoading) {
+    return (
+      <section id="stories" className="py-20 bg-gradient-to-b from-[#F9F8F6] via-[#F4EFEA]/60 to-[#F9F8F6]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-right animate-pulse space-y-4">
+          <div className="h-6 w-48 bg-gray-200 rounded-full mb-2" />
+          <div className="h-8 w-72 bg-gray-200 rounded-2xl mb-6" />
+          <div className="h-72 bg-white rounded-3xl border border-[#EADFD5] p-8" />
+        </div>
+      </section>
+    );
+  }
+
+  // 100% Authentic Empty State for Launch Phase (when no completed stays with reviews exist yet)
+  if (stories.length === 0) {
+    return (
+      <section id="stories" className="py-20 bg-gradient-to-b from-[#F9F8F6] via-[#F4EFEA]/60 to-[#F9F8F6]">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="bg-white rounded-3xl p-8 sm:p-12 border border-[#EADFD5] shadow-xs space-y-5">
+            <div className="w-14 h-14 rounded-2xl bg-[#FBF4F0] text-[#C25E38] flex items-center justify-center mx-auto border border-[#C25E38]/20">
+              <Sparkles className="w-7 h-7" />
+            </div>
+            <div className="space-y-2">
+              <span className="text-xs font-bold text-[#C25E38]">روایت‌های واقعی از اقامت‌های دوطرفه</span>
+              <h3 className="text-xl sm:text-2xl font-black text-gray-900 leading-snug">
+                داستان‌های میزبانی و دوستی همجا به زودی در اینجا ثبت می‌شوند
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-600 max-w-xl mx-auto leading-relaxed">
+                تمام روایت‌ها و نظرات این بخش ۱۰۰٪ واقعی و بر اساس اقامت‌های تأییدشده اعضای همجا هستند. با ارسال درخواست یا گشودن درِ خانه به روی مسافران، شما می‌توانید اولین روایت ماندگار همجا را رقم بزنید.
+              </p>
+            </div>
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+              <Link
+                href="/explore"
+                className="px-6 py-3 bg-[#C25E38] hover:bg-[#A84E2D] text-white text-xs font-bold rounded-2xl shadow-xs transition-colors flex items-center gap-2"
+              >
+                <MapPin className="w-4 h-4" />
+                <span>کاوش اعضا و میزبان‌ها</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const activeStoryIndex = currentIndex < stories.length ? currentIndex : 0;
+  const story = stories[activeStoryIndex];
 
   return (
     <section id="stories" className="py-20 bg-gradient-to-b from-[#F9F8F6] via-[#F4EFEA]/60 to-[#F9F8F6]">
@@ -238,7 +240,11 @@ export default function LatestHostingsStories() {
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FBF4F0] text-[#C25E38] text-xs font-bold border border-[#C25E38]/20 mb-3">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>۵ میزبانی و دوستی اخیر در همجا</span>
+              <span>
+                {stories.length === 1
+                  ? 'جدیدترین میزبانی و دوستی در همجا'
+                  : `${toPersianDigits(stories.length)} میزبانی و دوستی اخیر در همجا`}
+              </span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-[#1F2937] leading-tight">
               روایت‌های واقعی از اقامت‌های دوطرفه
@@ -248,64 +254,69 @@ export default function LatestHostingsStories() {
             </p>
           </div>
 
-          {/* Navigation Arrows */}
-          <div className="flex items-center gap-2 self-start sm:self-auto">
-            <button
-              onClick={handlePrev}
-              className="p-2.5 rounded-2xl bg-white border border-[#EADFD5] text-gray-700 hover:text-[#C25E38] hover:border-[#C25E38] shadow-xs transition-all active:scale-95"
-              aria-label="داستان قبلی"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-            <div className="text-xs font-bold text-gray-500 px-2">
-              <span>{toPersianDigits(currentIndex + 1)}</span> از <span>{toPersianDigits(stories.length)}</span>
+          {/* Navigation Arrows (shown if more than 1 story) */}
+          {stories.length > 1 && (
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <button
+                onClick={handlePrev}
+                className="p-2.5 rounded-2xl bg-white border border-[#EADFD5] text-gray-700 hover:text-[#C25E38] hover:border-[#C25E38] shadow-xs transition-all active:scale-95"
+                aria-label="داستان قبلی"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+              <div className="text-xs font-bold text-gray-500 px-2">
+                <span>{toPersianDigits(activeStoryIndex + 1)}</span> از{' '}
+                <span>{toPersianDigits(stories.length)}</span>
+              </div>
+              <button
+                onClick={handleNext}
+                className="p-2.5 rounded-2xl bg-white border border-[#EADFD5] text-gray-700 hover:text-[#C25E38] hover:border-[#C25E38] shadow-xs transition-all active:scale-95"
+                aria-label="داستان بعدی"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
             </div>
-            <button
-              onClick={handleNext}
-              className="p-2.5 rounded-2xl bg-white border border-[#EADFD5] text-gray-700 hover:text-[#C25E38] hover:border-[#C25E38] shadow-xs transition-all active:scale-95"
-              aria-label="داستان بعدی"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-          </div>
+          )}
         </div>
 
-        {/* Stories Quick Navigation Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-6 scrollbar-none">
-          {stories.map((s, idx) => {
-            const isActive = idx === currentIndex;
-            return (
-              <button
-                key={s.id}
-                onClick={() => setCurrentIndex(idx)}
-                className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition-all shrink-0 flex items-center gap-2 border ${
-                  isActive
-                    ? 'bg-[#1E5647] text-white border-[#1E5647] shadow-md scale-102'
-                    : 'bg-white text-gray-700 border-[#EADFD5] hover:bg-gray-50'
-                }`}
-              >
-                <div className="flex items-center -space-x-1.5 space-x-reverse">
-                  <img
-                    src={getAvatarUrl(s.guest.avatar)}
-                    alt={s.guest.name}
-                    className="w-5 h-5 rounded-full object-cover ring-1 ring-white"
-                  />
-                  <img
-                    src={getAvatarUrl(s.host.avatar)}
-                    alt={s.host.name}
-                    className="w-5 h-5 rounded-full object-cover ring-1 ring-white"
-                  />
-                </div>
-                <span>
-                  {s.guest.name.split(' ')[0]} و {s.host.name.split(' ')[0]}
-                </span>
-                <span className={`text-[10px] ${isActive ? 'text-white/80' : 'text-gray-400'}`}>
-                  ({s.guest.city} - {s.host.city})
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        {/* Stories Quick Navigation Pills (shown if more than 1 story) */}
+        {stories.length > 1 && (
+          <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-6 scrollbar-none">
+            {stories.map((s, idx) => {
+              const isActive = idx === activeStoryIndex;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => setCurrentIndex(idx)}
+                  className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition-all shrink-0 flex items-center gap-2 border ${
+                    isActive
+                      ? 'bg-[#1E5647] text-white border-[#1E5647] shadow-md scale-102'
+                      : 'bg-white text-gray-700 border-[#EADFD5] hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-center -space-x-1.5 space-x-reverse">
+                    <img
+                      src={getAvatarUrl(s.guest.avatar)}
+                      alt={s.guest.name}
+                      className="w-5 h-5 rounded-full object-cover ring-1 ring-white"
+                    />
+                    <img
+                      src={getAvatarUrl(s.host.avatar)}
+                      alt={s.host.name}
+                      className="w-5 h-5 rounded-full object-cover ring-1 ring-white"
+                    />
+                  </div>
+                  <span>
+                    {s.guest.name.split(' ')[0]} و {s.host.name.split(' ')[0]}
+                  </span>
+                  <span className={`text-[10px] ${isActive ? 'text-white/80' : 'text-gray-400'}`}>
+                    ({s.guest.city} - {s.host.city})
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Active Hosting Showcase Card */}
         <div className="bg-white rounded-3xl p-6 sm:p-10 border border-[#EADFD5] shadow-sm space-y-8 animate-fade-in relative overflow-hidden">
@@ -353,7 +364,7 @@ export default function LatestHostingsStories() {
                   </span>
                   {story.isMutual && (
                     <span className="text-[11px] font-bold text-[#C25E38] bg-[#FBF4F0] px-2.5 py-0.5 rounded-full border border-[#C25E38]/20">
-                      میزبانی متقابل
+                      بازخورد دوطرفه
                     </span>
                   )}
                   <span className="text-[11px] text-gray-500 font-medium">
@@ -375,103 +386,127 @@ export default function LatestHostingsStories() {
             </Link>
           </div>
 
-          {/* Dual Review Perspectives (What each thought of the other) */}
+          {/* Dual Review Perspectives */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
-            {/* 1. Guest's Review of the Host */}
-            <div className="p-6 rounded-3xl bg-[#FAF7F4] border border-[#EADFD5] space-y-4 flex flex-col justify-between">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between pb-3 border-b border-[#EADFD5]/60">
-                  <div className="flex items-center gap-2.5">
-                    <img
-                      src={getAvatarUrl(story.guest.avatar)}
-                      alt={story.guest.name}
-                      className="w-10 h-10 rounded-full object-cover ring-2 ring-[#C25E38]/20"
-                    />
-                    <div>
-                      <h4 className="text-xs font-bold text-gray-900 flex items-center gap-1">
-                        <span>نظر {story.guest.name}</span>
-                        <span className="text-[10px] text-gray-500 font-normal">({story.guest.city})</span>
-                      </h4>
-                      <span className="text-[10px] text-[#C25E38] font-bold">درباره اقامت با {story.host.name}</span>
+            {/* 1. Guest's Review */}
+            {story.guest.quote ? (
+              <div className="p-6 rounded-3xl bg-[#FAF7F4] border border-[#EADFD5] space-y-4 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between pb-3 border-b border-[#EADFD5]/60">
+                    <div className="flex items-center gap-2.5">
+                      <img
+                        src={getAvatarUrl(story.guest.avatar)}
+                        alt={story.guest.name}
+                        className="w-10 h-10 rounded-full object-cover ring-2 ring-[#C25E38]/20"
+                      />
+                      <div>
+                        <h4 className="text-xs font-bold text-gray-900 flex items-center gap-1">
+                          <span>نظر {story.guest.name}</span>
+                          <span className="text-[10px] text-gray-500 font-normal">({story.guest.city})</span>
+                        </h4>
+                        <span className="text-[10px] text-[#C25E38] font-bold">درباره اقامت با {story.host.name}</span>
+                      </div>
+                    </div>
+
+                    {/* Rating Stars */}
+                    <div className="flex items-center gap-1 bg-white px-2 py-0.5 rounded-lg border border-amber-200">
+                      <span className="text-xs font-black text-amber-600">
+                        {toPersianDigits(story.guest.rating || 5)}
+                      </span>
+                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
                     </div>
                   </div>
 
-                  {/* Rating Stars */}
-                  <div className="flex items-center gap-1 bg-white px-2 py-0.5 rounded-lg border border-amber-200">
-                    <span className="text-xs font-black text-amber-600">
-                      {toPersianDigits(story.guest.rating)}
-                    </span>
-                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
+                  <p className="text-xs sm:text-sm text-gray-700 leading-relaxed italic font-medium">
+                    &ldquo;{story.guest.quote}&rdquo;
+                  </p>
+                </div>
+
+                {/* Tags */}
+                {story.guest.tags && story.guest.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-2">
+                    {story.guest.tags.map((t) => (
+                      <span
+                        key={t}
+                        className="text-[10px] font-semibold text-gray-600 bg-white px-2.5 py-1 rounded-lg border border-gray-200"
+                      >
+                        ✓ {t}
+                      </span>
+                    ))}
                   </div>
-                </div>
-
-                <p className="text-xs sm:text-sm text-gray-700 leading-relaxed italic font-medium">
-                  &ldquo;{story.guest.quote}&rdquo;
-                </p>
+                )}
               </div>
+            ) : (
+              <div className="p-6 rounded-3xl bg-[#FAF7F4]/60 border border-dashed border-[#EADFD5] space-y-3 flex flex-col items-center justify-center text-center">
+                <Clock className="w-6 h-6 text-gray-400" />
+                <p className="text-xs font-bold text-gray-600">
+                  اقامت با موفقیت انجام شده است
+                </p>
+                <span className="text-[11px] text-gray-400">
+                  در انتظار ثبت نظر و بازخورد توسط مهمان ({story.guest.name})
+                </span>
+              </div>
+            )}
 
-              {/* Tags */}
-              {story.guest.tags && (
-                <div className="flex flex-wrap gap-1.5 pt-2">
-                  {story.guest.tags.map((t) => (
-                    <span
-                      key={t}
-                      className="text-[10px] font-semibold text-gray-600 bg-white px-2.5 py-1 rounded-lg border border-gray-200"
-                    >
-                      ✓ {t}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
+            {/* 2. Host's Review */}
+            {story.host.quote ? (
+              <div className="p-6 rounded-3xl bg-[#FAF7F4] border border-[#EADFD5] space-y-4 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between pb-3 border-b border-[#EADFD5]/60">
+                    <div className="flex items-center gap-2.5">
+                      <img
+                        src={getAvatarUrl(story.host.avatar)}
+                        alt={story.host.name}
+                        className="w-10 h-10 rounded-full object-cover ring-2 ring-[#1E5647]/20"
+                      />
+                      <div>
+                        <h4 className="text-xs font-bold text-gray-900 flex items-center gap-1">
+                          <span>نظر {story.host.name}</span>
+                          <span className="text-[10px] text-gray-500 font-normal">({story.host.city})</span>
+                        </h4>
+                        <span className="text-[10px] text-[#1E5647] font-bold">درباره میزبانی از {story.guest.name}</span>
+                      </div>
+                    </div>
 
-            {/* 2. Host's Review of the Guest */}
-            <div className="p-6 rounded-3xl bg-[#FAF7F4] border border-[#EADFD5] space-y-4 flex flex-col justify-between">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between pb-3 border-b border-[#EADFD5]/60">
-                  <div className="flex items-center gap-2.5">
-                    <img
-                      src={getAvatarUrl(story.host.avatar)}
-                      alt={story.host.name}
-                      className="w-10 h-10 rounded-full object-cover ring-2 ring-[#1E5647]/20"
-                    />
-                    <div>
-                      <h4 className="text-xs font-bold text-gray-900 flex items-center gap-1">
-                        <span>نظر {story.host.name}</span>
-                        <span className="text-[10px] text-gray-500 font-normal">({story.host.city})</span>
-                      </h4>
-                      <span className="text-[10px] text-[#1E5647] font-bold">درباره میزبانی از {story.guest.name}</span>
+                    {/* Rating Stars */}
+                    <div className="flex items-center gap-1 bg-white px-2 py-0.5 rounded-lg border border-amber-200">
+                      <span className="text-xs font-black text-amber-600">
+                        {toPersianDigits(story.host.rating || 5)}
+                      </span>
+                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
                     </div>
                   </div>
 
-                  {/* Rating Stars */}
-                  <div className="flex items-center gap-1 bg-white px-2 py-0.5 rounded-lg border border-amber-200">
-                    <span className="text-xs font-black text-amber-600">
-                      {toPersianDigits(story.host.rating)}
-                    </span>
-                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
+                  <p className="text-xs sm:text-sm text-gray-700 leading-relaxed italic font-medium">
+                    &ldquo;{story.host.quote}&rdquo;
+                  </p>
+                </div>
+
+                {/* Tags */}
+                {story.host.tags && story.host.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-2">
+                    {story.host.tags.map((t) => (
+                      <span
+                        key={t}
+                        className="text-[10px] font-semibold text-gray-600 bg-white px-2.5 py-1 rounded-lg border border-gray-200"
+                      >
+                        ✓ {t}
+                      </span>
+                    ))}
                   </div>
-                </div>
-
-                <p className="text-xs sm:text-sm text-gray-700 leading-relaxed italic font-medium">
-                  &ldquo;{story.host.quote}&rdquo;
-                </p>
+                )}
               </div>
-
-              {/* Tags */}
-              {story.host.tags && (
-                <div className="flex flex-wrap gap-1.5 pt-2">
-                  {story.host.tags.map((t) => (
-                    <span
-                      key={t}
-                      className="text-[10px] font-semibold text-gray-600 bg-white px-2.5 py-1 rounded-lg border border-gray-200"
-                    >
-                      ✓ {t}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
+            ) : (
+              <div className="p-6 rounded-3xl bg-[#FAF7F4]/60 border border-dashed border-[#EADFD5] space-y-3 flex flex-col items-center justify-center text-center">
+                <Clock className="w-6 h-6 text-gray-400" />
+                <p className="text-xs font-bold text-gray-600">
+                  میزبانی با موفقیت انجام شده است
+                </p>
+                <span className="text-[11px] text-gray-400">
+                  در انتظار ثبت نظر و بازخورد توسط میزبان ({story.host.name})
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>
