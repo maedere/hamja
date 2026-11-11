@@ -1,5 +1,5 @@
 -- ==============================================================================
--- همجا (Hamja) - Persian Social Travel and Mutual Hosting Platform
+-- هم‌بام (Hambam) - Persian Social Travel and Mutual Hosting Platform
 -- Complete PostgreSQL Schema for Supabase
 -- ==============================================================================
 

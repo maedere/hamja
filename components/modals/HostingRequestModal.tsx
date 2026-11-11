@@ -56,7 +56,7 @@ export default function HostingRequestModal({
             }}
             className="w-full py-3 bg-[#C25E38] hover:bg-[#A84E2D] text-white font-bold rounded-2xl text-xs transition-colors shadow"
           >
-            ورود یا ثبت‌نام در همجا
+            ورود یا ثبت‌نام در هم‌بام
           </button>
         </div>
       </div>
@@ -80,8 +80,8 @@ export default function HostingRequestModal({
           <h3 className="text-base font-bold text-gray-900 text-center">نیاز به تأیید احراز هویت</h3>
           <p className="text-xs text-gray-600 leading-relaxed text-center">
             {currentUser.verification_status === 'pending'
-              ? 'مدارک هویتی شما ارسال شده و در حال بررسی توسط کارشناسان همجا است. پس از تأیید نهایی، امکان ارسال درخواست برای شما فعال خواهد شد.'
-              : 'جهت حفظ امنیت جامعه همجا و اعتماد متقابل اعضا، تنها کاربرانی که مدارک هویتی آن‌ها تأیید شده است مجاز به ارسال درخواست یا پیشنهاد میزبانی هستند.'}
+              ? 'مدارک هویتی شما ارسال شده و در حال بررسی توسط کارشناسان هم‌بام است. پس از تأیید نهایی، امکان ارسال درخواست برای شما فعال خواهد شد.'
+              : 'جهت حفظ امنیت جامعه هم‌بام و اعتماد متقابل اعضا، تنها کاربرانی که مدارک هویتی آن‌ها تأیید شده است مجاز به ارسال درخواست یا پیشنهاد میزبانی هستند.'}
           </p>
           <button
             onClick={onClose}
@@ -113,7 +113,7 @@ export default function HostingRequestModal({
           </div>
           <h3 className="text-base font-bold text-gray-900 text-center">ارسال درخواست به خود امکان‌پذیر نیست</h3>
           <p className="text-xs text-gray-600 leading-relaxed text-center">
-            این حساب متعلق به شماست. اعضای همجا به یکدیگر درخواست ارسال می‌کنند و امکان ارسال درخواست یا پیشنهاد به خود وجود ندارد.
+            این حساب متعلق به شماست. اعضای هم‌بام به یکدیگر درخواست ارسال می‌کنند و امکان ارسال درخواست یا پیشنهاد به خود وجود ندارد.
           </p>
           <button
             onClick={onClose}
@@ -138,7 +138,7 @@ export default function HostingRequestModal({
     try {
       const payload = {
         sender_id: currentUser.id,
-        sender_name: currentUser.full_name || 'کاربر همجا',
+        sender_name: currentUser.full_name || 'کاربر هم‌بام',
         sender_avatar: getAvatarUrl(currentUser.avatar_url),
         sender_city: currentUser.city || 'تهران',
         receiver_id: host.id,

@@ -3,7 +3,7 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 
 export const metadata: Metadata = {
-  title: "همجا | سفر به شهرها، ماندن در جمع دوستان؛ میزبانی دوطرفه",
+  title: "هم‌بام | سفر به شهرها، ماندن در جمع دوستان؛ میزبانی دوطرفه",
   description: "جامعه‌ای امن از میزبانان و مسافران محلی ایرانی برای میزبانی متقابل و سفرهای انسانی",
 };
 

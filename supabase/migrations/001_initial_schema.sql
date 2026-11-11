@@ -1,5 +1,5 @@
 -- ==============================================================================
--- همجا (Hamja) - Persian Social Travel and Mutual Hosting Platform
+-- هم‌بام (Hambam) - Persian Social Travel and Mutual Hosting Platform
 -- Supabase PostgreSQL Schema & Row Level Security (RLS)
 -- ==============================================================================
 
@@ -165,7 +165,7 @@ BEGIN
     INSERT INTO public.profiles (id, full_name, avatar_url, city, role)
     VALUES (
         new.id,
-        COALESCE(new.raw_user_meta_data->>'full_name', 'عضو جدید همجا'),
+        COALESCE(new.raw_user_meta_data->>'full_name', 'عضو جدید هم‌بام'),
         COALESCE(new.raw_user_meta_data->>'avatar_url', ''),
         COALESCE(new.raw_user_meta_data->>'city', 'تهران'),
         'both'

@@ -83,7 +83,7 @@ describe('Hamja Components & Core Features Test Suite', () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/تصویر کارت ملی یا برگه رهگیری/)).toBeInTheDocument();
     expect(screen.getByText(/تصویر سلفی به همراه کارت ملی/)).toBeInTheDocument();
-    expect(screen.getByText('ارسال مدارک جهت بررسی دستی همجا')).toBeInTheDocument();
+    expect(screen.getByText('ارسال مدارک جهت بررسی دستی هم‌بام')).toBeInTheDocument();
   });
 
   it('renders HostingRequestModal and handles stay submission', () => {
@@ -120,7 +120,7 @@ describe('Hamja Components & Core Features Test Suite', () => {
       <IranMap selectedCity="" onSelectCity={handleSelectCity} />
     );
 
-    expect(screen.getByText('میزبان‌های همجا روی نقشه')).toBeInTheDocument();
+    expect(screen.getByText('میزبان‌های هم‌بام روی نقشه')).toBeInTheDocument();
     expect(screen.getByText('دریای خزر')).toBeInTheDocument();
     expect(screen.getByText('خلیج فارس')).toBeInTheDocument();
 
@@ -157,8 +157,8 @@ describe('Hamja Components & Core Features Test Suite', () => {
       </AuthProvider>
     );
 
-    expect(screen.getByText('ورود به حساب کاربری همجا')).toBeInTheDocument();
-    expect(screen.getByText('ورود / ثبت‌نام در همجا')).toBeInTheDocument();
+    expect(screen.getByText('ورود به حساب کاربری هم‌بام')).toBeInTheDocument();
+    expect(screen.getByText('ورود / ثبت‌نام در هم‌بام')).toBeInTheDocument();
   });
 
   it('renders ProfilePage with user details when logged in', async () => {

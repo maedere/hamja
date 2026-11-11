@@ -52,7 +52,7 @@ export default function Navbar() {
                   </svg>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-2xl font-black text-[#1F2937] tracking-tight leading-none">همجا</span>
+                  <span className="text-2xl font-black text-[#1F2937] tracking-tight leading-none">هم‌بام</span>
                   <span className="text-[10px] text-[#6B7280] mt-1 font-medium">میزبانی متقابل و سفر</span>
                 </div>
               </Link>
@@ -167,7 +167,7 @@ export default function Navbar() {
                     href="/register"
                     className="px-5 py-2.5 text-xs sm:text-sm font-bold text-white bg-[#C25E38] hover:bg-[#A84E2D] rounded-2xl shadow-sm transition-all hover:shadow hover:scale-102 active:scale-98 flex items-center gap-1.5"
                   >
-                    <span>عضویت در همجا</span>
+                    <span>عضویت در هم‌بام</span>
                     <ArrowLeft className="w-3.5 h-3.5" />
                   </Link>
                 </div>
@@ -263,7 +263,7 @@ export default function Navbar() {
                   onClick={() => setIsMenuOpen(false)}
                   className="block w-full py-3 text-center text-sm font-bold text-white bg-[#C25E38] hover:bg-[#A84E2D] rounded-2xl shadow transition-colors"
                 >
-                  عضویت رایگان در همجا
+                  عضویت رایگان در هم‌بام
                 </Link>
                 <Link
                   href="/register"

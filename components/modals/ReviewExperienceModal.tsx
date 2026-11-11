@@ -106,7 +106,7 @@ export default function ReviewExperienceModal({
                 : `میزبان شدم · ثبت تجربه میزبانی از ${targetName}`}
             </h3>
             <p className="text-xs text-gray-500">
-              شهر {targetCity} · ثبت نظر شما به ارتقای اعتماد در جامعه همجا کمک می‌کند.
+              شهر {targetCity} · ثبت نظر شما به ارتقای اعتماد در جامعه هم‌بام کمک می‌کند.
             </p>
           </div>
         </div>

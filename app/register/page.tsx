@@ -301,7 +301,7 @@ export default function RegisterPage() {
     e.preventDefault();
 
     if (!agreeId || !agreeEthic || !agreeTerms) {
-      alert('لطفاً تمامی تاییده‌ها و شرایط امنیتی همجا را تایید فرمایید.');
+      alert('لطفاً تمامی تاییده‌ها و شرایط امنیتی هم‌بام را تایید فرمایید.');
       return;
     }
 
@@ -396,9 +396,9 @@ export default function RegisterPage() {
   const stepMeta = [
     { num: 1, title: 'قدم اول: ایجاد حساب کاربری', sub: 'نام کاربری، رمز عبور و شماره همراه' },
     { num: 2, title: 'قدم دوم: مشخصات فردی', sub: 'نام، سن، شهر و عکس پروفایل' },
-    { num: 3, title: 'قدم سوم: نقش شما در همجا', sub: 'میزبان، مسافر یا میزبانی متقابل' },
+    { num: 3, title: 'قدم سوم: نقش شما در هم‌بام', sub: 'میزبان، مسافر یا میزبانی متقابل' },
     { num: 4, title: 'قدم چهارم: روحیات و علایق', sub: 'برای پیدا کردن دوستان هم‌سلیقه' },
-    { num: 5, title: 'قدم پنجم: پیمان اعتماد و امنیت', sub: 'اصول و خط قرمز جامعه همجا' },
+    { num: 5, title: 'قدم پنجم: پیمان اعتماد و امنیت', sub: 'اصول و خط قرمز جامعه هم‌بام' },
   ];
 
   return (
@@ -443,7 +443,7 @@ export default function RegisterPage() {
               <div className="w-12 h-12 rounded-2xl bg-[#C25E38]/10 text-[#C25E38] flex items-center justify-center mx-auto">
                 <LogIn className="w-6 h-6" />
               </div>
-              <h2 className="text-lg font-black text-gray-800">ورود به حساب کاربری همجا</h2>
+              <h2 className="text-lg font-black text-gray-800">ورود به حساب کاربری هم‌بام</h2>
               <p className="text-xs text-gray-500">
                 نام کاربری یا شماره موبایل و رمز عبور خود را وارد کنید.
               </p>
@@ -530,7 +530,7 @@ export default function RegisterPage() {
                     هم
                   </div>
                   <div>
-                    <h2 className="text-xs font-black text-gray-900">عضویت در جامعه همجا</h2>
+                    <h2 className="text-xs font-black text-gray-900">عضویت در جامعه هم‌بام</h2>
                     <p className="text-[11px] text-gray-500">میزبانی صمیمانه و سفر دوستانه</p>
                   </div>
                 </div>
@@ -689,7 +689,7 @@ export default function RegisterPage() {
                     <div className="space-y-0.5">
                       <span className="text-xs font-bold text-gray-800 block">عکس چهره شما (اختیاری)</span>
                       <p className="text-[11px] text-gray-500 leading-relaxed">
-                        داشتن عکس واقعی اعتماد اعضای جامعه همجا را چند برابر می‌کند.
+                        داشتن عکس واقعی اعتماد اعضای جامعه هم‌بام را چند برابر می‌کند.
                       </p>
                     </div>
                   </div>
@@ -779,7 +779,7 @@ export default function RegisterPage() {
               {currentStep === 3 && (
                 <div className="space-y-4 animate-fade-in">
                   <p className="text-xs text-gray-600 leading-relaxed">
-                    دوست دارید چطور در جامعه همجا مشارکت کنید؟ (همیشه بعداً می‌توانید این وضعیت را تغییر دهید):
+                    دوست دارید چطور در جامعه هم‌بام مشارکت کنید؟ (همیشه بعداً می‌توانید این وضعیت را تغییر دهید):
                   </p>
 
                   {/* 3 Role Choice Cards */}
@@ -1205,9 +1205,9 @@ export default function RegisterPage() {
                       <ShieldCheck className="w-6 h-6" />
                     </div>
                     <div>
-                      <h4 className="text-xs font-black text-[#1E5647]">پیمان اعتماد جامعه همجا</h4>
+                      <h4 className="text-xs font-black text-[#1E5647]">پیمان اعتماد جامعه هم‌بام</h4>
                       <p className="text-[11px] text-[#1E5647]/80 leading-relaxed">
-                        امنیت، شفافیت و مهمان‌نوازی اصیل ایرانی خط قرمز همجاست.
+                        امنیت، شفافیت و مهمان‌نوازی اصیل ایرانی خط قرمز هم‌بام است.
                       </p>
                     </div>
                   </div>
@@ -1256,7 +1256,7 @@ export default function RegisterPage() {
                       <div className="space-y-0.5">
                         <span className="text-xs font-bold text-gray-900 block">میزبانی دوستانه و بدون تبادل مالی</span>
                         <p className="text-[11px] text-gray-500 leading-relaxed">
-                          همجا یک بستر مالی یا هتل نیست؛ هدف ما گسترش دوستی، اعتماد و میزبانی اصیل در سراسر ایران است.
+                          هم‌بام یک بستر مالی یا هتل نیست؛ هدف ما گسترش دوستی، اعتماد و میزبانی اصیل در سراسر ایران است.
                         </p>
                       </div>
                     </label>
@@ -1296,7 +1296,7 @@ export default function RegisterPage() {
                       {currentStep === 1
                         ? 'مرحله بعد: مشخصات فردی'
                         : currentStep === 2
-                        ? 'مرحله بعد: نقش در همجا'
+                        ? 'مرحله بعد: نقش در هم‌بام'
                         : currentStep === 3
                         ? 'مرحله بعد: علایق و روحیات'
                         : 'مرحله بعد: قوانین و امنیت'}
@@ -1318,7 +1318,7 @@ export default function RegisterPage() {
                     ) : (
                       <>
                         <Sparkles className="w-4 h-4" />
-                        <span>تکمیل عضویت در همجا 🎉</span>
+                        <span>تکمیل عضویت در هم‌بام 🎉</span>
                       </>
                     )}
                   </button>

@@ -83,7 +83,7 @@ export default function HomePage() {
                 </h1>
 
                 <p className="text-base sm:text-lg text-[#4B5563] leading-relaxed max-w-xl font-normal">
-                  جامعه‌ای امن از میزبانان و مسافران محلی. در همجا، مهمان دوستانت می‌شوی و روزی درِ خانه‌ات را به روی آن‌ها باز می‌کنی؛ بدون تبادل مالی و بر پایه اعتماد و مهمان‌نوازی اصیل ایرانی.
+                  جامعه‌ای امن از میزبانان و مسافران محلی. در هم‌بام، مهمان دوستانت می‌شوی و روزی درِ خانه‌ات را به روی آن‌ها باز می‌کنی؛ بدون تبادل مالی و بر پایه اعتماد و مهمان‌نوازی اصیل ایرانی.
                 </p>
 
                 <div className="flex flex-wrap items-center gap-4 pt-2">
@@ -91,7 +91,7 @@ export default function HomePage() {
                     onClick={() => setShowVerifyModal(true)}
                     className="px-6 py-3.5 bg-[#C25E38] hover:bg-[#A84E2D] text-white font-bold rounded-2xl shadow-md transition-all hover:shadow-xl hover:scale-102 active:scale-98 flex items-center gap-2 text-sm sm:text-base"
                   >
-                    <span>عضویت رایگان در همجا</span>
+                    <span>عضویت رایگان در هم‌بام</span>
                     <ArrowLeft className="w-4 h-4" />
                   </button>
 
@@ -262,7 +262,7 @@ export default function HomePage() {
               سه قدم تا یک آشنایی تازه
             </h2>
             <p className="text-xs sm:text-sm text-gray-500 max-w-xl mx-auto mb-14">
-              در همجا همه چیز بر پایه شفافیت، احترام و مهمان‌نوازی استوار است.
+              در هم‌بام همه چیز بر پایه شفافیت، احترام و مهمان‌نوازی استوار است.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -321,7 +321,7 @@ export default function HomePage() {
                   شاید دوست بعدی‌ات همین‌جاست
                 </h2>
                 <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                  با میزبانان و مسافران محلی آشنا شو؛ برای دیدن پروفایل کامل و پیام‌رسانی، عضو همجا شو.
+                  با میزبانان و مسافران محلی آشنا شو؛ برای دیدن پروفایل کامل و پیام‌رسانی، عضو هم‌بام شو.
                 </p>
               </div>
               <Link
@@ -350,7 +350,7 @@ export default function HomePage() {
                     هنوز کاربری ثبت‌نام نکرده است
                   </h3>
                   <p className="text-xs text-gray-500 max-w-md mx-auto leading-relaxed">
-                    با عضویت در همجا، اولین میزبان یا مسافر باشید و پروفایل خود را ثبت کنید تا جامعه همجا گسترش یابد.
+                    با عضویت در هم‌بام، اولین میزبان یا مسافر باشید و پروفایل خود را ثبت کنید تا جامعه هم‌بام گسترش یابد.
                   </p>
                 </div>
                 <div>
@@ -368,7 +368,7 @@ export default function HomePage() {
             <div className="mt-8 p-4 rounded-2xl bg-[#F0EDE8] border border-[#EADFD5] text-center text-xs text-gray-600 flex items-center justify-center gap-2 font-medium">
               <Lock className="w-4 h-4 text-gray-500 shrink-0" />
               <span>
-                برای حفظ حریم خصوصی اعضا، پروفایل کامل، نشانی خانه و پیام‌رسان پس از عضویت در همجا در دسترس قرار می‌گیرد.
+                برای حفظ حریم خصوصی اعضا، پروفایل کامل، نشانی خانه و پیام‌رسان پس از عضویت در هم‌بام در دسترس قرار می‌گیرد.
               </span>
             </div>
           </div>
@@ -387,7 +387,7 @@ export default function HomePage() {
                   در کدام شهرها میزبان داریم؟
                 </h3>
                 <p className="text-xs sm:text-sm text-white/80 max-w-xl leading-relaxed">
-                  از تبریز و رشت تا یزد، اصفهان، شیراز و بوشهر؛ با نقشه تعاملی همجا موقعیت میزبانان را جستجو کنید و مقصد سفر بعدیتان را بیابید.
+                  از تبریز و رشت تا یزد، اصفهان، شیراز و بوشهر؛ با نقشه تعاملی هم‌بام موقعیت میزبانان را جستجو کنید و مقصد سفر بعدیتان را بیابید.
                 </p>
               </div>
 
@@ -413,7 +413,7 @@ export default function HomePage() {
               با خیال راحت درِ خانه را باز کن
             </h2>
             <p className="text-xs sm:text-sm text-gray-500 max-w-xl mx-auto mb-14">
-              امنیت اولویت نخست ماست. مکانیزم‌های چندلایه همجا برای تضمین آسودگی خاطر شما طراحی شده‌اند.
+              امنیت اولویت نخست ماست. مکانیزم‌های چندلایه هم‌بام برای تضمین آسودگی خاطر شما طراحی شده‌اند.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-right">
@@ -423,7 +423,7 @@ export default function HomePage() {
                 </div>
                 <h3 className="text-base font-black text-[#1F2937]">ثبت کد ملی و مدارک شناسایی</h3>
                 <p className="text-xs sm:text-sm text-gray-600 leading-relaxed font-medium">
-                  کد ملی و تصویر مدارک هویتی اعضا در سامانه ثبت و جهت امنیت جامعه و پیگیری‌های لازم نزد همجا محفوظ می‌ماند.
+                  کد ملی و تصویر مدارک هویتی اعضا در سامانه ثبت و جهت امنیت جامعه و پیگیری‌های لازم نزد هم‌بام محفوظ می‌ماند.
                 </p>
               </div>
 

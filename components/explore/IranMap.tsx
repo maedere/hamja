@@ -122,7 +122,7 @@ export default function IranMap({ selectedCity, onSelectCity, users = [] }: Iran
       <div className="flex items-center justify-between mb-3">
         <h4 className="text-sm font-bold text-[#1F2937] flex items-center gap-1.5">
           <MapPin className="w-4 h-4 text-[#C25E38]" />
-          <span>میزبان‌های همجا روی نقشه</span>
+          <span>میزبان‌های هم‌بام روی نقشه</span>
         </h4>
         <span className="text-[11px] text-gray-500 font-medium">
           {totalMembers > 0
@@ -294,8 +294,8 @@ export default function IranMap({ selectedCity, onSelectCity, users = [] }: Iran
         <div>
           <span className="font-bold text-gray-800">
             {totalMembers > 0
-              ? `شبکه میزبانی همجا با ${toPersianDigits(totalMembers)} عضو فعال`
-              : 'شروع شبکه همجا'}
+              ? `شبکه میزبانی هم‌بام با ${toPersianDigits(totalMembers)} عضو فعال`
+              : 'شروع شبکه هم‌بام'}
           </span>
           <p className="mt-0.5 font-medium">
             با کلیک روی هر شهر روی نقشه، اعضای آن شهر فیلتر می‌شوند. جهت حفظ امنیت و حریم خصوصی، نشان‌ها محدوده کلی شهر را نمایش می‌دهند نه نشانی دقیق.

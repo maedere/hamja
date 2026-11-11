@@ -48,7 +48,7 @@ export default function ProfilePage() {
             <User className="w-8 h-8" />
           </div>
           <div className="space-y-2">
-            <h1 className="text-xl font-black text-gray-800">ورود به حساب کاربری همجا</h1>
+            <h1 className="text-xl font-black text-gray-800">ورود به حساب کاربری هم‌بام</h1>
             <p className="text-xs text-gray-500 leading-relaxed">
               برای مشاهده پروفایل کاربری و وضعیت احراز هویت، لطفاً وارد حساب خود شوید یا ثبت‌نام کنید.
             </p>
@@ -58,7 +58,7 @@ export default function ProfilePage() {
               href="/register"
               className="w-full py-3 bg-[#C25E38] hover:bg-[#A84E2D] text-white font-bold rounded-2xl text-sm shadow transition-colors block text-center"
             >
-              ورود / ثبت‌نام در همجا
+              ورود / ثبت‌نام در هم‌بام
             </Link>
             <Link
               href="/"
@@ -190,7 +190,7 @@ export default function ProfilePage() {
                     </h2>
                   </div>
                   <p className="text-xs text-amber-900 leading-relaxed max-w-2xl">
-                    تصاویر کارت ملی و سلفی شما با موفقیت ارسال شد و هم‌اکنون در صف بررسی توسط ادمین همجا قرار دارد. پس از تأیید نهایی، نشان هویت تأییدشده در پروفایل شما فعال خواهد شد.
+                    تصاویر کارت ملی و سلفی شما با موفقیت ارسال شد و هم‌اکنون در صف بررسی توسط ادمین هم‌بام قرار دارد. پس از تأیید نهایی، نشان هویت تأییدشده در پروفایل شما فعال خواهد شد.
                   </p>
                   {currentUser.verification_docs?.submitted_at && (
                     <p className="text-[11px] text-amber-700">
@@ -232,14 +232,14 @@ export default function ProfilePage() {
                     </h2>
                   </div>
                   <p className="text-xs text-gray-700 leading-relaxed max-w-2xl">
-                    تصاویر کارت ملی و سلفی شما توسط تیم پشتیبانی بررسی و تأیید گردید. شما دسترسی کامل برای ارسال درخواست میزبانی و میزبانی از سایر مسافران همجا دارید.
+                    تصاویر کارت ملی و سلفی شما توسط تیم پشتیبانی بررسی و تأیید گردید. شما دسترسی کامل برای ارسال درخواست میزبانی و میزبانی از سایر مسافران هم‌بام دارید.
                   </p>
                 </div>
               </div>
 
               <div className="px-4 py-2 rounded-2xl bg-white/80 border border-[#1E5647]/20 text-xs font-bold text-[#1E5647] flex items-center gap-1.5 shrink-0">
                 <Sparkles className="w-4 h-4 text-[#C25E38]" />
-                <span>عضو معتبر همجا</span>
+                <span>عضو معتبر هم‌بام</span>
               </div>
             </div>
           </div>
@@ -396,7 +396,7 @@ export default function ProfilePage() {
                 <span className="block text-xl sm:text-2xl font-black text-gray-900 mb-0.5">
                   {toPersianDigits(currentUser.member_since_year || '۱۴۰۴')}
                 </span>
-                <span className="text-[11px] sm:text-xs text-gray-500 font-bold">سال عضویت در همجا</span>
+                <span className="text-[11px] sm:text-xs text-gray-500 font-bold">سال عضویت در هم‌بام</span>
               </div>
             </div>
 
@@ -483,7 +483,7 @@ export default function ProfilePage() {
 
                 <div className="space-y-2.5 text-xs">
                   <div className="flex items-center justify-between py-1 border-b border-gray-50">
-                    <span className="text-gray-500">نقش در همجا:</span>
+                    <span className="text-gray-500">نقش در هم‌بام:</span>
                     <span className="font-bold text-gray-800">{roleLabel}</span>
                   </div>
 

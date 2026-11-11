@@ -12,13 +12,13 @@ export default function Footer() {
               <div className="w-9 h-9 rounded-xl bg-white text-[#1E5647] flex items-center justify-center font-black text-xl">
                 هم
               </div>
-              <span className="text-2xl font-black text-white">همجا</span>
+              <span className="text-2xl font-black text-white">هم‌بام</span>
               <span className="text-xs text-white/70 mr-2 border-r border-white/20 pr-2">
                 خانه‌ای به وسعت دوستی
               </span>
             </div>
             <p className="text-sm text-white/80 leading-relaxed max-w-sm">
-              همجا، جمعی برای سفرهای انسانی‌تر؛ جایی برای آشنایی با آدم‌های محلی و تجربه میزبانی رایگان و دوطرفه. در همجا، خانه مقصد بعدی یک دوست است.
+              هم‌بام، جمعی برای سفرهای انسانی‌تر؛ جایی برای آشنایی با آدم‌های محلی و تجربه میزبانی رایگان و دوطرفه. در هم‌بام، خانه مقصد بعدی یک دوست است.
             </p>
             <div className="pt-2 flex items-center gap-3">
               <span className="text-xs text-white/60">همراهی در شبکه‌های اجتماعی:</span>
@@ -57,7 +57,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/#stories" className="hover:text-white transition-colors">
-                  داستان‌های همجا
+                  داستان‌های هم‌بام
                 </Link>
               </li>
             </ul>
@@ -110,7 +110,7 @@ export default function Footer() {
 
         {/* Bottom Copyright */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-white/60 gap-4">
-          <p>© ۱۴۰۵ همجا؛ ساخته‌شده برای دوستی، سفر و اعتماد.</p>
+          <p>© ۱۴۰۵ هم‌بام؛ ساخته‌شده برای دوستی، سفر و اعتماد.</p>
           <div className="flex items-center gap-6">
             <span>تأیید هویت و امنیت سفر</span>
             <span className="w-1.5 h-1.5 rounded-full bg-white/30" />

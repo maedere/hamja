@@ -67,7 +67,7 @@ function formatStayLabel(startDate?: string, endDate?: string, createdAt?: strin
     }
   }
 
-  return 'اقامت تأییدشده همجا';
+  return 'اقامت تأییدشده هم‌بام';
 }
 
 function parseStoryFromRequest(req: HostingRequest): HostingStory | null {
@@ -83,11 +83,11 @@ function parseStoryFromRequest(req: HostingRequest): HostingStory | null {
     return null;
   }
 
-  const guestName = req.sender_name || guestRev?.reviewer_name || 'مهمان همجا';
+  const guestName = req.sender_name || guestRev?.reviewer_name || 'مهمان هم‌بام';
   const guestCity = req.sender_city || guestRev?.reviewer_city || 'ایران';
   const guestAvatar = getAvatarUrl(req.sender_avatar || guestRev?.reviewer_avatar);
 
-  const hostName = req.receiver_name || hostRev?.reviewer_name || 'میزبان همجا';
+  const hostName = req.receiver_name || hostRev?.reviewer_name || 'میزبان هم‌بام';
   const hostCity = req.receiver_city || hostRev?.reviewer_city || 'ایران';
   const hostAvatar = getAvatarUrl(req.receiver_avatar || hostRev?.reviewer_avatar);
 
@@ -208,10 +208,10 @@ export default function LatestHostingsStories() {
             <div className="space-y-2">
               <span className="text-xs font-bold text-[#C25E38]">روایت‌های واقعی از اقامت‌های دوطرفه</span>
               <h3 className="text-xl sm:text-2xl font-black text-gray-900 leading-snug">
-                داستان‌های میزبانی و دوستی همجا به زودی در اینجا ثبت می‌شوند
+                داستان‌های میزبانی و دوستی هم‌بام به زودی در اینجا ثبت می‌شوند
               </h3>
               <p className="text-xs sm:text-sm text-gray-600 max-w-xl mx-auto leading-relaxed">
-                تمام روایت‌ها و نظرات این بخش ۱۰۰٪ واقعی و بر اساس اقامت‌های تأییدشده اعضای همجا هستند. با ارسال درخواست یا گشودن درِ خانه به روی مسافران، شما می‌توانید اولین روایت ماندگار همجا را رقم بزنید.
+                تمام روایت‌ها و نظرات این بخش ۱۰۰٪ واقعی و بر اساس اقامت‌های تأییدشده اعضای هم‌بام هستند. با ارسال درخواست یا گشودن درِ خانه به روی مسافران، شما می‌توانید اولین روایت ماندگار هم‌بام را رقم بزنید.
               </p>
             </div>
             <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
@@ -242,8 +242,8 @@ export default function LatestHostingsStories() {
               <Sparkles className="w-3.5 h-3.5" />
               <span>
                 {stories.length === 1
-                  ? 'جدیدترین میزبانی و دوستی در همجا'
-                  : `${toPersianDigits(stories.length)} میزبانی و دوستی اخیر در همجا`}
+                  ? 'جدیدترین میزبانی و دوستی در هم‌بام'
+                  : `${toPersianDigits(stories.length)} میزبانی و دوستی اخیر در هم‌بام`}
               </span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-[#1F2937] leading-tight">
@@ -360,7 +360,7 @@ export default function LatestHostingsStories() {
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#1E5647] bg-[#EBF5F1] px-2.5 py-0.5 rounded-full border border-[#1E5647]/20">
                     <CheckCircle2 className="w-3 h-3" />
-                    تجربه تأییدشده همجا
+                    تجربه تأییدشده هم‌بام
                   </span>
                   {story.isMutual && (
                     <span className="text-[11px] font-bold text-[#C25E38] bg-[#FBF4F0] px-2.5 py-0.5 rounded-full border border-[#C25E38]/20">

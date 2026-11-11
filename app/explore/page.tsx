@@ -132,7 +132,7 @@ function ExploreContent() {
         <div className="text-right mb-8">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FBF4F0] text-[#C25E38] text-xs font-bold mb-2 shadow-xs">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>جامعه میزبانان و مسافران همجا</span>
+            <span>جامعه میزبانان و مسافران هم‌بام</span>
           </div>
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#1F2937]">
             دوست بعدی‌ات را در شهر مقصد پیدا کن
@@ -322,7 +322,7 @@ function ExploreContent() {
             {/* Results Header */}
             <div className="flex items-center justify-between bg-white px-5 py-3.5 rounded-2xl border border-[#EADFD5] shadow-xs">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-sm font-black text-gray-800">اعضای فعال همجا</h3>
+                <h3 className="text-sm font-black text-gray-800">اعضای فعال هم‌بام</h3>
                 <span className="text-xs text-gray-500 font-bold">
                   ({toPersianDigits(filteredMembers.length)} عضو)
                 </span>
@@ -359,9 +359,9 @@ function ExploreContent() {
                 {usersList.length === 0 ? (
                   <>
                     <div className="space-y-1">
-                      <h4 className="text-base font-black text-gray-800">هنوز عضوی در همجا ثبت‌نام نکرده است</h4>
+                      <h4 className="text-base font-black text-gray-800">هنوز عضوی در هم‌بام ثبت‌نام نکرده است</h4>
                       <p className="text-xs text-gray-500 max-w-sm mx-auto leading-relaxed">
-                        با ثبت‌نام در همجا، اولین میزبان یا مسافر این جمع باشید.
+                        با ثبت‌نام در هم‌بام، اولین میزبان یا مسافر این جمع باشید.
                       </p>
                     </div>
                     <div>
@@ -369,7 +369,7 @@ function ExploreContent() {
                         href="/register"
                         className="inline-flex items-center gap-1.5 px-6 py-3 bg-[#C25E38] hover:bg-[#A84E2D] text-white text-xs font-bold rounded-2xl shadow transition-colors"
                       >
-                        ثبت‌نام اولین عضو همجا
+                        ثبت‌نام اولین عضو هم‌بام
                       </Link>
                     </div>
                   </>

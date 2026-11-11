@@ -172,7 +172,7 @@ export default function VerificationModal({
             <div className="space-y-1.5">
               <h4 className="text-lg font-bold text-gray-800">مدارک در انتظار بررسی دستی</h4>
               <p className="text-xs text-gray-600 leading-relaxed max-w-sm mx-auto">
-                مدارک شما با موفقیت دریافت شد. تیم همجا به صورت دستی مدارک را در پنل ادمین بررسی کرده و پس از تأیید، امکان ارسال درخواست برای شما فعال خواهد شد.
+                مدارک شما با موفقیت دریافت شد. تیم هم‌بام به صورت دستی مدارک را در پنل ادمین بررسی کرده و پس از تأیید، امکان ارسال درخواست برای شما فعال خواهد شد.
               </p>
             </div>
 
@@ -335,7 +335,7 @@ export default function VerificationModal({
             {/* Privacy notice */}
             <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500 pt-1">
               <Lock className="w-3.5 h-3.5 text-gray-400" />
-              <span>مدارک شما کاملاً محرمانه بوده و تنها توسط ادمین همجا بررسی می‌شود.</span>
+              <span>مدارک شما کاملاً محرمانه بوده و تنها توسط ادمین هم‌بام بررسی می‌شود.</span>
             </div>
 
             {/* Action button */}
@@ -350,7 +350,7 @@ export default function VerificationModal({
                 ) : currentStatus === 'rejected' ? (
                   <span>بارگذاری مجدد مدارک جهت بررسی مجدد</span>
                 ) : (
-                  <span>ارسال مدارک جهت بررسی دستی همجا</span>
+                  <span>ارسال مدارک جهت بررسی دستی هم‌بام</span>
                 )}
               </button>
             </div>

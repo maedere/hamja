@@ -122,7 +122,7 @@ export default function AdminPage() {
             <div className="w-16 h-16 rounded-3xl bg-[#1E5647] text-white mx-auto flex items-center justify-center shadow-lg shadow-[#1E5647]/20">
               <ShieldCheck className="w-8 h-8" />
             </div>
-            <h1 className="text-xl font-black text-gray-900 pt-2">ورود به پنل مدیریت همجا</h1>
+            <h1 className="text-xl font-black text-gray-900 pt-2">ورود به پنل مدیریت هم‌بام</h1>
             <p className="text-xs text-gray-500 leading-relaxed">
               این بخش ویژه مدیر سایت جهت تایید هویت و مدیریت اعضا است. لطفاً اطلاعات امنیتی خود را وارد کنید.
             </p>
@@ -205,7 +205,7 @@ export default function AdminPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-xl sm:text-2xl font-black text-gray-800">
-                  پنل مدیریت و بررسی مدارک هویتی همجا
+                  پنل مدیریت و بررسی مدارک هویتی هم‌بام
                 </h1>
                 <span className="text-[11px] bg-[#C25E38] text-white font-bold px-2.5 py-0.5 rounded-full">
                   Admin

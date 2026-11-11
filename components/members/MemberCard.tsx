@@ -45,7 +45,7 @@ export default function MemberCard({ member }: MemberCardProps) {
               <span>هویت تأییدشده</span>
             </div>
           ) : (
-            <span className="text-[11px] text-gray-400 font-medium">عضو همجا</span>
+            <span className="text-[11px] text-gray-400 font-medium">عضو هم‌بام</span>
           )}
         </div>
 
@@ -122,7 +122,7 @@ export default function MemberCard({ member }: MemberCardProps) {
       <div className="pt-3.5 border-t border-gray-100 flex items-center justify-between text-xs">
         <span className="text-[11px] text-gray-500 font-medium">
           {isTravelerOnly
-            ? 'مسافر مهمان همجا'
+            ? 'مسافر مهمان هم‌بام'
             : member.hosting_count && member.hosting_count > 0
             ? `${toPersianDigits(member.hosting_count)} تجربه میزبانی`
             : `عضو از ${toPersianDigits(member.member_since_year || '۱۴۰۴')}`}

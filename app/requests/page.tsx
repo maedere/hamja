@@ -233,7 +233,7 @@ export default function RequestsPage() {
       comment,
       tags,
       reviewer_id: currentUser?.id || 'user',
-      reviewer_name: currentUser?.full_name || 'کاربر همجا',
+      reviewer_name: currentUser?.full_name || 'کاربر هم‌بام',
       reviewer_city: currentUser?.city || 'ایران',
       reviewer_avatar: currentUser?.avatar_url,
       target_user_id:
@@ -363,7 +363,7 @@ export default function RequestsPage() {
                 href="/register"
                 className="inline-flex items-center justify-center gap-2 w-full py-3 bg-[#C25E38] hover:bg-[#A84E2D] text-white text-xs font-bold rounded-2xl shadow transition-colors"
               >
-                ورود یا ثبت‌نام در همجا
+                ورود یا ثبت‌نام در هم‌بام
               </Link>
             </div>
           </div>
@@ -861,11 +861,11 @@ export default function RequestsPage() {
       <VerificationModal
         isOpen={showVerifyModal}
         onClose={() => setShowVerifyModal(false)}
-        reason="جهت امنیت جامعه همجا و اطمینان از هویت میزبان قبل از پذیرش مسافر، ارسال تصویر کارت ملی و سلفی الزامی است."
+        reason="جهت امنیت جامعه هم‌بام و اطمینان از هویت میزبان قبل از پذیرش مسافر، ارسال تصویر کارت ملی و سلفی الزامی است."
         onComplete={() => {
           setShowVerifyModal(false);
           alert(
-            'مدارک هویتی شما با موفقیت ثبت شد و در صف بررسی تیم همجا قرار گرفت. پس از تأیید احراز هویت توسط مدیر، امکان پذیرش درخواست فعال خواهد شد.'
+            'مدارک هویتی شما با موفقیت ثبت شد و در صف بررسی تیم هم‌بام قرار گرفت. پس از تأیید احراز هویت توسط مدیر، امکان پذیرش درخواست فعال خواهد شد.'
           );
         }}
       />
