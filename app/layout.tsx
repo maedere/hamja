@@ -5,6 +5,15 @@ import { AuthProvider } from "@/lib/auth-context";
 export const metadata: Metadata = {
   title: "هم‌بام | سفر به شهرها، ماندن در جمع دوستان؛ میزبانی دوطرفه",
   description: "جامعه‌ای امن از میزبانان و مسافران محلی ایرانی برای میزبانی متقابل و سفرهای انسانی",
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/images/logo-icon.png', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/images/logo-icon.png' },
+    ],
+  },
 };
 
 export default function RootLayout({

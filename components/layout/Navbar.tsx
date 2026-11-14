@@ -44,12 +44,13 @@ export default function Navbar() {
           <div className="flex items-center justify-between h-20">
             {/* Logo & Brand */}
             <div className="flex items-center gap-8">
-              <Link href="/" className="flex items-center gap-2.5 group">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#C25E38] to-[#A84E2D] text-white flex items-center justify-center shadow-md transition-all duration-300 group-hover:scale-105 group-hover:shadow-lg">
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 10l9-7 9 7v10a1 1 0 01-1 1H4a1 1 0 01-1-1V10z" />
-                    <path d="M9 21V12h6v9" />
-                  </svg>
+              <Link href="/" className="flex items-center gap-3 group">
+                <div className="w-11 h-11 rounded-2xl bg-[#FAF5EE] border border-[#E8DED1] p-1 flex items-center justify-center shadow-xs transition-all duration-300 group-hover:scale-105 group-hover:shadow-md">
+                  <img
+                    src="/images/logo-icon.png"
+                    alt="لوگوی هم‌بام"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
                 <div className="flex flex-col">
                   <span className="text-2xl font-black text-[#1F2937] tracking-tight leading-none">هم‌بام</span>

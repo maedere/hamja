@@ -525,9 +525,13 @@ export default function RegisterPage() {
             {/* Header with Segmented Progress Bar */}
             <div className="bg-gradient-to-b from-[#FAF7F4] to-white p-5 border-b border-[#EADFD5]/60">
               <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-[#C25E38] text-white flex items-center justify-center font-black text-xs shadow-xs">
-                    هم
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-[#FAF5EE] border border-[#E8DED1] p-0.5 flex items-center justify-center shadow-xs shrink-0">
+                    <img
+                      src="/images/logo-icon.png"
+                      alt="هم‌بام"
+                      className="w-full h-full object-contain"
+                    />
                   </div>
                   <div>
                     <h2 className="text-xs font-black text-gray-900">عضویت در جامعه هم‌بام</h2>

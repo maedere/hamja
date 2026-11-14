@@ -8,9 +8,13 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-white/10">
           {/* Brand & Mission Column */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-xl bg-white text-[#1E5647] flex items-center justify-center font-black text-xl">
-                هم
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-2xl bg-[#FAF5EE] p-1 flex items-center justify-center shadow-xs shrink-0">
+                <img
+                  src="/images/logo-icon.png"
+                  alt="لوگوی هم‌بام"
+                  className="w-full h-full object-contain"
+                />
               </div>
               <span className="text-2xl font-black text-white">هم‌بام</span>
               <span className="text-xs text-white/70 mr-2 border-r border-white/20 pr-2">
