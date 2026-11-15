@@ -258,156 +258,113 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 2. Three Steps Section - Connected Stepper Flow matching reference image */}
-        <section id="mutual" className="py-24 relative overflow-hidden bg-white border-y border-[#EADFD5]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-            {/* Header Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FBF4F0] text-[#C25E38] text-xs font-bold mb-4 border border-[#C25E38]/20 shadow-xs">
-              <Sparkles className="w-4 h-4 text-[#C25E38]" />
-              <span>ساده، انسانی، دوطرفه</span>
-            </div>
-
+        {/* 2. Three Steps Section - Ultra-Minimal Connected Flow matching approved concept */}
+        <section id="mutual" className="py-24 bg-[#F9F8F6] border-y border-[#EADFD5]">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            {/* Header */}
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#1F2937] mb-4 tracking-tight">
               سه قدم تا یک آشنایی تازه
             </h2>
-            <p className="text-sm sm:text-base text-gray-500 max-w-2xl mx-auto mb-16 sm:mb-20 leading-relaxed">
+            <p className="text-sm sm:text-base text-gray-500 max-w-2xl mx-auto mb-20 sm:mb-24 leading-relaxed font-normal">
               در هم‌بام همه چیز بر پایه شفافیت، احترام و مهمان‌نوازی استوار است.
             </p>
 
-            {/* Step-by-Step Flow with curved connectors (RTL direction: 1 -> 2 -> 3) */}
-            <div className="relative">
-              {/* Desktop Curved Dashed Connector Lines (RTL: right to left) */}
-              <div className="hidden md:block absolute top-12 inset-x-0 w-full pointer-events-none z-0">
+            {/* Steps Row with RTL Curved Connectors */}
+            <div className="relative max-w-4xl mx-auto">
+              {/* Desktop Curved Dashed SVG Arrows (RTL direction: Step 1 -> Step 2 -> Step 3) */}
+              <div className="hidden md:block absolute top-10 inset-x-0 w-full pointer-events-none z-0">
                 <svg
-                  className="w-full h-24 overflow-visible"
-                  viewBox="0 0 1000 100"
+                  className="w-full h-16 overflow-visible"
+                  viewBox="0 0 800 60"
                   fill="none"
                   preserveAspectRatio="none"
                 >
                   <defs>
-                    <linearGradient id="stepCurveGrad" x1="100%" y1="0%" x2="0%" y2="0%">
-                      <stop offset="0%" stopColor="#C25E38" stopOpacity="0.5" />
-                      <stop offset="50%" stopColor="#1E5647" stopOpacity="0.5" />
-                      <stop offset="100%" stopColor="#C25E38" stopOpacity="0.5" />
-                    </linearGradient>
-                    {/* RTL Arrow marker pointing Left */}
                     <marker
-                      id="arrowLeft"
+                      id="minimalArrow"
                       viewBox="0 0 10 10"
                       refX="5"
                       refY="5"
                       markerWidth="6"
                       markerHeight="6"
-                      orient="auto"
+                      orient="auto-start-reverse"
                     >
-                      <path d="M 10 2 L 2 5 L 10 8 z" fill="#9CA3AF" />
+                      <path d="M 0 1.5 L 7 5 L 0 8.5 z" fill="#9CA3AF" />
                     </marker>
                   </defs>
 
-                  {/* Curve 1: From Step 1 (around x=830) down and up to Step 2 (around x=500) */}
+                  {/* Curve 1: Right to Middle (Step 1 to Step 2) */}
                   <path
-                    d="M 770 20 C 690 90, 610 90, 545 35"
+                    d="M 590 30 C 530 65, 470 65, 410 30"
                     stroke="#D1D5DB"
-                    strokeWidth="2.5"
-                    strokeDasharray="6 6"
+                    strokeWidth="1.8"
+                    strokeDasharray="5 5"
                     strokeLinecap="round"
-                    markerEnd="url(#arrowLeft)"
+                    markerEnd="url(#minimalArrow)"
                   />
 
-                  {/* Curve 2: From Step 2 (around x=460) down and up to Step 3 (around x=170) */}
+                  {/* Curve 2: Middle to Left (Step 2 to Step 3) */}
                   <path
-                    d="M 440 35 C 370 95, 290 95, 225 35"
+                    d="M 330 30 C 270 65, 210 65, 150 30"
                     stroke="#D1D5DB"
-                    strokeWidth="2.5"
-                    strokeDasharray="6 6"
+                    strokeWidth="1.8"
+                    strokeDasharray="5 5"
                     strokeLinecap="round"
-                    markerEnd="url(#arrowLeft)"
+                    markerEnd="url(#minimalArrow)"
                   />
                 </svg>
               </div>
 
-              {/* 3 Step Items Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-16 relative z-10">
-                {/* Step 1: Registration & Verified Identity */}
-                <div className="flex flex-col items-center text-center group">
-                  {/* Distinctive Teardrop / Squircle Icon matching reference */}
-                  <div className="relative mb-6">
-                    <div className="w-24 h-24 rounded-[32px] rounded-bl-sm bg-gradient-to-br from-[#C25E38] via-[#B8532F] to-[#8C3415] text-white flex items-center justify-center shadow-xl shadow-[#C25E38]/25 group-hover:scale-110 group-hover:shadow-2xl transition-all duration-300 transform">
-                      <ShieldCheck className="w-11 h-11 text-white stroke-[2.2]" />
-                    </div>
-                    {/* Step number badge pill */}
-                    <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#1F2937] text-white font-black text-xs flex items-center justify-center border-2 border-white shadow-md">
-                      ۱
-                    </div>
+              {/* 3 Steps Columns */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-12 sm:gap-14 relative z-10">
+                {/* Step 1: Right in RTL */}
+                <div className="flex flex-col items-center text-center">
+                  {/* Flat Terracotta Teardrop Icon */}
+                  <div className="w-24 h-24 rounded-[36px] rounded-bl-md bg-[#C25E38] text-white flex items-center justify-center shadow-md mb-7 hover:scale-105 transition-transform duration-300">
+                    <ShieldCheck className="w-11 h-11 text-white stroke-[2.2]" />
                   </div>
 
-                  <h3 className="text-xl font-black text-[#C25E38] mb-3 group-hover:scale-105 transition-transform duration-300">
-                    ثبت‌نام و احراز هویت با سلفی و کدملی
+                  <h3 className="text-lg sm:text-xl font-black text-[#1F2937] mb-2.5">
+                    ۱. احراز هویت با سلفی و کدملی
                   </h3>
 
-                  <p className="text-xs sm:text-sm text-gray-500 leading-relaxed font-normal max-w-xs">
-                    یک پروفایل واقعی بسازید؛ اعتماد در همین‌جا شروع می‌شود تا با خیالی آسوده و اطمینان کامل میزبان یا مهمان شوید.
+                  <p className="text-xs sm:text-sm text-gray-500 leading-relaxed font-normal max-w-[240px]">
+                    یک پروفایل واقعی بسازید؛ اعتماد در همین‌جا شروع می‌شود تا با خیالی آسوده همراه جمع شوید.
                   </p>
                 </div>
 
-                {/* Step 2: Role & Destination Selection */}
-                <div className="flex flex-col items-center text-center group">
-                  {/* Distinctive Teardrop / Squircle Icon matching reference */}
-                  <div className="relative mb-6">
-                    <div className="w-24 h-24 rounded-[32px] rounded-bl-sm bg-gradient-to-br from-[#1E5647] via-[#236654] to-[#12382E] text-white flex items-center justify-center shadow-xl shadow-[#1E5647]/25 group-hover:scale-110 group-hover:shadow-2xl transition-all duration-300 transform">
-                      <CompassIcon className="w-11 h-11 text-white stroke-[2.2]" />
-                    </div>
-                    {/* Step number badge pill */}
-                    <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#1F2937] text-white font-black text-xs flex items-center justify-center border-2 border-white shadow-md">
-                      ۲
-                    </div>
+                {/* Step 2: Middle */}
+                <div className="flex flex-col items-center text-center">
+                  {/* Flat Dark Green Teardrop Icon */}
+                  <div className="w-24 h-24 rounded-[36px] rounded-bl-md bg-[#1E5647] text-white flex items-center justify-center shadow-md mb-7 hover:scale-105 transition-transform duration-300">
+                    <CompassIcon className="w-11 h-11 text-white stroke-[2.2]" />
                   </div>
 
-                  <h3 className="text-xl font-black text-[#1E5647] mb-3 group-hover:scale-105 transition-transform duration-300">
-                    تعیین وضعیت (میزبان، مسافر یا متقابل)
+                  <h3 className="text-lg sm:text-xl font-black text-[#1F2937] mb-2.5">
+                    ۲. تعیین وضعیت مسافر یا میزبان
                   </h3>
 
-                  <p className="text-xs sm:text-sm text-gray-500 leading-relaxed font-normal max-w-xs">
-                    مشخص کنید چطور می‌خواهید در این جمع همراه ما باشید. شرایط خانه‌تان یا برنامه‌های سفر و مقاصد پیش‌رو را بنویسید.
+                  <p className="text-xs sm:text-sm text-gray-500 leading-relaxed font-normal max-w-[240px]">
+                    مشخص کنید چطور می‌خواهید همراه باشید؛ شرایط خانه یا برنامه‌های سفر پیش‌رو را بنویسید.
                   </p>
                 </div>
 
-                {/* Step 3: Mutual Connection & Free Stay */}
-                <div className="flex flex-col items-center text-center group">
-                  {/* Distinctive Teardrop / Squircle Icon matching reference */}
-                  <div className="relative mb-6">
-                    <div className="w-24 h-24 rounded-[32px] rounded-bl-sm bg-gradient-to-br from-[#C25E38] via-[#D97746] to-[#A84E2D] text-white flex items-center justify-center shadow-xl shadow-[#C25E38]/25 group-hover:scale-110 group-hover:shadow-2xl transition-all duration-300 transform">
-                      <HeartHandshake className="w-11 h-11 text-white stroke-[2.2]" />
-                    </div>
-                    {/* Step number badge pill */}
-                    <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#1F2937] text-white font-black text-xs flex items-center justify-center border-2 border-white shadow-md">
-                      ۳
-                    </div>
+                {/* Step 3: Left */}
+                <div className="flex flex-col items-center text-center">
+                  {/* Flat Terracotta Teardrop Icon */}
+                  <div className="w-24 h-24 rounded-[36px] rounded-bl-md bg-[#C25E38] text-white flex items-center justify-center shadow-md mb-7 hover:scale-105 transition-transform duration-300">
+                    <HeartHandshake className="w-11 h-11 text-white stroke-[2.2]" />
                   </div>
 
-                  <h3 className="text-xl font-black text-[#C25E38] mb-3 group-hover:scale-105 transition-transform duration-300">
-                    پیوند دوطرفه و میزبانی رایگان
+                  <h3 className="text-lg sm:text-xl font-black text-[#1F2937] mb-2.5">
+                    ۳. پیوند دوطرفه و میزبانی رایگان
                   </h3>
 
-                  <p className="text-xs sm:text-sm text-gray-500 leading-relaxed font-normal max-w-xs">
-                    آشنا شوید، هماهنگ کنید و درِ خانه را به روی یک دوست باز کنید و در سفر بعدی در شهر او مهمانش شوید.
+                  <p className="text-xs sm:text-sm text-gray-500 leading-relaxed font-normal max-w-[240px]">
+                    آشنا شوید، هماهنگ کنید و درِ خانه را باز کنید و در سفر بعدی در شهر او مهمانش شوید.
                   </p>
                 </div>
               </div>
-            </div>
-
-            {/* Bottom Quick Action */}
-            <div className="mt-16 inline-flex items-center gap-3 p-2 pr-5 bg-[#F9F8F6] rounded-full border border-[#EADFD5] shadow-xs hover:shadow-md transition-all text-right">
-              <span className="text-xs sm:text-sm font-bold text-gray-700">
-                آماده‌اید تجربه جدیدی از سفر و دوستی بسازید؟
-              </span>
-              <button
-                onClick={() => setShowVerifyModal(true)}
-                className="px-5 py-2.5 bg-[#C25E38] hover:bg-[#A84E2D] text-white text-xs font-black rounded-full shadow transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5"
-              >
-                <span>شروع عضویت رایگان</span>
-                <ArrowLeft className="w-3.5 h-3.5" />
-              </button>
             </div>
           </div>
         </section>
