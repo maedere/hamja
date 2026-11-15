@@ -18,6 +18,13 @@ import {
   Users,
   Map,
   X,
+  Camera,
+  Compass as CompassIcon,
+  Home,
+  ArrowRight,
+  KeyRound,
+  Coffee,
+  Check,
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -251,59 +258,172 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 2. Three Steps Section matching Page 3 */}
-        <section id="mutual" className="py-20 bg-white border-y border-[#EADFD5]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FBF4F0] text-[#C25E38] text-xs font-bold mb-3">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>ساده، انسانی، دوطرفه</span>
+        {/* 2. Three Steps Section - Redesigned with rich visuals and colors */}
+        <section id="mutual" className="py-24 relative overflow-hidden bg-gradient-to-b from-[#F9F8F6] via-white to-[#F9F8F6] border-y border-[#EADFD5]">
+          {/* Subtle decorative background glow circles */}
+          <div className="absolute top-1/4 right-0 w-96 h-96 bg-[#C25E38]/5 rounded-full blur-3xl pointer-events-none -mr-48" />
+          <div className="absolute bottom-1/4 left-0 w-96 h-96 bg-[#1E5647]/5 rounded-full blur-3xl pointer-events-none -ml-48" />
+
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+            {/* Header Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-[#FBF4F0] to-[#F5ECE5] text-[#C25E38] text-xs font-bold mb-4 shadow-xs border border-[#C25E38]/20">
+              <Sparkles className="w-4 h-4 text-[#C25E38] animate-pulse" />
+              <span>ساده، انسانی، دوطرفه و بدون تبادل مالی</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-[#1F2937] mb-4">
+
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#1F2937] mb-4 tracking-tight">
               سه قدم تا یک آشنایی تازه
             </h2>
-            <p className="text-xs sm:text-sm text-gray-500 max-w-xl mx-auto mb-14">
-              در هم‌بام همه چیز بر پایه شفافیت، احترام و مهمان‌نوازی استوار است.
+            <p className="text-sm sm:text-base text-gray-500 max-w-2xl mx-auto mb-16 leading-relaxed">
+              در هم‌بام همه چیز بر پایه <span className="font-bold text-[#1E5647]">شفافیت هویت</span>، <span className="font-bold text-[#C25E38]">احترام متقابل</span> و <span className="font-bold text-gray-800">مهمان‌نوازی اصیل ایرانی</span> استوار است.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* Step 1 */}
-              <div className="bg-[#F9F8F6] rounded-3xl p-7 border border-[#EADFD5] text-right space-y-3 relative group hover:border-[#C25E38]/50 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                <div className="w-12 h-12 rounded-2xl bg-[#C25E38]/10 text-[#C25E38] flex items-center justify-center font-black text-xl shadow-xs group-hover:bg-[#C25E38] group-hover:text-white transition-colors">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+              {/* Step 1: Identity & Profile */}
+              <div className="group relative bg-white rounded-3xl p-8 border-2 border-[#EADFD5] hover:border-[#C25E38] transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 text-right flex flex-col justify-between overflow-hidden">
+                {/* Decorative Top Accent Gradient */}
+                <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-[#C25E38] via-[#E07A5F] to-[#C25E38]" />
+                
+                {/* Background Watermark Number */}
+                <div className="absolute -bottom-6 -left-4 text-9xl font-black text-[#C25E38]/5 select-none pointer-events-none transition-transform group-hover:scale-110 duration-500">
                   ۱
                 </div>
-                <h3 className="text-lg font-black text-[#1F2937]">
-                  ثبت‌نام و احراز هویت با سلفی و کدملی
-                </h3>
-                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed font-medium">
-                  یک پروفایل واقعی بسازید؛ اعتماد در همین‌جا شروع می‌شود تا با خیالی آسوده و اطمینان کامل میزبان یا مهمان شوید.
-                </p>
+
+                <div>
+                  {/* Top Bar: Icon + Step Badge */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#C25E38] to-[#9E411F] text-white flex items-center justify-center shadow-lg shadow-[#C25E38]/25 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                      <ShieldCheck className="w-7 h-7" />
+                    </div>
+                    <span className="px-3.5 py-1 text-xs font-black tracking-wide bg-[#FBF4F0] text-[#C25E38] rounded-full border border-[#C25E38]/20 flex items-center gap-1.5 shadow-2xs">
+                      <span>قدم اول</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#C25E38]" />
+                    </span>
+                  </div>
+
+                  <h3 className="text-xl font-black text-[#1F2937] mb-3 group-hover:text-[#C25E38] transition-colors leading-snug">
+                    ثبت‌نام و احراز هویت با سلفی و کدملی
+                  </h3>
+
+                  <p className="text-xs sm:text-sm text-gray-600 leading-relaxed font-medium mb-6">
+                    یک پروفایل واقعی بسازید؛ اعتماد در همین‌جا آغاز می‌شود تا با خیالی آسوده، درِ خانه را باز کنید یا مهمان دوستان شوید.
+                  </p>
+                </div>
+
+                {/* Feature Chips */}
+                <div className="pt-4 border-t border-gray-100 space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-bold text-gray-700 bg-[#F9F8F6] px-3 py-2 rounded-xl border border-gray-200/80">
+                    <Camera className="w-3.5 h-3.5 text-[#C25E38] shrink-0" />
+                    <span>سلفی زنده با کارت ملی جهت اصالت‌سنجی</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs font-bold text-gray-700 bg-[#F9F8F6] px-3 py-2 rounded-xl border border-gray-200/80">
+                    <Lock className="w-3.5 h-3.5 text-[#1E5647] shrink-0" />
+                    <span>محفوظ ماندن کامل مدارک نزد مدیریت هم‌بام</span>
+                  </div>
+                </div>
               </div>
 
-              {/* Step 2 */}
-              <div className="bg-[#F9F8F6] rounded-3xl p-7 border border-[#EADFD5] text-right space-y-3 relative group hover:border-[#1E5647]/50 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                <div className="w-12 h-12 rounded-2xl bg-[#1E5647]/10 text-[#1E5647] flex items-center justify-center font-black text-xl shadow-xs group-hover:bg-[#1E5647] group-hover:text-white transition-colors">
+              {/* Step 2: Role & Destination */}
+              <div className="group relative bg-white rounded-3xl p-8 border-2 border-[#EADFD5] hover:border-[#1E5647] transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 text-right flex flex-col justify-between overflow-hidden">
+                {/* Decorative Top Accent Gradient */}
+                <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-[#1E5647] via-[#2F855A] to-[#1E5647]" />
+                
+                {/* Background Watermark Number */}
+                <div className="absolute -bottom-6 -left-4 text-9xl font-black text-[#1E5647]/5 select-none pointer-events-none transition-transform group-hover:scale-110 duration-500">
                   ۲
                 </div>
-                <h3 className="text-lg font-black text-[#1F2937]">
-                  تعیین وضعیت (میزبان، مسافر یا متقابل)
-                </h3>
-                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed font-medium">
-                  مشخص کنید چطور می‌خواهید در این جمع همراه ما باشید. شرایط خانه‌تان یا برنامه‌های سفر و مقاصد پیش‌رو را بنویسید.
-                </p>
+
+                <div>
+                  {/* Top Bar: Icon + Step Badge */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#1E5647] to-[#133C31] text-white flex items-center justify-center shadow-lg shadow-[#1E5647]/25 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                      <CompassIcon className="w-7 h-7" />
+                    </div>
+                    <span className="px-3.5 py-1 text-xs font-black tracking-wide bg-[#EBF5F1] text-[#1E5647] rounded-full border border-[#1E5647]/20 flex items-center gap-1.5 shadow-2xs">
+                      <span>قدم دوم</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#1E5647]" />
+                    </span>
+                  </div>
+
+                  <h3 className="text-xl font-black text-[#1F2937] mb-3 group-hover:text-[#1E5647] transition-colors leading-snug">
+                    تعیین وضعیت (میزبان، مسافر یا متقابل)
+                  </h3>
+
+                  <p className="text-xs sm:text-sm text-gray-600 leading-relaxed font-medium mb-6">
+                    مشخص کنید چطور می‌خواهید همراه این جمع باشید؛ امکانات خانه، علایق، شغل و شهرهای مقصد پیش‌رویتان را تعریف کنید.
+                  </p>
+                </div>
+
+                {/* Feature Chips */}
+                <div className="pt-4 border-t border-gray-100 space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-bold text-gray-700 bg-[#F9F8F6] px-3 py-2 rounded-xl border border-gray-200/80">
+                    <Home className="w-3.5 h-3.5 text-[#1E5647] shrink-0" />
+                    <span>تعریف ظرفیت و شرایط دلخواه خانه شما</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs font-bold text-gray-700 bg-[#F9F8F6] px-3 py-2 rounded-xl border border-gray-200/80">
+                    <MapPin className="w-3.5 h-3.5 text-[#C25E38] shrink-0" />
+                    <span>ثبت مقاصد سفر برای دریافت پیشنهاد میزبانی</span>
+                  </div>
+                </div>
               </div>
 
-              {/* Step 3 */}
-              <div className="bg-[#F9F8F6] rounded-3xl p-7 border border-[#EADFD5] text-right space-y-3 relative group hover:border-[#C25E38]/50 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                <div className="w-12 h-12 rounded-2xl bg-[#C25E38]/10 text-[#C25E38] flex items-center justify-center font-black text-xl shadow-xs group-hover:bg-[#C25E38] group-hover:text-white transition-colors">
+              {/* Step 3: Mutual Hosting & Friendship */}
+              <div className="group relative bg-white rounded-3xl p-8 border-2 border-[#EADFD5] hover:border-[#C25E38] transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 text-right flex flex-col justify-between overflow-hidden">
+                {/* Decorative Top Accent Gradient */}
+                <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-[#C25E38] via-[#E28743] to-[#1E5647]" />
+                
+                {/* Background Watermark Number */}
+                <div className="absolute -bottom-6 -left-4 text-9xl font-black text-[#C25E38]/5 select-none pointer-events-none transition-transform group-hover:scale-110 duration-500">
                   ۳
                 </div>
-                <h3 className="text-lg font-black text-[#1F2937]">
-                  پیوند دوطرفه و میزبانی رایگان
-                </h3>
-                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed font-medium">
-                  آشنا شوید، هماهنگ کنید و درِ خانه را به روی یک دوست باز کنید و در سفر بعدی در شهر او مهمانش شوید.
-                </p>
+
+                <div>
+                  {/* Top Bar: Icon + Step Badge */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#C25E38] via-[#B8532F] to-[#1E5647] text-white flex items-center justify-center shadow-lg shadow-[#C25E38]/25 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                      <HeartHandshake className="w-7 h-7" />
+                    </div>
+                    <span className="px-3.5 py-1 text-xs font-black tracking-wide bg-[#FBF4F0] text-[#C25E38] rounded-full border border-[#C25E38]/20 flex items-center gap-1.5 shadow-2xs">
+                      <span>قدم سوم</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#C25E38]" />
+                    </span>
+                  </div>
+
+                  <h3 className="text-xl font-black text-[#1F2937] mb-3 group-hover:text-[#C25E38] transition-colors leading-snug">
+                    پیوند دوطرفه و میزبانی رایگان
+                  </h3>
+
+                  <p className="text-xs sm:text-sm text-gray-600 leading-relaxed font-medium mb-6">
+                    آشنا شوید، گفتگو کنید، نشانی امن خانه را باز کنید و در سفر بعدی در شهر دوست جدیدتان با احترام مهمان شوید.
+                  </p>
+                </div>
+
+                {/* Feature Chips */}
+                <div className="pt-4 border-t border-gray-100 space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-bold text-gray-700 bg-[#F9F8F6] px-3 py-2 rounded-xl border border-gray-200/80">
+                    <KeyRound className="w-3.5 h-3.5 text-[#C25E38] shrink-0" />
+                    <span>قفل‌گشایی شماره تماس و آدرس پس از توافق</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs font-bold text-gray-700 bg-[#F9F8F6] px-3 py-2 rounded-xl border border-gray-200/80">
+                    <Coffee className="w-3.5 h-3.5 text-[#1E5647] shrink-0" />
+                    <span>میزبانی گرم بر پایه رفاقت نه تبادل مالی</span>
+                  </div>
+                </div>
               </div>
+            </div>
+
+            {/* Bottom Quick Action */}
+            <div className="mt-14 inline-flex items-center gap-3 p-2 pr-5 bg-white rounded-full border border-[#EADFD5] shadow-md hover:shadow-lg transition-all text-right">
+              <span className="text-xs sm:text-sm font-bold text-gray-700">
+                آماده‌اید تجربه جدیدی از سفر و دوستی بسازید؟
+              </span>
+              <button
+                onClick={() => setShowVerifyModal(true)}
+                className="px-5 py-2.5 bg-gradient-to-r from-[#C25E38] to-[#A84E2D] hover:from-[#A84E2D] hover:to-[#913B1E] text-white text-xs font-black rounded-full shadow transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5"
+              >
+                <span>شروع عضویت رایگان</span>
+                <ArrowLeft className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
         </section>
