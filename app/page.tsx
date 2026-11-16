@@ -31,6 +31,7 @@ import Footer from '@/components/layout/Footer';
 import MemberCard from '@/components/members/MemberCard';
 import VerificationModal from '@/components/modals/VerificationModal';
 import LatestHostingsStories from '@/components/home/LatestHostingsStories';
+import TrustSafetyShowcase from '@/components/TrustSafetyShowcase';
 import { useAuth } from '@/lib/auth-context';
 import { toPersianDigits } from '@/lib/persian-utils';
 
@@ -463,53 +464,8 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 5. Trust & Safety Section matching Page 3 */}
-        <section id="trust" className="py-20 bg-white border-y border-[#EADFD5]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EBF5F1] text-[#1E5647] text-xs font-bold mb-3">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>اعتماد، پیش از اولین سلام</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-[#1F2937] mb-4">
-              با خیال راحت درِ خانه را باز کن
-            </h2>
-            <p className="text-xs sm:text-sm text-gray-500 max-w-xl mx-auto mb-14">
-              امنیت اولویت نخست ماست. مکانیزم‌های چندلایه هم‌بام برای تضمین آسودگی خاطر شما طراحی شده‌اند.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-right">
-              <div className="bg-[#F9F8F6] p-7 rounded-3xl border border-[#EADFD5] space-y-3 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                <div className="w-12 h-12 rounded-2xl bg-[#1E5647]/10 text-[#1E5647] flex items-center justify-center shadow-xs">
-                  <UserCheck className="w-6 h-6" />
-                </div>
-                <h3 className="text-base font-black text-[#1F2937]">ثبت کد ملی و مدارک شناسایی</h3>
-                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed font-medium">
-                  کد ملی و تصویر مدارک هویتی اعضا در سامانه ثبت و جهت امنیت جامعه و پیگیری‌های لازم نزد هم‌بام محفوظ می‌ماند.
-                </p>
-              </div>
-
-              <div className="bg-[#F9F8F6] p-7 rounded-3xl border border-[#EADFD5] space-y-3 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                <div className="w-12 h-12 rounded-2xl bg-[#C25E38]/10 text-[#C25E38] flex items-center justify-center shadow-xs">
-                  <ShieldCheck className="w-6 h-6" />
-                </div>
-                <h3 className="text-base font-black text-[#1F2937]">احراز هویت سلفی زنده ضد جعل</h3>
-                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed font-medium">
-                  یک سلفی زنده برای اطمینان از حضور فرد واقعی پشت هر پروفایل و تطبیق با تصویر کارت ملی.
-                </p>
-              </div>
-
-              <div className="bg-[#F9F8F6] p-7 rounded-3xl border border-[#EADFD5] space-y-3 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                <div className="w-12 h-12 rounded-2xl bg-[#1E5647]/10 text-[#1E5647] flex items-center justify-center shadow-xs">
-                  <HeartHandshake className="w-6 h-6" />
-                </div>
-                <h3 className="text-base font-black text-[#1F2937]">امتیاز و بازخورد دوطرفه</h3>
-                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed font-medium">
-                  بعد از هر میزبانی، تجربه‌تان را برای هم و برای جامعه بنویسید تا زنجیره اعتماد روز به روز محکم‌تر شود.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* 5. Trust & Safety Section matching Approved High-fidelity Design */}
+        <TrustSafetyShowcase />
 
         {/* 6. Real Stories & Latest 5 Hostings Showcase */}
         <LatestHostingsStories />
