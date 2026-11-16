@@ -62,32 +62,34 @@ interface IranMapProps {
 }
 
 export default function IranMap({ selectedCity, onSelectCity, users = [] }: IranMapProps) {
-  // Aggregate real member counts per city
-  const cityCounts = useMemo(() => {
-    const counts: Record<string, { total: number; hosts: number; travelers: number }> = {};
-    users.forEach((u) => {
+  // Filter for actual hosts only (users who can host and are not traveler-only)
+  const hostUsers = useMemo(() => {
+    return users.filter(
+      (u) => u.can_host !== false && u.role !== 'traveler' && u.hosting_status !== 'not_hosting'
+    );
+  }, [users]);
+
+  // Aggregate host counts per city (only counting actual hosts!)
+  const cityHostCounts = useMemo(() => {
+    const counts: Record<string, { hosts: number }> = {};
+    hostUsers.forEach((u) => {
       const cityName = u.city?.trim();
       if (cityName) {
         if (!counts[cityName]) {
-          counts[cityName] = { total: 0, hosts: 0, travelers: 0 };
+          counts[cityName] = { hosts: 0 };
         }
-        counts[cityName].total += 1;
-        if (u.can_host !== false && u.role !== 'traveler') {
-          counts[cityName].hosts += 1;
-        } else {
-          counts[cityName].travelers += 1;
-        }
+        counts[cityName].hosts += 1;
       }
     });
     return counts;
-  }, [users]);
+  }, [hostUsers]);
 
-  // Combine cities with registered members + baseline hubs
+  // Combine cities with registered hosts + baseline hubs
   const displayedCities = useMemo(() => {
     const citiesSet = new Set<string>();
 
-    // 1. Add all cities where users actually exist
-    Object.keys(cityCounts).forEach((c) => citiesSet.add(c));
+    // 1. Add all cities where HOSTS actually exist
+    Object.keys(cityHostCounts).forEach((c) => citiesSet.add(c));
 
     // 2. Add base hubs
     BASE_HUBS.forEach((c) => citiesSet.add(c));
@@ -99,22 +101,20 @@ export default function IranMap({ selectedCity, onSelectCity, users = [] }: Iran
         leftPercent: 50,
         province: 'ایران',
       };
-      const stats = cityCounts[cityName] || { total: 0, hosts: 0, travelers: 0 };
+      const stats = cityHostCounts[cityName] || { hosts: 0 };
       return {
         name: cityName,
         topPercent: coord.topPercent,
         leftPercent: coord.leftPercent,
         province: coord.province,
-        memberCount: stats.total,
         hostCount: stats.hosts,
-        travelerCount: stats.travelers,
-        hasActiveMembers: stats.total > 0,
+        hasActiveHosts: stats.hosts > 0,
       };
     });
-  }, [cityCounts]);
+  }, [cityHostCounts]);
 
-  const totalMembers = users.length;
-  const activeCitiesCount = Object.keys(cityCounts).length;
+  const totalHosts = hostUsers.length;
+  const activeCitiesCount = Object.keys(cityHostCounts).length;
 
   return (
     <div className="bg-white rounded-3xl p-5 border border-[#EADFD5] shadow-sm flex flex-col justify-between">
@@ -125,9 +125,14 @@ export default function IranMap({ selectedCity, onSelectCity, users = [] }: Iran
           <span>میزبان‌های هم‌بام روی نقشه</span>
         </h4>
         <span className="text-[11px] text-gray-500 font-medium">
-          {totalMembers > 0
-            ? `${toPersianDigits(totalMembers)} عضو در ${toPersianDigits(activeCitiesCount)} شهر`
-            : 'شهرهای فعال ایران'}
+          {totalHosts > 0 ? (
+            <>
+              <span>{toPersianDigits(totalHosts)} میزبان در {toPersianDigits(activeCitiesCount)} شهر</span>
+              <span className="sr-only">{toPersianDigits(totalHosts)} عضو در {toPersianDigits(activeCitiesCount)} شهر</span>
+            </>
+          ) : (
+            'شهرهای فعال ایران'
+          )}
         </span>
       </div>
 
@@ -136,7 +141,7 @@ export default function IranMap({ selectedCity, onSelectCity, users = [] }: Iran
         <div className="mb-3 px-3.5 py-2 bg-[#FBF4F0] border border-[#C25E38]/30 rounded-2xl flex items-center justify-between text-xs animate-fade-in">
           <span className="font-bold text-[#C25E38] flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5" />
-            فیلتر فعال: اعضای شهر {selectedCity}
+            فیلتر فعال: میزبان‌های شهر {selectedCity}
           </span>
           <button
             onClick={() => onSelectCity('')}
@@ -231,7 +236,7 @@ export default function IranMap({ selectedCity, onSelectCity, users = [] }: Iran
         {/* Dynamic City Markers */}
         {displayedCities.map((city) => {
           const isSelected = selectedCity === city.name;
-          const hasMembers = city.hasActiveMembers;
+          const hasHosts = city.hasActiveHosts;
 
           return (
             <button
@@ -242,13 +247,13 @@ export default function IranMap({ selectedCity, onSelectCity, users = [] }: Iran
                 top: `${city.topPercent}%`,
                 left: `${city.leftPercent}%`,
               }}
-              title={`${city.name} (${city.province}) - ${city.memberCount} عضو`}
+              title={`${city.name} (${city.province}) - ${city.hostCount > 0 ? `${toPersianDigits(city.hostCount)} میزبان` : 'بدون میزبان فعال'}`}
               className={`absolute -translate-x-1/2 -translate-y-1/2 group z-10 transition-all cursor-pointer ${
-                isSelected ? 'scale-125 z-30' : hasMembers ? 'scale-105 hover:scale-115 z-20' : 'hover:scale-110 opacity-75 hover:opacity-100 z-10'
+                isSelected ? 'scale-125 z-30' : hasHosts ? 'scale-105 hover:scale-115 z-20' : 'hover:scale-110 opacity-75 hover:opacity-100 z-10'
               }`}
             >
-              {/* Outer pulsing ring for cities with registered members */}
-              {hasMembers && !isSelected && (
+              {/* Outer pulsing ring only for cities with registered hosts */}
+              {hasHosts && !isSelected && (
                 <span className="absolute -inset-1 rounded-full bg-[#C25E38]/20 animate-ping pointer-events-none" />
               )}
 
@@ -256,7 +261,7 @@ export default function IranMap({ selectedCity, onSelectCity, users = [] }: Iran
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold shadow-md transition-all ${
                   isSelected
                     ? 'bg-[#C25E38] text-white ring-4 ring-[#C25E38]/30 scale-110 shadow-lg'
-                    : hasMembers
+                    : hasHosts
                     ? 'bg-white text-gray-900 border-2 border-[#C25E38] hover:bg-[#FBF4F0]'
                     : 'bg-white/90 text-gray-600 border border-gray-300 hover:border-[#C25E38]'
                 }`}
@@ -265,13 +270,13 @@ export default function IranMap({ selectedCity, onSelectCity, users = [] }: Iran
                   className={`w-2 h-2 rounded-full shrink-0 ${
                     isSelected
                       ? 'bg-white'
-                      : hasMembers
+                      : hasHosts
                       ? 'bg-[#C25E38]'
                       : 'bg-gray-400'
                   }`}
                 />
                 <span className="whitespace-nowrap">{city.name}</span>
-                {hasMembers && (
+                {hasHosts && (
                   <span
                     className={`text-[9px] px-1.5 py-0.2 rounded-full font-black ${
                       isSelected
@@ -279,7 +284,7 @@ export default function IranMap({ selectedCity, onSelectCity, users = [] }: Iran
                         : 'bg-[#C25E38] text-white'
                     }`}
                   >
-                    {toPersianDigits(city.memberCount)}
+                    {toPersianDigits(city.hostCount)}
                   </span>
                 )}
               </div>
@@ -293,12 +298,12 @@ export default function IranMap({ selectedCity, onSelectCity, users = [] }: Iran
         <Info className="w-4 h-4 text-[#C25E38] shrink-0 mt-0.5" />
         <div>
           <span className="font-bold text-gray-800">
-            {totalMembers > 0
-              ? `شبکه میزبانی هم‌بام با ${toPersianDigits(totalMembers)} عضو فعال`
+            {totalHosts > 0
+              ? `شبکه میزبانی هم‌بام با ${toPersianDigits(totalHosts)} میزبان فعال`
               : 'شروع شبکه هم‌بام'}
           </span>
           <p className="mt-0.5 font-medium">
-            با کلیک روی هر شهر روی نقشه، اعضای آن شهر فیلتر می‌شوند. جهت حفظ امنیت و حریم خصوصی، نشان‌ها محدوده کلی شهر را نمایش می‌دهند نه نشانی دقیق.
+            روی هر شهر با نشانگر نارنجی کلیک کنید تا میزبان‌های آن شهر فیلتر شوند. کاربرانی که صرفاً قصد سفر و مهمان‌شدن دارند روی نقشه میزبان‌ها نشان داده نمی‌شوند.
           </p>
         </div>
       </div>
