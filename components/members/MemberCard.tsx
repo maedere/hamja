@@ -190,17 +190,20 @@ export default function MemberCard({ member }: MemberCardProps) {
         {/* Status Pill Badge */}
         <div className="flex justify-center px-4 mb-3">
           {isTravelerOnly ? (
-            <span className="inline-flex items-center justify-center gap-1 px-3.5 py-1.5 rounded-full bg-[#EAF5F9] text-[#1E6888] border border-[#BCE1EE] text-xs font-bold shadow-2xs text-center">
+            <span className="inline-flex items-center justify-center gap-1 px-3.5 py-1.5 rounded-full bg-[#EAF5F9] text-[#1E6888] border border-[#BCE1EE] text-xs font-bold shadow-2xs text-center flex-wrap">
               {member.target_destination ? (
                 <>
                   <span className="sr-only">قصد سفر به {member.target_destination} (مشتاق میزبان)</span>
                   <span>
                     قصد سفر به {member.target_destination}
                     {member.target_travel_dates ? ` • ${member.target_travel_dates}` : ''}
+                    {member.target_guests_count && member.target_guests_count > 1 ? ` (${toPersianDigits(member.target_guests_count)} نفر)` : ''}
                   </span>
                 </>
               ) : (
-                <span>مسافر مهمان • در جستجوی میزبان</span>
+                <span>
+                  مسافر مهمان • {member.target_guests_count ? `${toPersianDigits(member.target_guests_count)} نفر • ` : ''}در جستجوی میزبان
+                </span>
               )}
             </span>
           ) : (

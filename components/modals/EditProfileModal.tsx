@@ -66,6 +66,7 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
   const [customDestination, setCustomDestination] = useState('');
   const [targetDestination, setTargetDestination] = useState('');
   const [targetDates, setTargetDates] = useState('');
+  const [targetGuestsCount, setTargetGuestsCount] = useState('1');
   const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
@@ -81,6 +82,7 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
       setDestinations(currentUser.favorite_destinations || []);
       setTargetDestination(currentUser.target_destination || '');
       setTargetDates(currentUser.target_travel_dates || '');
+      setTargetGuestsCount(currentUser.target_guests_count ? currentUser.target_guests_count.toString() : '1');
     }
   }, [currentUser, isOpen]);
 
@@ -131,6 +133,7 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     const parsedAge = parsePersianNumber(age);
+    const parsedGuests = parsePersianNumber(targetGuestsCount);
 
     updateUserProfile({
       full_name: fullName.trim() || currentUser.full_name,
@@ -144,6 +147,7 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
       favorite_destinations: destinations.length > 0 ? destinations : undefined,
       target_destination: targetDestination.trim() || undefined,
       target_travel_dates: targetDates.trim() || undefined,
+      target_guests_count: parsedGuests || 1,
     });
 
     setIsSaved(true);
@@ -304,6 +308,21 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
                     placeholder="مثال: نیمه اول اردیبهشت"
                     className="w-full px-3.5 py-2.5 text-xs bg-[#F9F8F6] border border-gray-200 rounded-xl outline-none focus:border-sky-500"
                   />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    تعداد نفرات همراه
+                  </label>
+                  <select
+                    value={targetGuestsCount}
+                    onChange={(e) => setTargetGuestsCount(e.target.value)}
+                    className="w-full px-3.5 py-2.5 text-xs bg-[#F9F8F6] border border-gray-200 rounded-xl outline-none font-bold text-gray-800"
+                  >
+                    <option value="1">۱ نفر (تنها سفر می‌کنم)</option>
+                    <option value="2">۲ نفر (همراه با ۱ همسفر)</option>
+                    <option value="3">۳ نفر (گروه یا خانواده)</option>
+                    <option value="4">۴ نفر یا بیشتر</option>
+                  </select>
                 </div>
               </div>
             </div>

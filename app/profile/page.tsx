@@ -535,13 +535,20 @@ export default function ProfilePage() {
             )}
 
             {/* Traveler Destination & Dates (If Traveler) */}
-            {(currentUser.target_destination || currentUser.target_travel_dates) && (
+            {(currentUser.target_destination || currentUser.target_travel_dates || currentUser.target_guests_count) && (
               <div className="mt-5 pt-5 border-t border-gray-100">
-                <h4 className="text-xs font-black text-sky-800 mb-2.5 flex items-center gap-1.5">
-                  <Compass className="w-3.5 h-3.5 text-sky-600" />
-                  <span>برنامه و مقصد سفر مسافر:</span>
+                <h4 className="text-xs font-black text-sky-800 mb-2.5 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Compass className="w-3.5 h-3.5 text-sky-600" />
+                    <span>برنامه و مشخصات سفر مسافر:</span>
+                  </span>
+                  {currentUser.target_guests_count && (
+                    <span className="bg-sky-100 text-sky-800 px-2.5 py-0.5 rounded-full text-[11px] font-black border border-sky-200">
+                      مهمان: {toPersianDigits(currentUser.target_guests_count)} نفر
+                    </span>
+                  )}
                 </h4>
-                <div className="p-3.5 bg-sky-50 rounded-2xl border border-sky-200 text-xs text-sky-950 flex flex-wrap gap-4">
+                <div className="p-3.5 bg-sky-50 rounded-2xl border border-sky-200 text-xs text-sky-950 flex flex-wrap items-center gap-4">
                   {currentUser.target_destination && (
                     <span className="font-bold flex items-center gap-1">
                       <MapPin className="w-3.5 h-3.5 text-[#C25E38]" />
@@ -549,15 +556,16 @@ export default function ProfilePage() {
                     </span>
                   )}
                   {currentUser.target_travel_dates && (
-                    <span className="flex items-center gap-1">
+                    <span className="flex items-center gap-1 font-medium">
                       <Calendar className="w-3.5 h-3.5 text-sky-700" />
                       بازه زمانی سفر: {currentUser.target_travel_dates}
                     </span>
                   )}
                   {currentUser.target_guests_count && (
-                    <span className="flex items-center gap-1">
-                      <Users className="w-3.5 h-3.5 text-sky-700" />
-                      تعداد همراهان: {currentUser.target_guests_count} نفر
+                    <span className="flex items-center gap-1 font-bold text-sky-900 bg-white px-2.5 py-1 rounded-xl border border-sky-200 shadow-2xs">
+                      <Users className="w-3.5 h-3.5 text-sky-600" />
+                      تعداد نفرات مسافر: {toPersianDigits(currentUser.target_guests_count)} نفر
+                      {currentUser.target_guests_count > 1 ? ' (همراه با همسفر)' : ' (تنها سفر می‌کند)'}
                     </span>
                   )}
                 </div>

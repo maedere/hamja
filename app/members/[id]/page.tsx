@@ -355,12 +355,11 @@ function MemberProfileContent() {
                       تاریخ سفر: {member.target_travel_dates}
                     </span>
                   )}
-                  {member.target_guests_count && (
-                    <span className="flex items-center gap-1">
-                      <Users className="w-3.5 h-3.5 text-sky-600" />
-                      همراهان: {member.target_guests_count} نفر
-                    </span>
-                  )}
+                  <span className="flex items-center gap-1 font-bold bg-white px-2.5 py-0.5 rounded-xl border border-sky-200 text-sky-800 shadow-2xs">
+                    <Users className="w-3.5 h-3.5 text-sky-600" />
+                    مهمان: {toPersianDigits(member.target_guests_count || 1)} نفر
+                    {member.target_guests_count && member.target_guests_count > 1 ? ' (۲ نفر یا بیشتر)' : ' (تنها)'}
+                  </span>
                 </div>
               )}
 
@@ -603,10 +602,13 @@ function MemberProfileContent() {
                     </p>
                   </div>
                   <div className="p-4 rounded-2xl bg-[#F9F8F6] border border-[#EADFD5]">
-                    <span className="text-xs text-gray-500 block mb-1">تعداد همراهان</span>
+                    <span className="text-xs text-gray-500 block mb-1">تعداد نفرات مهمان</span>
                     <p className="text-base font-bold text-gray-900 flex items-center gap-1.5">
                       <Users className="w-4 h-4 text-sky-600" />
-                      {member.target_guests_count ? `${member.target_guests_count} نفر` : '۱ نفر (تنها سفر می‌کند)'}
+                      <span>{toPersianDigits(member.target_guests_count || 1)} نفر</span>
+                      <span className="text-xs font-normal text-gray-500">
+                        {member.target_guests_count && member.target_guests_count > 1 ? '(همراه با همسفر)' : '(تنها)'}
+                      </span>
                     </p>
                   </div>
                 </div>
