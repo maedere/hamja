@@ -28,6 +28,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useAuth } from '@/lib/auth-context';
 import { GuestPreference, SleepingArrangement, UserRole } from '@/types/database';
+import { DEFAULT_AVATAR } from '@/lib/persian-utils';
 import { parsePersianNumber, toEnglishDigits, toPersianDigits } from '@/lib/persian-utils';
 
 export default function RegisterPage() {
@@ -328,7 +329,7 @@ export default function RegisterPage() {
       city: city.trim(),
       age: parsedAge,
       job_education: jobEducation.trim() || undefined,
-      avatar_url: avatarPreview || '/images/default-avatar.svg',
+      avatar_url: avatarPreview || DEFAULT_AVATAR,
       can_host: isHostCapable,
       role: selectedRole,
       hosting_status: isHostCapable ? 'ready_for_hosting' : 'not_hosting',
@@ -683,7 +684,7 @@ export default function RegisterPage() {
                         <img src={avatarPreview} alt="عکس پروفایل" className="w-full h-full object-cover" />
                       ) : (
                         <div className="relative w-full h-full flex items-center justify-center">
-                          <img src="/images/default-avatar.svg" alt="آیکون پیش‌فرض پروفایل" className="w-full h-full object-cover opacity-85 group-hover:opacity-100 transition-opacity" />
+                          <img src={DEFAULT_AVATAR} alt="آیکون پیش‌فرض پروفایل" className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
                           <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                             <Camera className="w-4 h-4 text-white drop-shadow" />
                           </div>

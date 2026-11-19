@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { UserProfile, VerificationStatus } from '@/types/database';
+import { DEFAULT_AVATAR } from '@/lib/persian-utils';
 
 interface AuthContextType {
   currentUser: UserProfile | null;
@@ -145,7 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       username: data.username?.trim().toLowerCase() || `user_${Date.now().toString().slice(-4)}`,
       avatar_url:
         data.avatar_url ||
-        '/images/default-avatar.svg',
+        DEFAULT_AVATAR,
       member_since_year: '۱۴۰۵',
       response_rate_percent: 100,
       hosting_count: 0,

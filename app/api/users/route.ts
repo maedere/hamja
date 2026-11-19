@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAllUsers, createUser, getUserByUsername } from '@/lib/db';
 import { UserProfile } from '@/types/database';
+import { DEFAULT_AVATAR } from '@/lib/persian-utils';
 
 export async function GET() {
   try {
@@ -43,7 +44,7 @@ export async function POST(req: Request) {
       username: body.username?.trim().toLowerCase() || `user_${Date.now().toString().slice(-4)}`,
       avatar_url:
         body.avatar_url ||
-        '/images/default-avatar.svg',
+        DEFAULT_AVATAR,
       member_since_year: body.member_since_year || '۱۴۰۵',
       response_rate_percent: body.response_rate_percent ?? 100,
       hosting_count: body.hosting_count ?? 0,
