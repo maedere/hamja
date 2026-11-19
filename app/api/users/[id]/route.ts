@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUserById, updateUser } from '@/lib/db';
+import { getUserById, updateUser, deleteUser } from '@/lib/db';
 
 export async function GET(
   req: Request,
@@ -48,6 +48,23 @@ export async function PUT(
     console.error('API PUT /api/users/[id] error:', error);
     return NextResponse.json(
       { success: false, error: 'خطا در ویرایش اطلاعات کاربر' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    await deleteUser(id);
+    return NextResponse.json({ success: true, message: 'کاربر با موفقیت حذف شد' });
+  } catch (error: any) {
+    console.error('API DELETE /api/users/[id] error:', error);
+    return NextResponse.json(
+      { success: false, error: 'خطا در حذف کاربر' },
       { status: 500 }
     );
   }

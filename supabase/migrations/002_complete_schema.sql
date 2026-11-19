@@ -104,6 +104,10 @@ CREATE POLICY "Anyone can update hosting requests"
 ON public.hosting_requests FOR UPDATE
 USING (true);
 
+CREATE POLICY "Anyone can delete hosting requests"
+ON public.hosting_requests FOR DELETE
+USING (true);
+
 -- 4. Grant table privileges to Supabase roles
 GRANT ALL ON TABLE public.profiles TO anon, authenticated, service_role;
 GRANT ALL ON TABLE public.hosting_requests TO anon, authenticated, service_role;

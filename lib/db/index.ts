@@ -246,11 +246,47 @@ export async function updateUser(
   return updated;
 }
 
+export async function deleteUser(id: string): Promise<boolean> {
+  const supabase = getSupabase();
+  if (supabase) {
+    // 1. Delete user from profiles
+    await supabase.from('profiles').delete().eq('id', id);
+
+    // 2. Delete or soft-delete all requests involving this user
+    await supabase
+      .from('hosting_requests')
+      .delete()
+      .or(`sender_id.eq.${id},receiver_id.eq.${id}`);
+
+    await supabase
+      .from('hosting_requests')
+      .update({ status: 'deleted', host_response_note: null })
+      .or(`sender_id.eq.${id},receiver_id.eq.${id}`);
+  }
+
+  const db = await ensureLocalDb();
+  const filteredUsers = db.users.filter((u) => u.id !== id);
+  const filteredRequests = db.requests.filter(
+    (r) => r.sender_id !== id && r.receiver_id !== id
+  );
+  await persistLocalDb({ users: filteredUsers, requests: filteredRequests });
+  return true;
+}
+
 export async function clearAllUsers(): Promise<void> {
   const supabase = getSupabase();
   if (supabase) {
-    await supabase.from('profiles').delete().neq('id', '');
+    // 1. Try deleting hosting requests first
     await supabase.from('hosting_requests').delete().neq('id', '');
+
+    // 2. Fallback update to clear reviews & status for any row blocked by RLS delete restriction
+    await supabase
+      .from('hosting_requests')
+      .update({ status: 'deleted', host_response_note: null, message: '[deleted]' })
+      .neq('id', '');
+
+    // 3. Delete all profiles
+    await supabase.from('profiles').delete().neq('id', '');
   }
 
   const db = await ensureLocalDb();
@@ -267,10 +303,11 @@ export async function getAllRequests(): Promise<HostingRequest[]> {
     const { data, error } = await supabase
       .from('hosting_requests')
       .select('*')
+      .neq('status', 'deleted')
       .order('created_at', { ascending: false });
 
     if (!error && data) {
-      return data as HostingRequest[];
+      return (data as HostingRequest[]).filter((r) => r.status !== 'deleted');
     }
     if (error) {
       console.error('Supabase getAllRequests error:', error);
@@ -278,7 +315,7 @@ export async function getAllRequests(): Promise<HostingRequest[]> {
   }
 
   const db = await ensureLocalDb();
-  return db.requests;
+  return db.requests.filter((r) => r.status !== 'deleted');
 }
 
 export async function createRequest(req: HostingRequest): Promise<HostingRequest> {

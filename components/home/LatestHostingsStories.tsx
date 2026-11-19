@@ -133,13 +133,46 @@ export default function LatestHostingsStories() {
 
     const fetchRealHostings = async () => {
       try {
-        const res = await fetch('/api/requests', { cache: 'no-store' });
-        if (res.ok) {
-          const data = await res.json();
+        const [reqRes, usersRes] = await Promise.all([
+          fetch('/api/requests', { cache: 'no-store' }),
+          fetch('/api/users', { cache: 'no-store' }),
+        ]);
+
+        const validUserIds = new Set<string>();
+        if (usersRes.ok) {
+          const usersData = await usersRes.json();
+          if (usersData.success && Array.isArray(usersData.users)) {
+            usersData.users.forEach((u: any) => {
+              if (u.id) validUserIds.add(u.id);
+              if (u.username) validUserIds.add(u.username);
+              if (u.phone) validUserIds.add(u.phone);
+            });
+          }
+        }
+
+        // If all users were deleted, no stories should be shown
+        if (validUserIds.size === 0) {
+          if (isMounted) {
+            setStories([]);
+          }
+          return;
+        }
+
+        if (reqRes.ok) {
+          const data = await reqRes.json();
           if (data.success && Array.isArray(data.requests)) {
             const parsedList: HostingStory[] = [];
 
             data.requests.forEach((req: HostingRequest) => {
+              if (req.status === 'deleted') return;
+
+              // Ensure both users involved in the stay still exist in the database
+              const senderExists = validUserIds.has(req.sender_id);
+              const receiverExists = validUserIds.has(req.receiver_id);
+              if (!senderExists || !receiverExists) {
+                return;
+              }
+
               const story = parseStoryFromRequest(req);
               if (story) {
                 parsedList.push(story);

@@ -1,7 +1,7 @@
 export type UserRole = 'traveler' | 'host' | 'both';
 export type HostingStatus = 'ready_for_hosting' | 'not_hosting' | 'traveling';
 export type RoomType = 'private_room' | 'shared_room' | 'entire_place' | 'couch';
-export type RequestStatus = 'pending' | 'accepted' | 'declined' | 'canceled' | 'completed';
+export type RequestStatus = 'pending' | 'accepted' | 'declined' | 'canceled' | 'completed' | 'deleted';
 export type VerificationStatus = 'unverified' | 'pending' | 'approved' | 'rejected';
 
 export type GuestPreference = 'females_only' | 'males_only' | 'couples_families' | 'any';

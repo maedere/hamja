@@ -22,6 +22,7 @@ interface AuthContextType {
   rejectUser: (userId: string, reason: string) => Promise<void>;
   switchUser: (userId: string) => void;
   updateUserProfile: (data: Partial<UserProfile>) => Promise<void>;
+  deleteSingleUser: (userId: string) => Promise<void>;
   clearAllUsers: () => Promise<void>;
   refreshUsers: () => Promise<UserProfile[] | void>;
   pendingRequestsCount: number;
@@ -385,6 +386,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const deleteSingleUser = async (userId: string) => {
+    const updated = usersList.filter((u) => u.id !== userId);
+    saveUsersList(updated);
+    if (currentUser?.id === userId) {
+      saveCurrentUser(null);
+    }
+
+    if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
+      try {
+        await fetch(`/api/users/${userId}`, { method: 'DELETE' });
+        await refreshUsers();
+      } catch (e) {
+        console.error('Failed to delete user on server', e);
+      }
+    }
+  };
+
   const clearAllUsers = async () => {
     setUsersList([]);
     setCurrentUser(null);
@@ -521,6 +539,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         rejectUser,
         switchUser,
         updateUserProfile,
+        deleteSingleUser,
         clearAllUsers,
         refreshUsers,
         pendingRequestsCount,
@@ -550,6 +569,7 @@ export function useAuth(): AuthContextType {
       rejectUser: async () => {},
       switchUser: () => {},
       updateUserProfile: async () => {},
+      deleteSingleUser: async () => {},
       clearAllUsers: async () => {},
       refreshUsers: async () => {},
       pendingRequestsCount: 0,

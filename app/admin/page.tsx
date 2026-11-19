@@ -30,7 +30,7 @@ import { UserProfile, VerificationStatus } from '@/types/database';
 import { getAvatarUrl } from '@/lib/persian-utils';
 
 export default function AdminPage() {
-  const { usersList, approveUser, rejectUser, switchUser, currentUser, clearAllUsers, refreshUsers } = useAuth();
+  const { usersList, approveUser, rejectUser, switchUser, currentUser, deleteSingleUser, clearAllUsers, refreshUsers } = useAuth();
 
   // Admin Authentication State
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
@@ -220,9 +220,9 @@ export default function AdminPage() {
           <div className="flex items-center gap-3 w-full sm:w-auto">
             <button
               onClick={() => {
-                if (window.confirm('آیا از پاکسازی تمام کاربران و مدارک اطمینان دارید؟')) {
+                if (window.confirm('آیا از پاکسازی تمام کاربران، مدارک و روایات واقعی اقامت‌ها اطمینان دارید؟')) {
                   clearAllUsers();
-                  setActionNotice('تمام داده‌های تستی پاکسازی شدند.');
+                  setActionNotice('تمام کاربران، درخواست‌ها و روایات اقامت‌ها با موفقیت پاکسازی شدند.');
                   setTimeout(() => setActionNotice(null), 3000);
                 }
               }}
@@ -509,6 +509,21 @@ export default function AdminPage() {
                           className="px-3 py-2 text-xs font-semibold text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-colors"
                         >
                           سوییچ لاگین
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`آیا از حذف کامل کاربر «${user.full_name}» و تمام درخواست‌ها و روایات اقامت مرتبط اطمینان دارید؟`)) {
+                              deleteSingleUser(user.id);
+                              setActionNotice(`کاربر ${user.full_name} و داده‌های مرتبط با موفقیت حذف شدند.`);
+                              setTimeout(() => setActionNotice(null), 3000);
+                            }
+                          }}
+                          title="حذف کامل این کاربر از سامانه"
+                          className="px-2.5 py-2 text-xs font-semibold text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-xl transition-colors flex items-center gap-1"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>حذف کاربر</span>
                         </button>
                       </div>
                     </div>

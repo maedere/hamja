@@ -9,6 +9,7 @@ import ReviewExperienceModal from '@/components/modals/ReviewExperienceModal';
 import IranMap from '@/components/explore/IranMap';
 import ProfilePage from '@/app/profile/page';
 import RequestsPage from '@/app/requests/page';
+import LatestHostingsStories from '@/components/home/LatestHostingsStories';
 import { AuthProvider } from '@/lib/auth-context';
 import { MOCK_PROFILES, INITIAL_REQUESTS } from '@/lib/mock-data';
 
@@ -412,6 +413,37 @@ describe('Hamja Components & Core Features Test Suite', () => {
     expect(screen.getByText('امتیاز شما به این تجربه:')).toBeInTheDocument();
     expect(screen.getByText('خوش‌برخورد و صمیمی')).toBeInTheDocument();
     expect(screen.getByText('ثبت تجربه و پایان موفقیت‌آمیز سفر')).toBeInTheDocument();
+  });
+
+  it('renders authentic empty state in LatestHostingsStories when no users exist', async () => {
+    // Mock global fetch returning no users
+    const originalFetch = global.fetch;
+    global.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url.includes('/api/users')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ success: true, users: [] }),
+        });
+      }
+      if (url.includes('/api/requests')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ success: true, requests: [] }),
+        });
+      }
+      return Promise.resolve({ ok: false });
+    });
+
+    render(<LatestHostingsStories />);
+
+    expect(
+      await screen.findByText('داستان‌های میزبانی و دوستی هم‌بام به زودی در اینجا ثبت می‌شوند')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('روایت‌های واقعی از اقامت‌های دوطرفه')
+    ).toBeInTheDocument();
+
+    global.fetch = originalFetch;
   });
 });
 
