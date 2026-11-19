@@ -538,15 +538,6 @@ function MemberProfileContent() {
                       : 'فارسی (زبان مادری)'}
                   </p>
                 </div>
-
-                <div className="pt-3 border-t border-gray-100">
-                  <h4 className="text-xs font-bold text-gray-500 mb-1.5">مقصدهای محبوب من</h4>
-                  <p className="text-xs sm:text-sm font-semibold text-gray-800 leading-relaxed">
-                    {member.favorite_destinations && member.favorite_destinations.length > 0
-                      ? member.favorite_destinations.join(' · ')
-                      : 'هنوز مقصدی ثبت نشده است'}
-                  </p>
-                </div>
               </div>
             </div>
           </div>
